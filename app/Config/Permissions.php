@@ -104,6 +104,7 @@ class Permissions
             'WorkOrders::index',
             'WorkOrders::show',
             'Reports::*',
+            'PmReports::*',
             'Notifications::*',
         ],
 
@@ -167,6 +168,22 @@ class Permissions
         'cash_collector' => [
             'Dashboard::index',
             'Collector::*',
+            'Profile::*',
+            'Notifications::*',
+        ],
+
+        'landlord' => [
+            'Dashboard::index',
+            'PmReports::landlord',
+            'PmReports::landlordExport',
+            'Facilities::index',
+            'Facilities::show',
+            'Units::index',
+            'Units::view',
+            'Tenants::index',
+            'Tenants::show',
+            'Leases::index',
+            'Leases::show',
             'Profile::*',
             'Notifications::*',
         ],

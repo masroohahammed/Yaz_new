@@ -25,6 +25,7 @@ class PmMenu extends BaseConfig
         ['key' => 'ledger',       'label' => 'Finance Ledger','icon' => 'bi-journal-text',      'url' => 'finance/pm'],
         ['key' => 'reports',      'label' => 'Reports',       'icon' => 'bi-bar-chart-line',    'url' => 'reports'],
         ['key' => 'pm_reports',   'label' => 'PM Reports Hub', 'icon' => 'bi-clipboard-data',   'url' => 'reports/pm'],
+        ['key' => 'landlord_reports', 'label' => 'Landlord Reports', 'icon' => 'bi-person-badge', 'url' => 'reports/pm/landlord'],
 
         ['type' => 'heading', 'label' => 'CRM & Sales'],
         ['key' => 'crm',      'label' => 'CRM',        'icon' => 'bi-person-lines-fill', 'url' => 'crm'],

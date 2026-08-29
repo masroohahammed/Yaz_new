@@ -5,6 +5,7 @@
     <?php if (!empty($landlord['full_name_ar'])): ?><div class="small text-muted text-end" dir="rtl"><?= esc($landlord['full_name_ar']) ?></div><?php endif; ?>
   </div>
   <div class="d-flex gap-2">
+    <a href="<?= base_url('reports/pm/landlord?landlord='.(int)$landlord['id']) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-bar-chart-line me-1"></i>Reports</a>
     <a href="<?= base_url('landlords/'.$landlord['id'].'/revenue') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-graph-up me-1"></i>Revenue</a>
     <button class="btn btn-fm-outline btn-sm" data-bs-toggle="modal" data-bs-target="#payoutModal"><i class="bi bi-cash-coin me-1"></i>New Payout</button>
     <a href="<?= base_url('landlords/'.$landlord['id'].'/edit') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>

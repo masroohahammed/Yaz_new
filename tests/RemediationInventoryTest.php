@@ -279,4 +279,23 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringNotContainsString("Kitchen::", $routes);
         $this->assertStringNotContainsString("Pos::", $routes);
     }
+
+    public function testLandlordReportsReuseExistingTables(): void
+    {
+        $this->assertFileExists($this->root . '/app/Services/LandlordReportService.php');
+        $this->assertFileExists($this->root . '/app/Views/pm_reports/landlord.php');
+        $svc = file_get_contents($this->root . '/app/Services/LandlordReportService.php');
+        foreach (['lease_payments', 'cheques', 'expenses', 'lease_contracts', 'maintenance_requests', "where('landlord_id'"] as $needle) {
+            $this->assertStringContainsString($needle, $svc);
+        }
+        $this->assertStringNotContainsString('CREATE TABLE', $svc);
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString("PmReports::landlord", $routes);
+        $this->assertStringContainsString("PmReports::landlordExport", $routes);
+        $ctrl = file_get_contents($this->root . '/app/Controllers/PmReports.php');
+        $this->assertStringContainsString('function scopedActiveFacilities', $ctrl);
+        $this->assertStringContainsString('function landlordExport', $ctrl);
+        $menu = file_get_contents($this->root . '/app/Config/PmMenu.php');
+        $this->assertStringContainsString('reports/pm/landlord', $menu);
+    }
 }

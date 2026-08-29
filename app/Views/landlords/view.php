@@ -17,6 +17,7 @@ $docTypes = $docTypes ?? fm_document_types();
   </div>
   <div class="d-flex gap-2 flex-wrap">
     <span class="fm-badge badge-status-<?= esc($l['status']) ?> align-self-center"><?= ucfirst($l['status']) ?></span>
+    <a href="<?= base_url('reports/pm/landlord?landlord=' . (int) $l['id']) ?>" class="btn btn-sm btn-fm-outline">Landlord Reports</a>
     <a href="<?= base_url('landlords/' . $l['id'] . '/payout') ?>" class="btn btn-sm btn-fm-primary">Create Payout</a>
     <a href="<?= base_url('landlords/' . $l['id'] . '/payouts') ?>" class="btn btn-sm btn-outline-primary">All Payouts</a>
     <a href="<?= base_url('landlords/' . $l['id'] . '/edit') ?>" class="btn btn-sm btn-fm-outline"><i class="bi bi-pencil"></i> Edit</a>

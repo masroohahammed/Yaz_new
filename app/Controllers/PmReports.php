@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
 use App\Services\DashboardService;
+use App\Services\LandlordReportService;
 
 /**
  * Property Management reports hub and PM-scoped operational reports.
@@ -77,6 +78,11 @@ class PmReports extends BaseController
     public function occupancy()
     {
         [$facilitySql, $facilityParams] = $this->scopedFacilitySql('f.id');
+        $landlord = (int) ($this->request->getGet('landlord') ?? 0);
+        if ($landlord > 0) {
+            $facilitySql .= ' AND f.landlord_id = ? ';
+            $facilityParams[] = $landlord;
+        }
 
         $facilities = $this->db->query("
             SELECT f.id, f.name, f.code,
@@ -120,6 +126,7 @@ class PmReports extends BaseController
         $status   = $this->request->getGet('status') ?? '';
         $facility = (int) ($this->request->getGet('facility') ?? 0);
         $expiring = $this->request->getGet('expiring') ?? '';
+        $landlord = (int) ($this->request->getGet('landlord') ?? 0);
 
         $q = $this->db->table('lease_contracts lc')
             ->select('lc.*, t.full_name AS client_name, t.email AS client_email, t.phone AS client_mobile, f.name AS facility_name, u.unit_number')
@@ -136,6 +143,9 @@ class PmReports extends BaseController
         if ($facility > 0) {
             $q->where('lc.facility_id', $facility);
         }
+        if ($landlord > 0) {
+            $q->where('f.landlord_id', $landlord);
+        }
         if ($expiring) {
             $q->where('lc.end_date <=', date('Y-m-d', strtotime('+60 days')))
                 ->where('lc.end_date >=', date('Y-m-d'));
@@ -151,6 +161,7 @@ class PmReports extends BaseController
             'filterStatus'   => $status,
             'filterFacility' => $facility,
             'filterExpiring' => $expiring,
+            'filterLandlord' => $landlord,
         ]));
     }
 
@@ -213,6 +224,7 @@ class PmReports extends BaseController
         $to       = $this->request->getGet('to') ?? date('Y-m-d');
         $facility = (int) ($this->request->getGet('facility') ?? 0);
         $status   = $this->request->getGet('status') ?? '';
+        $landlord = (int) ($this->request->getGet('landlord') ?? 0);
 
         $q = $this->db->table('lease_payments lp')
             ->select('lp.*, lc.contract_number, t.full_name AS tenant_name, f.name AS facility_name')
@@ -226,6 +238,9 @@ class PmReports extends BaseController
 
         if ($facility > 0) {
             $q->where('lp.facility_id', $facility);
+        }
+        if ($landlord > 0) {
+            $q->where('f.landlord_id', $landlord);
         }
         if ($status !== '') {
             $q->where('lp.status', $status);
@@ -251,6 +266,7 @@ class PmReports extends BaseController
             'facilities'     => $this->scopedActiveFacilities(),
             'filterFacility' => $facility,
             'filterStatus'   => $status,
+            'filterLandlord' => $landlord,
             'stats'          => [
                 'count'     => count($payments),
                 'collected' => $collected,
@@ -269,6 +285,7 @@ class PmReports extends BaseController
         $to       = $this->request->getGet('to') ?? date('Y-m-d');
         $facility = (int) ($this->request->getGet('facility') ?? 0);
         $status   = $this->request->getGet('status') ?? '';
+        $landlord = (int) ($this->request->getGet('landlord') ?? 0);
 
         $q = $this->db->table('cheques c')
             ->select('c.*, t.full_name AS tenant_name, lc.contract_number, f.name AS facility_name')
@@ -282,6 +299,9 @@ class PmReports extends BaseController
 
         if ($facility > 0) {
             $q->where('c.facility_id', $facility);
+        }
+        if ($landlord > 0) {
+            $q->where('f.landlord_id', $landlord);
         }
         if ($status !== '') {
             $q->where('c.status', $status);
@@ -298,6 +318,7 @@ class PmReports extends BaseController
             'facilities'     => $this->scopedActiveFacilities(),
             'filterFacility' => $facility,
             'filterStatus'   => $status,
+            'filterLandlord' => $landlord,
             'totalAmount'    => $totalAmount,
         ]));
     }
@@ -308,6 +329,7 @@ class PmReports extends BaseController
         $to       = $this->request->getGet('to') ?? date('Y-m-d');
         $facility = (int) ($this->request->getGet('facility') ?? 0);
         $status   = $this->request->getGet('status') ?? '';
+        $landlord = (int) ($this->request->getGet('landlord') ?? 0);
 
         $q = $this->db->table('expenses e')
             ->select('e.*, f.name as facility_name')
@@ -318,6 +340,9 @@ class PmReports extends BaseController
 
         if ($facility > 0) {
             $q->where('e.facility_id', $facility);
+        }
+        if ($landlord > 0) {
+            $q->where('f.landlord_id', $landlord);
         }
         if ($status !== '') {
             $q->where('e.status', $status);
@@ -337,6 +362,7 @@ class PmReports extends BaseController
             'facilities'     => $this->scopedActiveFacilities(),
             'filterFacility' => $facility,
             'filterStatus'   => $status,
+            'filterLandlord' => $landlord,
             'approvedTotal'  => $approved,
         ]));
     }
@@ -349,6 +375,244 @@ class PmReports extends BaseController
             'title'      => 'Property P&amp;L Reports',
             'properties' => $properties,
         ]));
+    }
+
+    public function landlord()
+    {
+        $svc      = new LandlordReportService($this->db);
+        $companyId = $this->pmCompanyId();
+        $forced    = $this->forcedLandlordId();
+        $landlordId = $forced ?: (int) ($this->request->getGet('landlord') ?? 0);
+        $facilityId = (int) ($this->request->getGet('facility') ?? 0);
+        $unitId     = (int) ($this->request->getGet('unit') ?? 0);
+        $tenantId   = (int) ($this->request->getGet('tenant') ?? 0);
+        $from       = (string) ($this->request->getGet('from') ?: date('Y-m-01'));
+        $to         = (string) ($this->request->getGet('to') ?: date('Y-m-d'));
+        $payStatus  = (string) ($this->request->getGet('pay_status') ?? '');
+        $chqStatus  = (string) ($this->request->getGet('cheque_status') ?? '');
+        $mntStatus  = (string) ($this->request->getGet('maint_status') ?? '');
+        $expCat     = (string) ($this->request->getGet('expense_category') ?? '');
+        $unitStatus = (string) ($this->request->getGet('unit_status') ?? '');
+        $leaseStatus = (string) ($this->request->getGet('lease_status') ?? '');
+        $expiryDays = (int) ($this->request->getGet('expiry_days') ?? 0);
+
+        $landlords = $svc->landlords($companyId);
+        if ($landlordId < 1 && $landlords !== []) {
+            $landlordId = (int) $landlords[0]['id'];
+        }
+
+        $facilityIds = $landlordId > 0
+            ? $svc->facilityIdsForLandlord($landlordId, $companyId, $this->companyScope()->facilityIds(), $facilityId ?: null)
+            : [];
+
+        $landlord = null;
+        if ($landlordId > 0 && $this->db->tableExists('landlords')) {
+            $lq = $this->db->table('landlords')->where('id', $landlordId)->where('deleted_at', null);
+            $this->scopeCompany($lq, 'company_id');
+            $landlord = $lq->get()->getRowArray();
+            if (! $landlord) {
+                return redirect()->to(base_url('reports/pm/landlord'))->with('error', 'Landlord not found or not in your company.');
+            }
+        }
+
+        $overview   = $svc->overview($facilityIds, $from, $to);
+        $units      = $svc->units($facilityIds, $unitId ?: null, $unitStatus);
+        $tenants    = $svc->tenants($facilityIds);
+        $payments   = $svc->collections($facilityIds, $from, $to, $payStatus, $tenantId ?: null);
+        $pending    = $svc->pendingCollections($facilityIds);
+        $cheques    = $svc->cheques($facilityIds, $from, $to, $chqStatus);
+        $maint      = $svc->maintenance($facilityIds, $from, $to, $mntStatus);
+        $expenses   = $svc->expenses($facilityIds, $from, $to, $expCat);
+        $contracts  = $svc->contracts($facilityIds, $leaseStatus, $expiryDays > 0 ? $expiryDays : null);
+        $occupancy  = $svc->occupancy($facilityIds);
+        $statement  = $landlordId > 0 ? $svc->statement($facilityIds, $landlordId, $from, $to) : [];
+        $pnl        = $svc->pnl($facilityIds, $from, $to);
+        $properties = $svc->properties($landlordId > 0
+            ? $svc->facilityIdsForLandlord($landlordId, $companyId, $this->companyScope()->facilityIds())
+            : []);
+
+        $qs = http_build_query(array_filter([
+            'landlord' => $landlordId, 'facility' => $facilityId ?: null, 'from' => $from, 'to' => $to,
+        ]));
+
+        return view('pm_reports/landlord', $this->viewData([
+            'title'        => 'Landlord Reports',
+            'landlords'    => $landlords,
+            'landlord'     => $landlord,
+            'landlordId'   => $landlordId,
+            'forcedLandlord' => $forced > 0,
+            'properties'   => $properties,
+            'facilityId'   => $facilityId,
+            'unitId'       => $unitId,
+            'tenantId'     => $tenantId,
+            'from'         => $from,
+            'to'           => $to,
+            'payStatus'    => $payStatus,
+            'chqStatus'    => $chqStatus,
+            'mntStatus'    => $mntStatus,
+            'expCat'       => $expCat,
+            'unitStatus'   => $unitStatus,
+            'leaseStatus'  => $leaseStatus,
+            'expiryDays'   => $expiryDays,
+            'overview'     => $overview,
+            'units'        => $units,
+            'tenants'      => $tenants,
+            'payments'     => $payments,
+            'pending'      => $pending,
+            'cheques'      => $cheques,
+            'maintenance'  => $maint,
+            'expenses'     => $expenses,
+            'contracts'    => $contracts,
+            'occupancy'    => $occupancy,
+            'statement'    => $statement,
+            'pnl'          => $pnl,
+            'exportBase'   => base_url('reports/pm/landlord/export') . '?' . $qs,
+            'printUrl'     => current_url() . '?' . $qs,
+        ]));
+    }
+
+    public function landlordExport(string $section = 'overview')
+    {
+        $svc       = new LandlordReportService($this->db);
+        $companyId = $this->pmCompanyId();
+        $forced    = $this->forcedLandlordId();
+        $landlordId = $forced ?: (int) ($this->request->getGet('landlord') ?? 0);
+        $facilityId = (int) ($this->request->getGet('facility') ?? 0);
+        $from       = (string) ($this->request->getGet('from') ?: date('Y-m-01'));
+        $to         = (string) ($this->request->getGet('to') ?: date('Y-m-d'));
+        $section    = preg_replace('/[^a-z_]/', '', $section) ?: 'overview';
+
+        $facilityIds = $landlordId > 0
+            ? $svc->facilityIdsForLandlord($landlordId, $companyId, $this->companyScope()->facilityIds(), $facilityId ?: null)
+            : [];
+
+        [$headers, $rows] = $this->landlordExportRows($svc, $section, $facilityIds, $landlordId, $from, $to);
+
+        return $this->csvResponse('landlord_' . $section . '_' . date('Ymd') . '.csv', $headers, $rows);
+    }
+
+    /**
+     * @param list<int> $facilityIds
+     * @return array{0: list<string>, 1: list<array<int|string, mixed>>}
+     */
+    private function landlordExportRows(LandlordReportService $svc, string $section, array $facilityIds, int $landlordId, string $from, string $to): array
+    {
+        return match ($section) {
+            'units' => [['Property', 'Unit', 'Type', 'Floor', 'Area', 'Tenant', 'Rent', 'Start', 'End', 'Status'],
+                array_map(static fn ($r) => [
+                    $r['facility_name'] ?? '', $r['unit_number'] ?? '', $r['unit_type'] ?? '', $r['floor'] ?? '',
+                    $r['area_sqft'] ?? '', $r['lease_tenant'] ?? $r['tenant_name'] ?? '',
+                    $r['lease_rent'] ?? $r['rent_amount'] ?? '', $r['lease_start'] ?? $r['contract_start'] ?? '',
+                    $r['lease_end'] ?? $r['contract_end'] ?? '', $r['status'] ?? '',
+                ], $svc->units($facilityIds))],
+            'tenants' => [['Tenant', 'Phone', 'Email', 'Property', 'Unit', 'Contract', 'Rent', 'Status'],
+                array_map(static fn ($r) => [
+                    $r['full_name'] ?? '', $r['phone'] ?? '', $r['email'] ?? '', $r['facility_name'] ?? '',
+                    $r['unit_number'] ?? '', $r['contract_number'] ?? '', $r['rent_amount'] ?? '', $r['lease_status'] ?? '',
+                ], $svc->tenants($facilityIds))],
+            'pending' => [['Tenant', 'Property', 'Unit', 'Due', 'Amount', 'Status', 'Days overdue'],
+                array_map(static fn ($r) => [
+                    $r['tenant_name'] ?? '', $r['facility_name'] ?? '', $r['unit_number'] ?? '',
+                    $r['due_date'] ?? '', $r['amount'] ?? '', $r['status'] ?? '', $r['days_overdue'] ?? 0,
+                ], $svc->pendingCollections($facilityIds))],
+            'cheques' => [['Tenant', 'Property', 'Cheque', 'Bank', 'Date', 'Amount', 'Status'],
+                array_map(static fn ($r) => [
+                    $r['tenant_name'] ?? '', $r['facility_name'] ?? '', $r['cheque_no'] ?? '',
+                    $r['bank_name'] ?? '', $r['cheque_date'] ?? '', $r['amount'] ?? '', $r['status'] ?? '',
+                ], $svc->cheques($facilityIds, $from, $to))],
+            'maintenance' => [['Ticket', 'Property', 'Unit', 'Issue', 'Priority', 'Status', 'Cost'],
+                array_map(static fn ($r) => [
+                    $r['ticket_number'] ?? '', $r['facility_name'] ?? '', $r['unit_number'] ?? '',
+                    $r['description'] ?? '', $r['priority'] ?? '', $r['status'] ?? '', $r['actual_cost'] ?? 0,
+                ], $svc->maintenance($facilityIds, $from, $to))],
+            'expenses' => [['Date', 'Property', 'Category', 'Description', 'Amount', 'Status'],
+                array_map(static fn ($r) => [
+                    $r['expense_date'] ?? '', $r['facility_name'] ?? '', $r['category'] ?? '',
+                    $r['description'] ?? '', $r['amount'] ?? '', $r['status'] ?? '',
+                ], $svc->expenses($facilityIds, $from, $to))],
+            'contracts' => [['Contract', 'Tenant', 'Property', 'Unit', 'Start', 'End', 'Rent', 'Status'],
+                array_map(static fn ($r) => [
+                    $r['contract_number'] ?? '', $r['tenant_name'] ?? '', $r['facility_name'] ?? '',
+                    $r['unit_number'] ?? '', $r['start_date'] ?? '', $r['end_date'] ?? '',
+                    $r['rent_amount'] ?? '', $r['status'] ?? '',
+                ], $svc->contracts($facilityIds))],
+            'occupancy' => [['Property', 'Units', 'Occupied', 'Vacant', 'Maintenance', 'Occupancy %'],
+                array_map(static fn ($r) => [
+                    $r['name'] ?? '', $r['total_units'] ?? 0, $r['occupied'] ?? 0, $r['vacant'] ?? 0,
+                    $r['maintenance'] ?? 0, $r['occupancy_pct'] ?? 0,
+                ], $svc->occupancy($facilityIds)['rows'])],
+            'statement' => [['Date', 'Property', 'Unit', 'Description', 'Income', 'Expense', 'Payment', 'Balance'],
+                array_map(static fn ($r) => [
+                    $r['entry_date'] ?? '', $r['facility'] ?? '', $r['unit'] ?? '', $r['description'] ?? '',
+                    $r['income'] ?? 0, $r['expense'] ?? 0, $r['payment'] ?? 0, $r['balance'] ?? 0,
+                ], $landlordId > 0 ? $svc->statement($facilityIds, $landlordId, $from, $to) : [])],
+            'pnl' => [['Metric', 'Amount'], (static function () use ($svc, $facilityIds, $from, $to) {
+                $p = $svc->pnl($facilityIds, $from, $to);
+
+                return [
+                    ['Rental income', $p['rental']], ['Parking', $p['parking']], ['Service charges', $p['service']],
+                    ['Utility recovery', $p['utility']], ['Late fees', $p['late']], ['Other income', $p['other']],
+                    ['Collected', $p['collected']], ['Pending', $p['pending']], ['Expenses', $p['expenses']],
+                    ['Net income', $p['net']], ['Margin %', $p['margin']],
+                ];
+            })()],
+            default => [['Payment #', 'Tenant', 'Property', 'Unit', 'Due', 'Paid', 'Amount', 'Method', 'Status', 'Reference'],
+                array_map(static fn ($r) => [
+                    $r['payment_number'] ?? '', $r['tenant_name'] ?? '', $r['facility_name'] ?? '',
+                    $r['unit_number'] ?? '', $r['due_date'] ?? '', $r['payment_date'] ?? '',
+                    $r['amount'] ?? '', $r['payment_method'] ?? '', $r['status'] ?? '', $r['reference_no'] ?? '',
+                ], $svc->collections($facilityIds, $from, $to))],
+        };
+    }
+
+    private function forcedLandlordId(): int
+    {
+        $role = (string) session()->get('user_role');
+        if ($role !== 'landlord') {
+            return 0;
+        }
+        $sid = (int) session()->get('landlord_id');
+        if ($sid > 0) {
+            return $sid;
+        }
+        $uid = (int) session()->get('user_id');
+        if ($uid > 0 && $this->db->fieldExists('landlord_id', 'users')) {
+            $row = $this->db->table('users')->select('landlord_id')->where('id', $uid)->get()->getRowArray();
+
+            return (int) ($row['landlord_id'] ?? 0);
+        }
+
+        return 0;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function scopedActiveFacilities(): array
+    {
+        $q = $this->db->table('facilities')->select('id, name, code')->where('status', 'active');
+        if ($this->db->fieldExists('deleted_at', 'facilities')) {
+            $q->where('deleted_at', null);
+        }
+        $this->scopeCompany($q, 'company_id');
+        $this->scopeFacilities($q, 'id');
+
+        return $q->orderBy('name')->get()->getResultArray();
+    }
+
+    /**
+     * @param list<string> $headers
+     * @param list<array<int|string, mixed>> $rows
+     */
+    private function csvResponse(string $filename, array $headers, array $rows): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $output = implode(',', array_map(static fn ($h) => '"' . $h . '"', $headers)) . "\n";
+        foreach ($rows as $row) {
+            $output .= implode(',', array_map(static fn ($v) => '"' . str_replace('"', '""', (string) $v) . '"', array_values($row))) . "\n";
+        }
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($output);
     }
 
     /**

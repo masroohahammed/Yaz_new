@@ -110,7 +110,7 @@ class RbacService
             'collector', 'dashboard', 'profile', 'notifications',
         ],
         'landlord' => [
-            'dashboard', 'facilities', 'units.view', 'tenants', 'leases', 'finance.invoices', 'profile', 'notifications',
+            'dashboard', 'facilities', 'units.view', 'tenants', 'leases', 'finance.invoices', 'reports', 'profile', 'notifications',
         ],
         'leasing_agent' => [
             'dashboard', 'facilities', 'units.view', 'units.create', 'tenants', 'leases', 'crm', 'sales', 'profile', 'notifications',

@@ -15,6 +15,7 @@ $reports = [
   ['cheques',       'bi-bank',                'Cheques (PDC)',           'Post-dated cheques by status and property',            'gold'],
   ['expenses',      'bi-wallet2',             'Expenses',                'Approved and pending expenses by property',            'red'],
   ['properties',    'bi-building',            'Property P&amp;L',         'Open profit &amp; loss for each property',             'primary'],
+  ['landlord',      'bi-person-badge',        'Landlord Reports',         'Overview, collections, cheques, occupancy, statement', 'blue'],
 ];
 
 $financeReports = [

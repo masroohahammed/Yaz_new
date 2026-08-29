@@ -19,6 +19,7 @@
 <td class="small"><?= esc($l['id_number'] ?? '—') ?></td><td><span class="badge bg-secondary"><?= esc($l['status']) ?></span></td>
 <td class="text-end">
   <a href="<?= base_url('landlords/'.$l['id']) ?>" class="btn btn-sm btn-fm-outline">View</a>
+  <a href="<?= base_url('reports/pm/landlord?landlord='.$l['id']) ?>" class="btn btn-sm btn-fm-outline">Reports</a>
   <a href="<?= base_url('landlords/'.$l['id'].'/revenue') ?>" class="btn btn-sm btn-fm-outline"><i class="bi bi-graph-up"></i></a>
   <a href="<?= base_url('landlords/'.$l['id'].'/edit') ?>" class="btn btn-sm btn-fm-outline">Edit</a>
 </td>

@@ -902,6 +902,9 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('reports/pm/cheques',               'PmReports::cheques');
     $routes->get('reports/pm/expenses',              'PmReports::expenses');
     $routes->get('reports/pm/properties',            'PmReports::properties');
+    $routes->get('reports/pm/landlord',              'PmReports::landlord');
+    $routes->get('reports/pm/landlord/export',       'PmReports::landlordExport/collections');
+    $routes->get('reports/pm/landlord/export/(:segment)', 'PmReports::landlordExport/$1');
 
     // Notifications & profile
     $routes->get('notifications',                    'Notifications::index');

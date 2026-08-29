@@ -120,6 +120,7 @@ class Menu
           ['href' => 'reports/kpi', 'icon' => 'bi-speedometer', 'label' => 'KPI Reports', 'perm' => 'reports.kpi', 'match' => 'reports/kpi'],
           ['href' => 'reports/finance', 'icon' => 'bi-cash-stack', 'label' => 'Finance Reports', 'perm' => 'reports.finance', 'match' => 'reports/finance'],
           ['href' => 'reports/pm', 'icon' => 'bi-clipboard-data', 'label' => 'PM Reports Hub', 'perm' => 'reports', 'match' => 'reports/pm'],
+          ['href' => 'reports/pm/landlord', 'icon' => 'bi-person-badge', 'label' => 'Landlord Reports', 'perm' => 'reports', 'match' => 'reports/pm/landlord'],
         ],
       ],
       [
