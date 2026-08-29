@@ -1,0 +1,234 @@
+/**
+ * Unified PM/FM workspace UI — theme-colored cards, tables, tabs, buttons.
+ * Loads after crimson-horizon.css; uses --primary-color from layout.
+ */
+
+:root {
+  --fm-theme: var(--primary-color, #76002b);
+  --fm-theme-soft: color-mix(in srgb, var(--fm-theme) 8%, white);
+  --fm-theme-muted: color-mix(in srgb, var(--fm-theme) 55%, #6b5a62);
+  --fm-border-soft: #ece4e8;
+  --fm-btn-h: 2.125rem;
+  --fm-btn-h-sm: 1.875rem;
+  --fm-btn-px: 0.875rem;
+  --fm-btn-px-sm: 0.65rem;
+  --fm-btn-fs: 0.8125rem;
+  --fm-btn-fs-sm: 0.78rem;
+  --fm-btn-radius: 10px;
+}
+
+/* ── Cards (fm-card + form-card) ── */
+.fm-card,
+.form-card,
+.fm-form-section {
+  border: 1px solid color-mix(in srgb, var(--fm-theme) 10%, #ece4e8);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--fm-theme) 6%, transparent);
+  background: #fff;
+}
+
+.fm-card-body {
+  padding: 1rem 1.15rem;
+}
+
+.form-card:not(.p-0) {
+  padding: 1.15rem 1.25rem;
+}
+
+.card-header-fm {
+  border-bottom: 1px solid var(--fm-border-soft);
+  padding: 0.75rem 1.15rem;
+}
+
+/* ── Tables (fm-table + table-registry) ── */
+.fm-table,
+.table-registry {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fm-btn-fs);
+  background: #fff;
+}
+
+.fm-table thead th,
+.table-registry thead th {
+  background: var(--fm-theme-soft) !important;
+  color: var(--fm-theme-muted) !important;
+  border-bottom: 2px solid color-mix(in srgb, var(--fm-theme) 15%, #ece4e8) !important;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.62rem 0.9rem;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.fm-table td,
+.table-registry tbody td {
+  padding: 0.58rem 0.9rem;
+  border-bottom: 1px solid #f0e8ec;
+  vertical-align: middle;
+  color: #2c2c2c;
+  font-size: 0.84rem;
+}
+
+.fm-table.table-sm td,
+.fm-table.table-sm th,
+.table-registry.table-sm tbody td,
+.table-registry.table-sm thead th {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.fm-table tbody tr:hover,
+.table-registry tbody tr:hover,
+.table-registry.table-hover tbody tr:hover {
+  background: color-mix(in srgb, var(--fm-theme) 4%, white) !important;
+}
+
+.fm-tab-pane .fm-table th,
+.fm-tab-pane .fm-table td {
+  padding: 0.5rem 0.75rem;
+}
+
+/* ── Entity tabs ── */
+.nav.fm-entity-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-bottom: 2px solid var(--fm-border-soft);
+  margin-bottom: 0;
+  padding: 0 0.15rem;
+}
+
+.nav.fm-entity-tabs .nav-item {
+  margin-bottom: -2px;
+}
+
+.nav.fm-entity-tabs .nav-link {
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 10px 10px 0 0;
+  color: #6b5a62;
+  font-size: var(--fm-btn-fs-sm);
+  font-weight: 600;
+  padding: 0.55rem 0.95rem;
+  line-height: 1.25;
+  background: transparent;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.nav.fm-entity-tabs .nav-link:hover {
+  color: var(--fm-theme);
+  background: var(--fm-theme-soft);
+}
+
+.nav.fm-entity-tabs .nav-link.active {
+  color: var(--fm-theme);
+  border-bottom-color: var(--fm-theme);
+  background: var(--fm-theme-soft);
+}
+
+.tab-content.fm-tab-pane {
+  background: #fff;
+  border: 1px solid var(--fm-border-soft);
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  padding: 1rem 1.15rem;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--fm-theme) 5%, transparent);
+}
+
+.tab-content.fm-tab-pane > .tab-pane > section,
+.tab-content.fm-tab-pane > section {
+  margin-bottom: 0;
+}
+
+/* ── Unified buttons ── */
+.btn,
+.btn-fm-primary,
+.btn-fm-outline,
+.btn-primary,
+.btn-secondary,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-info,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: var(--fm-btn-h);
+  padding: 0.4rem var(--fm-btn-px);
+  font-size: var(--fm-btn-fs);
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: var(--fm-btn-radius);
+}
+
+.btn-sm,
+.btn-group-sm > .btn,
+.btn-fm-primary.btn-sm,
+.btn-fm-outline.btn-sm,
+.page-header .btn-sm,
+.fm-card .btn-sm,
+.table-registry .btn-sm {
+  min-height: var(--fm-btn-h-sm);
+  padding: 0.32rem var(--fm-btn-px-sm);
+  font-size: var(--fm-btn-fs-sm);
+}
+
+.btn-fm-primary,
+.btn-primary-brand,
+.btn-primary {
+  background: var(--fm-theme) !important;
+  border-color: var(--fm-theme) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--fm-theme) 28%, transparent);
+}
+
+.btn-fm-primary:hover,
+.btn-primary-brand:hover,
+.btn-primary:hover {
+  filter: brightness(0.94);
+  color: #fff !important;
+}
+
+.btn-fm-outline {
+  color: var(--fm-theme) !important;
+  border: 1.5px solid var(--fm-theme) !important;
+  background: #fff !important;
+}
+
+.btn-fm-outline:hover {
+  background: var(--fm-theme) !important;
+  color: #fff !important;
+}
+
+.page-header .d-flex.gap-2,
+.page-header .btn + .btn,
+.fm-card .d-flex.gap-2 {
+  gap: 0.5rem !important;
+}
+
+.filters-inline {
+  border: 1px solid color-mix(in srgb, var(--fm-theme) 10%, #ece4e8);
+}
+
+.filters-inline .btn,
+.filters-inline .form-control,
+.filters-inline .form-select {
+  min-height: var(--fm-btn-h-sm);
+}
+
+/* KPI cards theme tint */
+.kpi-card.kpi-primary,
+.kpi-card.kpi-blue {
+  border-color: color-mix(in srgb, var(--fm-theme) 20%, #93c5fd) !important;
+}
+
+.kpi-card .kpi-icon {
+  background: var(--fm-theme-soft);
+  color: var(--fm-theme);
+}

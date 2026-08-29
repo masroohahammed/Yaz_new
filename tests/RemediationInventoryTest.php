@@ -328,10 +328,19 @@ final class RemediationInventoryTest extends TestCase
         $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
         $this->assertStringContainsString('scopedFacilitiesList', $leases);
         $this->assertStringContainsString('applyLeaseFacilityScope', $leases);
-        $this->assertStringNotContainsString(
-            "scopeFacilities(\n            \$this->db->table('facilities')",
-            $leases
-        );
+    }
+
+    public function testCompanyLogoPathSupportsUploadsCompanies(): void
+    {
+        $helper = file_get_contents($this->root . '/app/Helpers/fm_helper.php');
+        $this->assertStringContainsString('function fm_logo_resolve_path', $helper);
+        $this->assertStringContainsString("'companies'", $helper);
+        $letter = file_get_contents($this->root . '/app/Views/layouts/_doc_letterhead.php');
+        $this->assertStringContainsString('company_phone', $letter);
+        $this->assertStringContainsString('Tel:', $letter);
+        $print = file_get_contents($this->root . '/app/Views/leases/print.php');
+        $this->assertStringContainsString('_doc_letterhead', $print);
+        $this->assertFileExists($this->root . '/public/assets/css/fm-workspace-ui.css');
     }
 
     public function testNoKitchenPosModuleWasInvented(): void

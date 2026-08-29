@@ -96,6 +96,47 @@ if (! function_exists('fm_priority_badge')) {
     }
 }
 
+if (! function_exists('fm_logo_resolve_path')) {
+    /** Resolve stored logo path to a readable file (supports uploads/companies/…). */
+    function fm_logo_resolve_path(string $stored = ''): string
+    {
+        $stored = trim($stored);
+        if ($stored === '') {
+            return '';
+        }
+
+        $candidates = [];
+        $normalized = ltrim(str_replace('\\', '/', $stored), '/');
+
+        if (str_starts_with($normalized, 'uploads/')) {
+            $candidates[] = WRITEPATH . $normalized;
+            $normalized   = substr($normalized, 8);
+        }
+
+        if (str_contains($normalized, '/')) {
+            $candidates[] = WRITEPATH . 'uploads/' . $normalized;
+        }
+
+        $file = basename($normalized);
+        foreach (['logos', 'companies', ''] as $dir) {
+            $candidates[] = $dir === ''
+                ? WRITEPATH . 'uploads/' . $file
+                : WRITEPATH . 'uploads/' . $dir . '/' . $file;
+            $candidates[] = $dir === ''
+                ? FCPATH . 'uploads/' . $file
+                : FCPATH . 'uploads/' . $dir . '/' . $file;
+        }
+
+        foreach (array_unique($candidates) as $path) {
+            if (is_file($path) && is_readable($path)) {
+                return $path;
+            }
+        }
+
+        return '';
+    }
+}
+
 if (! function_exists('fm_logo_url')) {
     function fm_logo_url(string $stored = ''): string
     {
@@ -112,26 +153,22 @@ if (! function_exists('fm_logo_url')) {
             return base_url(ltrim($stored, '/'));
         }
 
-        if (str_contains($stored, '/')) {
-            [$dir, $file] = array_pad(explode('/', $stored, 2), 2, '');
-            $dir  = basename($dir);
-            $file = basename($file);
-            if ($dir !== '' && $file !== '' && is_file(WRITEPATH . 'uploads/' . $dir . '/' . $file)) {
-                return base_url('file/' . $dir . '/' . rawurlencode($file));
-            }
-
+        $path = fm_logo_resolve_path($stored);
+        if ($path === '') {
             return '';
         }
 
-        $file = basename($stored);
-        if (is_file(WRITEPATH . 'uploads/logos/' . $file)) {
-            return base_url('file/logos/' . rawurlencode($file));
+        $relative = str_replace(WRITEPATH . 'uploads/', '', $path);
+        if ($relative === $path) {
+            $relative = str_replace(FCPATH . 'uploads/', '', $path);
         }
-        if (is_file(WRITEPATH . 'uploads/' . $file)) {
-            return base_url('file/logo/' . rawurlencode($file));
+        if ($relative !== $path && str_contains($relative, '/')) {
+            [$dir, $file] = explode('/', $relative, 2);
+
+            return base_url('file/' . rawurlencode($dir) . '/' . rawurlencode($file));
         }
 
-        return '';
+        return base_url('file/logos/' . rawurlencode(basename($path)));
     }
 }
 
@@ -169,45 +206,18 @@ if (! function_exists('fm_logo_data_uri')) {
      */
     function fm_logo_data_uri(string $stored = ''): string
     {
-        $stored = trim($stored);
-        if ($stored === '') {
+        $path = fm_logo_resolve_path($stored);
+        if ($path === '') {
             return '';
         }
 
-        // Resolve the physical path the same way fm_logo_url() does
-        $candidates = [];
-        if (str_contains($stored, '/')) {
-            [$dir, $file] = array_pad(explode('/', $stored, 2), 2, '');
-            $dir  = basename($dir);
-            $file = basename($file);
-            if ($dir !== '' && $file !== '') {
-                $candidates[] = WRITEPATH . 'uploads/' . $dir . '/' . $file;
-            }
-        }
-        $file        = basename($stored);
-        $candidates[] = WRITEPATH . 'uploads/logos/' . $file;
-        $candidates[] = WRITEPATH . 'uploads/' . $file;
-        $candidates[] = FCPATH . 'uploads/logos/' . $file;
-        $candidates[] = FCPATH . 'uploads/' . $file;
-
-        $path = '';
-        foreach ($candidates as $c) {
-            if (is_file($c)) {
-                $path = $c;
-                break;
-            }
-        }
-
-        if ($path === '' || ! is_readable($path)) {
-            return '';
-        }
-
-        $raw  = @file_get_contents($path);
+        $raw = @file_get_contents($path);
         if ($raw === false) {
             return '';
         }
 
         $mime = mime_content_type($path) ?: 'image/png';
+
         return 'data:' . $mime . ';base64,' . base64_encode($raw);
     }
 }

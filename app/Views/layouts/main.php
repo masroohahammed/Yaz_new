@@ -30,6 +30,7 @@ $_unread = fm_unread_count();
     <link rel="stylesheet" href="<?= base_url('assets/css/fm-extra.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/commandcenter.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/crimson-horizon.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/fm-workspace-ui.css') ?>">
     <!-- Dynamic colour vars (injected here so CSS file stays static) -->
     <style>
         :root {

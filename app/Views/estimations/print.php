@@ -37,12 +37,18 @@ td:last-child{text-align:right;font-weight:600}
       $logoSrc = $companyLogoB64 ?? $companyLogoUrl ?? '';
       $coName  = trim((string) ($settings['company_name'] ?? 'FM ERP'));
       $coEmail = trim((string) ($settings['company_email'] ?? ''));
+      $coPhone = trim((string) ($settings['company_phone'] ?? ''));
+      if ($coPhone !== '') {
+          $digits = preg_replace('/\D/', '', $coPhone);
+          $coPhone = str_starts_with($digits, '974') ? '(974)' . substr($digits, 3) : (( $digits !== '') ? '(974)' . $digits : $coPhone);
+      }
       if ($logoSrc !== ''): ?>
-        <img src="<?= esc($logoSrc) ?>" style="max-height:64px;max-width:200px;object-fit:contain;display:block;margin-bottom:6px">
+        <img src="<?= esc($logoSrc) ?>" style="max-height:68px;max-width:220px;object-fit:contain;display:block;margin-bottom:8px">
         <div style="font-size:1.05rem;font-weight:700;color:<?= $p ?>;margin-bottom:2px"><?= esc($coName) ?></div>
       <?php else: ?>
         <div style="font-size:1.3rem;font-weight:700;color:<?= $p ?>"><?= esc($coName) ?></div>
       <?php endif; ?>
+      <?php if ($coPhone !== ''): ?><div style="font-size:.78rem;color:#6b7a8d;margin-top:2px">Tel: <?= esc($coPhone) ?></div><?php endif; ?>
       <?php if ($coEmail !== ''): ?><div style="font-size:.78rem;color:#6b7a8d;margin-top:2px"><?= esc($coEmail) ?></div><?php endif; ?>
     </div>
     <div style="text-align:right">

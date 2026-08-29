@@ -41,8 +41,6 @@ foreach ($jump as [$tid]) {
 }
 ?>
 <style>
-  .lr-tab-pane .fm-card { margin-bottom: 0; }
-  .lr-tab-pane .fm-table th, .lr-tab-pane .fm-table td { padding: .45rem .65rem; font-size: .78rem; }
   .lr-section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .65rem; }
   .lr-section-head h5 { margin: 0; font-size: 1rem; font-weight: 600; }
   @media print {
