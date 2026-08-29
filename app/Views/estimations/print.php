@@ -6,7 +6,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 <?php $p=$settings['primary_color']??'#76002b';$s=$settings['secondary_color']??'#c7ba9a';function _er($h){$h=ltrim($h,'#');if(strlen($h)==3)$h=$h[0].$h[0].$h[1].$h[1].$h[2].$h[2];return hexdec(substr($h,0,2)).','.hexdec(substr($h,2,2)).','.hexdec(substr($h,4,2));}?>
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#1a2332}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#1a2332}
 .page{max-width:800px;margin:0 auto}
 .header{display:flex;justify-content:space-between;padding:22px 30px 14px;border-bottom:3px solid <?= $p ?>}
 .tagline{font-size:.62rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
@@ -33,8 +33,17 @@ td:last-child{text-align:right;font-weight:600}
 <div class="page">
   <div class="header">
     <div>
-      <?php if(!empty($companyLogoB64)): ?><img src="<?= esc($companyLogoB64) ?>" style="max-height:52px;max-width:160px;object-fit:contain;display:block;margin-bottom:4px"><?php else: ?><div style="font-size:1.3rem;font-weight:700;color:<?= $p ?>"><?= esc($settings['company_name']??'FM ERP') ?></div><?php endif; ?>
-      <div class="tagline"><?= esc($settings['company_tagline']??'Facility Management ERP') ?></div>
+      <?php
+      $logoSrc = $companyLogoB64 ?? $companyLogoUrl ?? '';
+      $coName  = trim((string) ($settings['company_name'] ?? 'FM ERP'));
+      $coEmail = trim((string) ($settings['company_email'] ?? ''));
+      if ($logoSrc !== ''): ?>
+        <img src="<?= esc($logoSrc) ?>" style="max-height:64px;max-width:200px;object-fit:contain;display:block;margin-bottom:6px">
+        <div style="font-size:1.05rem;font-weight:700;color:<?= $p ?>;margin-bottom:2px"><?= esc($coName) ?></div>
+      <?php else: ?>
+        <div style="font-size:1.3rem;font-weight:700;color:<?= $p ?>"><?= esc($coName) ?></div>
+      <?php endif; ?>
+      <?php if ($coEmail !== ''): ?><div style="font-size:.78rem;color:#6b7a8d;margin-top:2px"><?= esc($coEmail) ?></div><?php endif; ?>
     </div>
     <div style="text-align:right">
       <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:<?= $s ?>">QUOTATION / ESTIMATION</div>

@@ -10,7 +10,7 @@ $p=$settings['primary_color']??'#76002b';
 $s=$settings['secondary_color']??'#c7ba9a';
 function _ir($h){$h=ltrim($h,'#');if(strlen($h)==3)$h=$h[0].$h[0].$h[1].$h[1].$h[2].$h[2];return hexdec(substr($h,0,2)).','.hexdec(substr($h,2,2)).','.hexdec(substr($h,4,2));}
 ?>
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#1a2332;background:#fff}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#1a2332;background:#fff}
 .page{max-width:800px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
 .header{display:flex;justify-content:space-between;align-items:flex-start;padding:24px 30px 16px;border-bottom:3px solid <?= $p ?>}
 .brand-text{font-size:1.3rem;font-weight:700;color:<?= $p ?>}
@@ -45,9 +45,15 @@ tfoot td{font-weight:700;background:rgba(<?= _ir($p) ?>,.06)}
     <div>
       <?php
       $logoSrc = $companyLogoB64 ?? $companyLogoUrl ?? '';
-      if ($logoSrc !== ''): ?><img src="<?= esc($logoSrc) ?>" style="max-height:56px;max-width:170px;object-fit:contain;display:block;margin-bottom:4px"><?php else: ?><div class="brand-text"><?= esc($settings['company_name']??'FM ERP') ?></div><?php endif; ?>
-      <div class="tagline"><?= esc($settings['company_tagline']??'Facility Management ERP') ?></div>
-      <?= $this->include('layouts/_company_contact', ['settings' => $settings, 'class' => 'contact', 'plain' => true]) ?>
+      $coName  = trim((string) ($settings['company_name'] ?? 'FM ERP'));
+      $coEmail = trim((string) ($settings['company_email'] ?? ''));
+      if ($logoSrc !== ''): ?>
+        <img src="<?= esc($logoSrc) ?>" style="max-height:64px;max-width:200px;object-fit:contain;display:block;margin-bottom:6px">
+      <?php endif; ?>
+      <?php if ($logoSrc === ''): ?><div class="brand-text"><?= esc($coName) ?></div><?php else: ?>
+        <div style="font-size:1.05rem;font-weight:700;color:<?= $p ?>;margin-bottom:2px"><?= esc($coName) ?></div>
+      <?php endif; ?>
+      <?php if ($coEmail !== ''): ?><div style="font-size:.78rem;color:#6b7a8d;margin-top:2px"><?= esc($coEmail) ?></div><?php endif; ?>
     </div>
     <div>
       <div class="doc-label">INVOICE</div>

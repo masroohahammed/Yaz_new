@@ -1,6 +1,6 @@
 <?php
 /**
- * Logo + company block for printable documents.
+ * Logo + company name + email for printable documents (from companies table).
  *
  * @var array       $settings
  * @var string|null $companyLogoUrl
@@ -15,24 +15,16 @@ if (is_array($branding)) {
     $companyLogoUrl = $branding['logoUrl'] ?? $companyLogoUrl ?? null;
     $companyLogoB64 = $branding['logoB64'] ?? $companyLogoB64 ?? null;
 }
-$logoSrc   = $usePdf ? ($companyLogoB64 ?? null) : ($companyLogoUrl ?? null);
-$name      = trim((string) ($settings['company_name'] ?? 'FM ERP'));
-$tagline   = trim((string) ($settings['company_tagline'] ?? ''));
-$code      = trim((string) ($settings['company_code'] ?? ''));
-$contact   = trim((string) ($settings['company_contact'] ?? ''));
+$logoSrc = $usePdf ? ($companyLogoB64 ?? null) : ($companyLogoUrl ?? null);
+$name    = trim((string) ($settings['company_name'] ?? 'FM ERP'));
+$email   = trim((string) ($settings['company_email'] ?? ''));
 ?>
-<div class="doc-letterhead" style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:14px">
-  <div style="flex:1;text-align:center">
-    <?php if ($logoSrc): ?>
-      <img src="<?= esc($logoSrc) ?>" alt="<?= esc($name) ?>" style="max-height:52px;max-width:160px;object-fit:contain;display:block;margin:0 auto 6px">
-    <?php endif; ?>
-    <div style="font-size:12px;font-weight:700"><?= esc($name) ?><?php if ($code !== ''): ?> <span style="font-weight:600;color:#555">(<?= esc($code) ?>)</span><?php endif; ?></div>
-    <?php if ($tagline !== ''): ?>
-      <div style="font-size:8px;color:#666;text-transform:uppercase;letter-spacing:.6px;margin-top:2px"><?= esc($tagline) ?></div>
-    <?php endif; ?>
-    <?php if ($contact !== ''): ?>
-      <div style="font-size:8px;color:#555;margin-top:2px"><?= esc($contact) ?></div>
-    <?php endif; ?>
-    <?= $this->include('layouts/_company_contact', ['settings' => $settings, 'plain' => true, 'style' => 'font-size:8px;color:#555;line-height:1.45;margin-top:4px;text-align:center']) ?>
-  </div>
+<div class="doc-letterhead" style="text-align:center;border-bottom:2px solid #333;padding-bottom:12px;margin-bottom:16px">
+  <?php if ($logoSrc): ?>
+    <img src="<?= esc($logoSrc) ?>" alt="<?= esc($name) ?>" style="max-height:64px;max-width:200px;object-fit:contain;display:block;margin:0 auto 8px">
+  <?php endif; ?>
+  <div style="font-size:14px;font-weight:700;line-height:1.3"><?= esc($name) ?></div>
+  <?php if ($email !== ''): ?>
+    <div style="font-size:11px;color:#444;margin-top:4px"><?= esc($email) ?></div>
+  <?php endif; ?>
 </div>

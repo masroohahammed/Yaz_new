@@ -24,10 +24,10 @@ $landlordName = esc($d['owner_name_en'] ?? $settings['company_name'] ?? '');
   .no-print button, .no-print a { background: #76002b; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; text-decoration: none; cursor: pointer; font-family: 'DM Sans', sans-serif; }
   .page { max-width: 210mm; margin: 0 auto; padding: 10mm 12mm 14mm; }
   .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; align-items: start; }
-  .col-en { font-family: 'DM Sans', Arial, sans-serif; font-size: 9px; direction: ltr; text-align: left; }
-  .col-ar { font-family: 'Cairo', 'Traditional Arabic', sans-serif; font-size: 9px; direction: rtl; text-align: right; }
-  .doc-title-en { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .3px; margin: 8px 0 4px; text-align: center; }
-  .doc-title-ar { font-weight: 700; font-size: 10px; margin: 8px 0 4px; text-align: center; }
+  .col-en { font-family: 'DM Sans', Arial, sans-serif; font-size: 10.5px; direction: ltr; text-align: left; }
+  .col-ar { font-family: 'Cairo', 'Traditional Arabic', sans-serif; font-size: 10.5px; direction: rtl; text-align: right; }
+  .doc-title-en { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .3px; margin: 8px 0 4px; text-align: center; }
+  .doc-title-ar { font-weight: 700; font-size: 12px; margin: 8px 0 4px; text-align: center; }
   .row-pair { display: contents; }
   .block { margin-bottom: 8px; }
   .clause-title { font-weight: 700; margin: 10px 0 4px; display: block; }
@@ -36,8 +36,8 @@ $landlordName = esc($d['owner_name_en'] ?? $settings['company_name'] ?? '');
   ol.ar { margin: 4px 0 0; padding-right: 14px; }
   ol.en li, ol.ar li { margin-bottom: 3px; }
   .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
-  .sig-line { border-top: 1px solid #333; margin-top: 36px; padding-top: 4px; font-size: 8px; }
-  .landlord-line { text-align: center; font-family: 'DM Sans', sans-serif; font-size: 9px; font-weight: 600; margin: 6px 0 10px; color: #333; }
+  .sig-line { border-top: 1px solid #333; margin-top: 36px; padding-top: 4px; font-size: 9.5px; }
+  .landlord-line { text-align: center; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; margin: 6px 0 10px; color: #333; }
   @media print {
     .no-print { display: none !important; }
     .page { padding: 8mm 10mm; }
@@ -69,7 +69,7 @@ $landlordName = esc($d['owner_name_en'] ?? $settings['company_name'] ?? '');
   <div class="bilingual">
     <div class="col-en">
       <div class="doc-title-en">Parking Space Lease Agreement</div>
-      <div class="doc-title-en" style="font-size:8px;font-weight:600;margin-bottom:8px">
+      <div class="doc-title-en" style="font-size:10px;font-weight:600;margin-bottom:8px">
         Parking Space Under the Property Building – Title Deed No. (<span class="highlight"><?= esc($d['header_title_deed_no'] ?? '') ?></span>)
       </div>
       <div class="block" style="text-align:center;margin-bottom:8px">Date: <span class="highlight"><?= esc($contractDateEn ?? '') ?></span></div>
@@ -189,19 +189,19 @@ $landlordName = esc($d['owner_name_en'] ?? $settings['company_name'] ?? '');
   </div>
 
   <div class="signatures">
-    <div class="col-en" style="font-size:8px">
+    <div class="col-en" style="font-size:10px">
       <strong>First Party / Owner</strong><br><?= esc($d['rep_company_en'] ?? '') ?><br><?= esc($d['rep_name_en'] ?? '') ?>
       <div class="sig-line">Signature: ______________________</div>
     </div>
-    <div class="col-ar" style="font-size:8px;direction:rtl;text-align:right;font-family:'Cairo',sans-serif">
+    <div class="col-ar" style="font-size:10px;direction:rtl;text-align:right;font-family:'Cairo',sans-serif">
       <strong>الطرف الأول / المالك</strong><br><?= esc($d['rep_company_ar'] ?? '') ?><br><?= esc($d['rep_name_ar'] ?? '') ?>
       <div class="sig-line">التوقيع:</div>
     </div>
-    <div class="col-en" style="font-size:8px">
+    <div class="col-en" style="font-size:10px">
       <strong>Second Party / Lessee</strong><br><?= esc(strtoupper((string) ($d['tenant_name'] ?? ''))) ?><br>ID: <?= esc($d['tenant_qid'] ?? '') ?>
       <div class="sig-line">Signature: ______________________</div>
     </div>
-    <div class="col-ar" style="font-size:8px;direction:rtl;text-align:right;font-family:'Cairo',sans-serif">
+    <div class="col-ar" style="font-size:10px;direction:rtl;text-align:right;font-family:'Cairo',sans-serif">
       <strong>الطرف الثاني / المستأجر</strong><br><?= esc($d['tenant_name'] ?? '') ?><br>رقم: <?= esc($d['tenant_qid'] ?? '') ?>
       <div class="sig-line">التوقيع:</div>
     </div>

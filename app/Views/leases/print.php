@@ -6,7 +6,7 @@
 <title>Lease Contract — <?= esc($contract['contract_number']) ?></title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; font-size: 12px; color: #333; background: #fff; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #333; background: #fff; }
   .page { max-width: 210mm; margin: 0 auto; padding: 15mm; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px; }
   .header .logo img { max-height: 60px; }
@@ -39,15 +39,15 @@
     <div class="logo">
       <?php
       $logoSrc = $companyLogoB64 ?? $companyLogoUrl ?? '';
+      $coName  = trim((string) ($settings['company_name'] ?? ''));
+      $coEmail = trim((string) ($settings['company_email'] ?? ''));
       if ($logoSrc !== ''): ?>
-        <img src="<?= esc($logoSrc) ?>" alt="Logo">
+        <img src="<?= esc($logoSrc) ?>" alt="Logo" style="max-height:64px">
       <?php endif; ?>
     </div>
-    <div class="co-info">
-      <?= esc($settings['company_name'] ?? '') ?><br>
-      <?= esc($settings['company_address'] ?? '') ?><br>
-      <?= esc($settings['company_phone'] ?? '') ?>
-      <?php if (! empty($settings['company_email'])): ?><br><?= esc($settings['company_email']) ?><?php endif; ?>
+    <div class="co-info" style="text-align:center;flex:1">
+      <?php if ($coName !== ''): ?><strong style="font-size:14px"><?= esc($coName) ?></strong><br><?php endif; ?>
+      <?php if ($coEmail !== ''): ?><span style="font-size:11px"><?= esc($coEmail) ?></span><?php endif; ?>
     </div>
   </div>
 
