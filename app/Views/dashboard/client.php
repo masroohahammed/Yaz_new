@@ -30,7 +30,7 @@
           <?php if($t['rating']): ?>
           <span class="text-warning"><?= str_repeat('★',$t['rating']) ?><?= str_repeat('☆',5-$t['rating']) ?></span>
           <?php else: ?>
-          <a href="<?= base_url('helpdesk/feedback/'.$t['id']) ?>" class="btn-action bg-success bg-opacity-10 text-success" title="Leave feedback"><i class="bi bi-star"></i></a>
+          <a href="<?= base_url('track/'.esc($t['ticket_number'])) ?>#feedback" class="btn-action bg-success bg-opacity-10 text-success" title="Leave feedback on track page"><i class="bi bi-star"></i></a>
           <?php endif; ?>
           <?php else: ?><span class="text-muted small">—</span><?php endif; ?>
         </td>

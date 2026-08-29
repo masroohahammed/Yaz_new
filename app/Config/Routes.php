@@ -499,6 +499,8 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
 
     // Procurement
     $routes->get('procurement/workflow', 'Procurement::workflowHub');
+    $routes->get('procurement/rfq',                           'Procurement::index');
+    $routes->get('procurement/orders',                        static fn () => redirect()->to(base_url('purchase-orders')));
     $routes->get('procurement',                           'Procurement::index');
     $routes->get('procurement/request/create',            'Procurement::createRequest');
     $routes->post('procurement/request/store',            'Procurement::storeRequest');

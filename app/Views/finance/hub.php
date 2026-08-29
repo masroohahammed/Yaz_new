@@ -57,6 +57,6 @@
 </div>
 <p class="small text-muted mt-3">
   <a href="<?= base_url('finance/integration-log') ?>">Integration log</a> ·
-  <a href="<?= base_url('docs') ?>">Documentation</a> (see repo <code>docs/FINANCE_MODULE.md</code>)
+  <span class="text-muted small">Documentation: see repo <code>docs/FINANCE_MODULE.md</code></span>
 </p>
 <?= $this->endSection() ?>

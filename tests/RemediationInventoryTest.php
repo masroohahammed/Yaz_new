@@ -447,4 +447,40 @@ final class RemediationInventoryTest extends TestCase
         $unitChecklist = file_get_contents($this->root . '/app/Views/units/checklist.php');
         $this->assertStringContainsString('checklistProgressBar', $unitChecklist);
     }
+
+    public function testPropertyMaintenanceTabHasCreateButton(): void
+    {
+        $view = file_get_contents($this->root . '/app/Views/facilities/view.php');
+        $this->assertStringContainsString('id="tab-maintenance"', $view);
+        $this->assertStringContainsString('New Maintenance Request', $view);
+        $this->assertStringContainsString('maintenanceCreateUrl', $view);
+        $this->assertStringNotContainsString("<?php endif; ?>\n\n  <!-- Documents Tab -->\n  <div class=\"tab-pane fade\" id=\"tab-maintenance\">", $view);
+    }
+
+    public function testLiveFormPostsAvoidOrphanStoreRoutes(): void
+    {
+        $pairs = [
+            'app/Views/crm/form.php'             => ["base_url('crm/store')", "base_url('crm')"],
+            'app/Views/cheques/form.php'         => ["base_url('cheques/store')", "base_url('cheques')"],
+            'app/Views/payments/form.php'        => ["base_url('payments/store')", "base_url('payments')"],
+            'app/Views/outgoing_cheques/form.php'=> ["base_url('outgoing-cheques/store')", "base_url('outgoing-cheques')"],
+        ];
+        foreach ($pairs as $file => [$bad, $good]) {
+            $src = file_get_contents($this->root . '/' . $file);
+            $this->assertNotFalse($src, $file);
+            $this->assertStringNotContainsString($bad, $src, $file . ' still uses orphan /store POST');
+            $this->assertStringContainsString($good, $src, $file . ' should POST to collection root');
+        }
+    }
+
+    public function testProcurementAndCollectorHubLinksAreRouted(): void
+    {
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString("get('procurement/rfq'", $routes);
+        $this->assertStringContainsString("get('procurement/orders'", $routes);
+        $this->assertStringContainsString("post('collector/assign'", $routes);
+        $hub = file_get_contents($this->root . '/app/Views/procurement/workflow_hub.php');
+        $this->assertStringContainsString("base_url('purchase-orders')", $hub);
+        $this->assertStringNotContainsString("procurement/orders", $hub);
+    }
 }

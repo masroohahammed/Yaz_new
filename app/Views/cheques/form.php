@@ -50,7 +50,7 @@
   </div>
 
 <?php else: ?>
-<form method="post" action="<?= isset($cheque['id']) ? base_url('cheques/'.$cheque['id'].'/update') : base_url('cheques/store') ?>"><?= csrf_field() ?>
+<form method="post" action="<?= isset($cheque['id']) ? base_url('cheques/'.$cheque['id'].'/update') : base_url('cheques') ?>"><?= csrf_field() ?>
   <div class="row g-3">
     <div class="col-md-4"><label class="form-label">Contract</label><select name="contract_id" class="form-select"><option value="">—</option><?php foreach ($contracts??[] as $c): ?><option value="<?= $c['id'] ?>"><?= esc($c['contract_number']) ?> — <?= esc($c['tenant_name']??'') ?></option><?php endforeach; ?></select></div>
     <div class="col-md-4"><label class="form-label">Cheque no <span class="text-danger">*</span></label><input name="cheque_no" class="form-control" required value="<?= esc($cheque['cheque_no']??'') ?>"></div>

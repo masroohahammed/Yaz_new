@@ -15,6 +15,10 @@ $canEditFacility = $rbac->can((string) $role, 'facilities.edit');
 $canAddUnit      = $rbac->can((string) $role, 'units.create');
 $canEditUnit     = $rbac->can((string) $role, 'units.edit');
 $canViewUnit     = $rbac->can((string) $role, 'units.view');
+$canHelpdesk     = $rbac->can((string) $role, 'helpdesk');
+$maintenanceCreateUrl = $isFm
+    ? base_url('maintenance/create?facility_id=' . (int) $facility['id'])
+    : base_url('public/maintenance?facility_id=' . (int) $facility['id']);
 ?>
 
 <div class="page-header">
@@ -57,10 +61,9 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
   <?php if ($isFm): ?>
   <li class="nav-item"><a class="nav-link" href="#tab-assets" data-bs-toggle="tab" role="tab"><i class="bi bi-cpu me-1"></i>Assets <span class="badge bg-secondary ms-1"><?= count($assets ?? []) ?></span></a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-wo" data-bs-toggle="tab" role="tab"><i class="bi bi-tools me-1"></i>Work Orders <span class="badge bg-secondary ms-1"><?= count($openWO ?? []) ?></span></a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-maintenance" data-bs-toggle="tab" role="tab"><i class="bi bi-wrench me-1"></i>Maintenance</a></li>
   <?php endif; ?>
-  <?php if ($isPm && ! $isFm): ?>
-  <li class="nav-item"><a class="nav-link" href="#tab-maintenance" data-bs-toggle="tab" role="tab"><i class="bi bi-wrench me-1"></i>Maintenance <span class="badge bg-secondary">View</span></a></li>
+  <?php if ($isFm || $isPm): ?>
+  <li class="nav-item"><a class="nav-link" href="#tab-maintenance" data-bs-toggle="tab" role="tab"><i class="bi bi-wrench me-1"></i>Maintenance<?php if ($isPm && ! $isFm): ?> <span class="badge bg-secondary ms-1">View</span><?php endif; ?></a></li>
   <?php endif; ?>
   <li class="nav-item"><a class="nav-link" href="#tab-documents" data-bs-toggle="tab" role="tab"><i class="bi bi-folder2-open me-1"></i>Documents <span class="badge bg-secondary ms-1"><?= count($propertyDocuments ?? []) ?></span></a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-qr" data-bs-toggle="tab" role="tab"><i class="bi bi-qr-code me-1"></i>QR Code</a></li>
@@ -330,35 +333,55 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
     </div>
   </div>
 
+  <?php endif; ?>
+
+  <!-- Maintenance tab (FM + PM) -->
+  <?php if ($isFm || $isPm): ?>
   <div class="tab-pane fade" id="tab-maintenance">
     <div class="fm-card">
-      <div class="card-header-fm d-flex justify-content-between">
-        <h5><i class="bi bi-wrench me-2"></i>Maintenance <?= ($isPm && ! $isFm) ? '<span class="badge bg-secondary">Read-only</span>' : '' ?></h5>
-        <?php if ($isFm): ?><a href="<?= base_url('maintenance/create?facility_id='.$facility['id']) ?>" class="btn btn-fm-primary btn-sm">New request</a><?php endif; ?>
+      <div class="card-header-fm d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0"><i class="bi bi-wrench me-2"></i>Maintenance Requests<?php if ($isPm && ! $isFm): ?> <span class="badge bg-secondary">Read-only list</span><?php endif; ?></h5>
+        <div class="d-flex gap-2 flex-wrap">
+          <?php if ($canHelpdesk && ($isFm || $isPm)): ?>
+          <a href="<?= esc($maintenanceCreateUrl) ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New Maintenance Request</a>
+          <?php endif; ?>
+          <?php if ($isFm): ?>
+          <a href="<?= base_url('helpdesk?facility_id=' . (int) $facility['id']) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-list me-1"></i>All tickets</a>
+          <?php endif; ?>
+        </div>
       </div>
       <div class="fm-card-body p-0">
         <div class="table-responsive">
         <table class="table table-registry table-sm mb-0">
-          <thead><tr><th>Ticket</th><th>Unit</th><th>Category</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead>
+          <thead><tr><th>Ticket</th><th>Unit</th><th>Category</th><th>Priority</th><th>Status</th><th>Date</th><th class="text-end">View</th></tr></thead>
           <tbody>
           <?php foreach ($maintenanceHistory ?? [] as $mr): ?>
-            <tr>
-              <td><a href="<?= base_url('maintenance/'.$mr['id']) ?>"><?= esc($mr['ticket_number']) ?></a></td>
-              <td><?= esc($mr['unit_number'] ?? '—') ?></td>
-              <td><?= esc($mr['category']) ?></td>
-              <td><?= esc(ucfirst($mr['priority'])) ?></td>
-              <td><?= esc(ucfirst($mr['status'])) ?></td>
-              <td><?= esc(substr($mr['created_at'], 0, 10)) ?></td>
+            <tr class="inspection-row-clickable" data-href="<?= base_url('maintenance/' . (int) $mr['id']) ?>">
+              <td class="fw-semibold small"><a href="<?= base_url('maintenance/' . (int) $mr['id']) ?>" onclick="event.stopPropagation()"><?= esc($mr['ticket_number']) ?></a></td>
+              <td class="small"><?= esc($mr['unit_number'] ?? '—') ?></td>
+              <td class="small"><?= esc($mr['category']) ?></td>
+              <td><span class="fm-badge badge-priority-<?= esc($mr['priority'] ?? 'medium') ?>"><?= esc(ucfirst($mr['priority'] ?? '')) ?></span></td>
+              <td><span class="fm-badge badge-status-<?= esc($mr['status'] ?? 'pending') ?>"><?= esc(ucfirst(str_replace('_', ' ', (string) ($mr['status'] ?? '')))) ?></span></td>
+              <td class="small"><?= esc(substr((string) ($mr['created_at'] ?? ''), 0, 10)) ?></td>
+              <td class="text-end"><a href="<?= base_url('maintenance/' . (int) $mr['id']) ?>" class="btn btn-fm-outline btn-sm" onclick="event.stopPropagation()"><i class="bi bi-eye"></i></a></td>
             </tr>
           <?php endforeach; ?>
-          <?php if (empty($maintenanceHistory)): ?><tr><td colspan="6" class="text-center text-muted py-3">No maintenance records</td></tr><?php endif; ?>
+          <?php if (empty($maintenanceHistory)): ?>
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">
+              No maintenance records for this property.
+              <?php if ($canHelpdesk && ($isFm || $isPm)): ?>
+              <div class="mt-2"><a href="<?= esc($maintenanceCreateUrl) ?>" class="btn btn-sm btn-fm-primary"><i class="bi bi-plus-lg me-1"></i>Submit first request</a></div>
+              <?php endif; ?>
+            </td>
+          </tr>
+          <?php endif; ?>
           </tbody>
         </table>
         </div>
       </div>
     </div>
   </div>
-
   <?php endif; ?>
 
   <!-- Documents Tab -->
@@ -385,5 +408,13 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
 </div><!-- /.tab-content -->
 
 <?= view('facilities/_unit_modal') ?>
+<script>
+document.querySelectorAll('#tab-maintenance .inspection-row-clickable[data-href]').forEach(function(row) {
+  row.addEventListener('click', function(e) {
+    if (e.target.closest('a, button')) return;
+    window.location = row.dataset.href;
+  });
+});
+</script>
 <?= view('partials/entity_tab_hash') ?>
 <?= $this->endSection() ?>

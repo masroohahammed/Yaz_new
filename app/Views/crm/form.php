@@ -2,7 +2,7 @@
 <?= $this->section('content') ?>
 <?php $isEdit = !empty($lead['id']); ?>
 <div class="page-header"><div><h1><?= esc($title ?? 'Lead') ?></h1></div><a href="<?= base_url('crm') ?>" class="btn btn-fm-outline btn-sm">Back</a></div>
-<div class="form-card"><form method="post" action="<?= $isEdit ? base_url('crm/'.$lead['id'].'/update') : base_url('crm/store') ?>"><?= csrf_field() ?>
+<div class="form-card"><form method="post" action="<?= $isEdit ? base_url('crm/'.$lead['id'].'/update') : base_url('crm') ?>"><?= csrf_field() ?>
 <div class="row g-3">
   <div class="col-md-6"><label class="form-label">Full name</label><input name="full_name" class="form-control" required value="<?= esc(old('full_name',$lead['full_name']??'')) ?>"></div>
   <div class="col-md-3"><label class="form-label">Phone</label><input name="phone" class="form-control" value="<?= esc(old('phone',$lead['phone']??'')) ?>"></div>

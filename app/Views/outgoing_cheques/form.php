@@ -2,7 +2,7 @@
 <?= $this->section('content') ?>
 <?php $isEdit = !empty($cheque['id']); ?>
 <div class="page-header"><div><h1><?= esc($title ?? 'Outgoing Cheque') ?></h1></div><a href="<?= base_url('outgoing-cheques') ?>" class="btn btn-fm-outline btn-sm">Back</a></div>
-<div class="form-card"><form method="post" action="<?= $isEdit ? base_url('outgoing-cheques/'.$cheque['id'].'/update') : base_url('outgoing-cheques/store') ?>"><?= csrf_field() ?>
+<div class="form-card"><form method="post" action="<?= $isEdit ? base_url('outgoing-cheques/'.$cheque['id'].'/update') : base_url('outgoing-cheques') ?>"><?= csrf_field() ?>
 <div class="row g-3">
   <div class="col-md-3"><label class="form-label">Cheque no</label><input name="cheque_no" class="form-control" required value="<?= esc(old('cheque_no',$cheque['cheque_no']??'')) ?>"></div>
   <div class="col-md-3"><label class="form-label">Bank</label><input name="bank_name" class="form-control" required value="<?= esc(old('bank_name',$cheque['bank_name']??'')) ?>"></div>

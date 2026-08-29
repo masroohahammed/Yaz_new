@@ -26,7 +26,7 @@
   <div class="col-md-6">
     <div class="fm-card p-4">
       <h5 class="mb-3">New Assignment</h5>
-      <?= form_open(base_url('collector/assignment')) ?>
+      <?= form_open(base_url('collector/assign')) ?>
       <div class="mb-2">
         <label class="form-label small">Tenant ID</label>
         <input type="number" name="tenant_id" class="form-control form-control-sm">
@@ -70,7 +70,7 @@
             <td><?= esc($s['closing_cash'] ?? '—') ?></td>
             <td>
               <?php if (($s['status'] ?? '') === 'open'): ?>
-              <?= form_open(base_url('collector/session/' . $s['id'] . '/close'), ['class' => 'd-inline']) ?>
+              <?= form_open(base_url('collector/session/close'), ['class' => 'd-inline']) ?>
                 <input type="hidden" name="closing_cash" value="0">
                 <button type="submit" class="btn btn-sm btn-outline-secondary">Close</button>
               <?= form_close() ?>
@@ -102,7 +102,7 @@
             <td><?= esc($a['status'] ?? '') ?></td>
             <td>
               <?php if (($a['status'] ?? '') === 'pending'): ?>
-              <?= form_open(base_url('collector/assignment/' . $a['id'] . '/collected'), ['class' => 'd-inline']) ?>
+              <?= form_open(base_url('collector/acknowledge/' . (int) $a['id']), ['class' => 'd-inline']) ?>
                 <button type="submit" class="btn btn-sm btn-success">Collected</button>
               <?= form_close() ?>
               <?php endif; ?>

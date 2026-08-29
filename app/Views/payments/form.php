@@ -3,7 +3,7 @@
 <?php $isEdit = !empty($payment['id']); ?>
 <div class="page-header"><div><h1><?= esc($title ?? 'Payment') ?></h1></div><a href="<?= base_url('payments') ?>" class="btn btn-fm-outline btn-sm">Back</a></div>
 <div class="form-card">
-<form method="post" action="<?= $isEdit ? base_url('payments/'.$payment['id'].'/update') : base_url('payments/store') ?>"><?= csrf_field() ?>
+<form method="post" action="<?= $isEdit ? base_url('payments/'.$payment['id'].'/update') : base_url('payments') ?>"><?= csrf_field() ?>
   <div class="row g-3">
     <div class="col-md-6"><label class="form-label">Contract</label><select name="contract_id" class="form-select"><option value="">—</option><?php foreach ($contracts as $c): ?><option value="<?= $c['id'] ?>" <?= old('contract_id',$payment['contract_id']??'')==$c['id']?'selected':'' ?>><?= esc($c['contract_number'].' — '.($c['tenant_name']??'')) ?></option><?php endforeach; ?></select></div>
     <div class="col-md-3"><label class="form-label">Amount</label><input type="number" step="0.01" name="amount" class="form-control" required value="<?= esc(old('amount',$payment['amount']??'')) ?>"></div>
