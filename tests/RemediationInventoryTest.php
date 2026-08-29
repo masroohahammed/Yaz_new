@@ -462,12 +462,15 @@ final class RemediationInventoryTest extends TestCase
     {
         $this->assertFileExists($this->root . '/app/Services/MaintenanceScopeQuery.php');
         $service = file_get_contents($this->root . '/app/Services/MaintenanceScopeQuery.php');
-        $this->assertStringContainsString("->where(\$alias . '.unit_id', \$unitId)", $service);
-        $this->assertStringContainsString("->where(\$alias . '.facility_id', \$facilityId)", $service);
+        $this->assertStringContainsString('mr.unit_id = ?', $service);
+        $this->assertStringContainsString('mr.facility_id = ?', $service);
+        $this->assertStringContainsString('$db->query($sql, $params)', $service);
         $controller = file_get_contents($this->root . '/app/Controllers/PublicEntity.php');
         $this->assertStringContainsString('MaintenanceScopeQuery::listRecords', $controller);
+        $this->assertStringContainsString('renderMaintenancePage', $controller);
         $this->assertStringNotContainsString('applyMaintenanceScope', $controller);
         $this->assertStringNotContainsString('loadMaintenanceRecords', $controller);
+        $this->assertStringNotContainsString('loadUnitsForFacility', $controller);
         $view = file_get_contents($this->root . '/app/Views/public/maintenance.php');
         $this->assertStringContainsString('form_open_multipart', $view);
         $this->assertStringContainsString('requester_name', $view);

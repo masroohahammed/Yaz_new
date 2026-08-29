@@ -11,6 +11,46 @@ class PublicEntity extends BaseController
 {
     public function maintenance()
     {
+        try {
+            return $this->renderMaintenancePage();
+        } catch (\Throwable $e) {
+            log_message('error', 'PublicEntity::maintenance fatal: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+
+            $facilityId = (int) ($this->request->getGet('facility_id') ?? $this->request->getPost('facility_id') ?? 0);
+            $unitId     = (int) ($this->request->getGet('unit_id') ?? $this->request->getPost('unit_id') ?? 0);
+            $assetId    = (int) ($this->request->getGet('asset_id') ?? $this->request->getPost('asset_id') ?? 0);
+
+            if ($facilityId <= 0 && $unitId <= 0 && $assetId <= 0) {
+                throw $e;
+            }
+
+            $scope = [
+                'type'        => $facilityId > 0 ? 'property' : ($unitId > 0 ? 'unit' : 'asset'),
+                'facility_id' => $facilityId,
+                'unit_id'     => $unitId ?: null,
+                'asset_id'    => $assetId ?: null,
+                'label'       => $facilityId > 0 ? ('Property #' . $facilityId) : ($unitId > 0 ? ('Unit #' . $unitId) : ('Asset #' . $assetId)),
+                'subtitle'    => '',
+                'scan_url'    => base_url('request'),
+            ];
+
+            return view('public/maintenance', [
+                'title'       => 'Maintenance',
+                'scope'       => $scope,
+                'entityLabel' => $scope['label'],
+                'records'     => [],
+                'units'       => $facilityId > 0 ? MaintenanceScopeQuery::unitsForFacility($this->db, $facilityId) : [],
+                'isLoggedIn'  => (bool) session()->get('user_id'),
+                'user'        => null,
+                'settings'    => $this->settings,
+                'backUrl'     => base_url('request'),
+            ]);
+        }
+    }
+
+    /** @return \CodeIgniter\HTTP\RedirectResponse|string */
+    private function renderMaintenancePage()
+    {
         $scope = $this->resolveScope();
         if ($scope === null) {
             return redirect()->to(base_url('request'))->with('error', 'Property, unit, or asset not specified.');
@@ -22,12 +62,20 @@ class PublicEntity extends BaseController
         $units      = [];
 
         if (($scope['type'] ?? '') === 'property' && ! empty($scope['facility_id'])) {
-            $units = $this->loadUnitsForFacility((int) $scope['facility_id']);
+            $units = MaintenanceScopeQuery::unitsForFacility($this->db, (int) $scope['facility_id']);
         }
 
-        $user = session()->get('user_id')
-            ? $this->db->table('users')->select('name, email')->where('id', (int) session()->get('user_id'))->get()->getRowArray()
-            : null;
+        $user = null;
+        if ($isLoggedIn) {
+            try {
+                $user = $this->db->query(
+                    'SELECT name, email FROM users WHERE id = ? LIMIT 1',
+                    [(int) session()->get('user_id')]
+                )->getRowArray();
+            } catch (\Throwable $e) {
+                log_message('error', 'PublicEntity maintenance user lookup: ' . $e->getMessage());
+            }
+        }
 
         return view('public/maintenance', [
             'title'       => 'Maintenance — ' . $entityLabel,
@@ -213,11 +261,7 @@ class PublicEntity extends BaseController
         }
 
         if ($facilityId > 0) {
-            $facilityQ = $this->db->table('facilities')->where('id', $facilityId);
-            if ($this->db->fieldExists('deleted_at', 'facilities')) {
-                $facilityQ->where('deleted_at', null);
-            }
-            $facility = $facilityQ->get()->getRowArray();
+            $facility = MaintenanceScopeQuery::resolveFacility($this->db, $facilityId);
             if (! $facility) {
                 return null;
             }
@@ -258,25 +302,6 @@ class PublicEntity extends BaseController
         }
 
         return http_build_query($parts);
-    }
-
-    /** @return list<array<string, mixed>> */
-    private function loadUnitsForFacility(int $facilityId): array
-    {
-        if ($facilityId <= 0 || ! $this->db->tableExists('units')) {
-            return [];
-        }
-
-        $q = $this->db->table('units u')
-            ->select('u.id, u.unit_number, u.floor, u.status')
-            ->where('u.facility_id', $facilityId)
-            ->orderBy('u.unit_number', 'ASC');
-
-        if ($this->db->fieldExists('deleted_at', 'units')) {
-            $q->where('u.deleted_at', null);
-        }
-
-        return $q->get()->getResultArray();
     }
 
     /** @param array<string, mixed> $scope
