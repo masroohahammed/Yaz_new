@@ -467,11 +467,15 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('$db->query($sql, $params)', $service);
         $controller = file_get_contents($this->root . '/app/Controllers/PublicEntity.php');
         $this->assertStringContainsString('MaintenanceScopeQuery::listRecords', $controller);
-        $this->assertStringContainsString('renderMaintenancePage', $controller);
+        $this->assertStringContainsString('renderPropertyMaintenance', $controller);
+        $this->assertStringContainsString('MAINTENANCE_BUILD', $controller);
+        $this->assertStringContainsString('maintenancePing', $controller);
+        $this->assertStringContainsString('maintenance/ping', file_get_contents($this->root . '/app/Config/Routes.php'));
         $this->assertStringNotContainsString('applyMaintenanceScope', $controller);
         $this->assertStringNotContainsString('loadMaintenanceRecords', $controller);
         $this->assertStringNotContainsString('loadUnitsForFacility', $controller);
         $view = file_get_contents($this->root . '/app/Views/public/maintenance.php');
+        $this->assertStringContainsString('fm-maintenance-build', $view);
         $this->assertStringContainsString('form_open_multipart', $view);
         $this->assertStringContainsString('requester_name', $view);
         $this->assertStringContainsString('category', $view);

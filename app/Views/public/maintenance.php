@@ -9,6 +9,7 @@
 <?= view('partials/public_scan_theme', ['settings' => $settings ?? []]) ?>
 </head>
 <body class="scan-public">
+<?php if (! empty($buildId)): ?><!-- fm-maintenance-build: <?= esc($buildId) ?> --><?php endif; ?>
 <?php
 helper('fm');
 $scope = $scope ?? [];

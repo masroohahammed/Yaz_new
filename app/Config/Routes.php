@@ -37,6 +37,7 @@ $routes->get('request/units/(:num)',     'PublicRequest::unitsForFacility/$1');
 $routes->get('track/(:segment)',         'PublicRequest::track/$1');
 
 $routes->get('public/maintenance',       'PublicEntity::maintenance');
+$routes->get('public/maintenance/ping',  'PublicEntity::maintenancePing');
 $routes->post('public/maintenance',      'PublicEntity::maintenanceSubmit');
 $routes->get('public/inspections',       'PublicEntity::inspections');
 

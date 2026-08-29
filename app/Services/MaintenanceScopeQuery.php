@@ -5,11 +5,12 @@ namespace App\Services;
 use CodeIgniter\Database\BaseConnection;
 
 /**
- * CI4-safe maintenance_requests scoping.
- * Uses parameterized raw SQL to avoid BaseBuilder int whereKey errors (PHP 8.1+).
+ * CI4-safe maintenance_requests queries (parameterized raw SQL only).
  */
 class MaintenanceScopeQuery
 {
+    public const BUILD = '2026-08-29-4';
+
     /**
      * @param array<string, mixed> $scope
      * @return list<array<string, mixed>>
@@ -21,10 +22,6 @@ class MaintenanceScopeQuery
         int $limit = 25,
         ?array $statusIn = null
     ): array {
-        if (! $db->tableExists('maintenance_requests')) {
-            return [];
-        }
-
         $unitId = (int) ($scope['unit_id'] ?? 0);
         $assetId = (int) ($scope['asset_id'] ?? 0);
         $facilityId = (int) ($scope['facility_id'] ?? 0);
@@ -38,17 +35,13 @@ class MaintenanceScopeQuery
         if ($unitId > 0) {
             $sql .= ' AND mr.unit_id = ?';
             $params[] = $unitId;
-        } elseif ($assetId > 0 && $db->fieldExists('asset_id', 'maintenance_requests')) {
+        } elseif ($assetId > 0) {
             $sql .= ' AND mr.asset_id = ?';
             $params[] = $assetId;
         } elseif ($facilityId > 0) {
-            if ($db->fieldExists('facility_id', 'maintenance_requests')) {
-                $sql .= ' AND mr.facility_id = ?';
-                $params[] = $facilityId;
-            } else {
-                $sql .= ' AND u.facility_id = ?';
-                $params[] = $facilityId;
-            }
+            $sql .= ' AND (mr.facility_id = ? OR u.facility_id = ?)';
+            $params[] = $facilityId;
+            $params[] = $facilityId;
         }
 
         if ($statusIn !== null && $statusIn !== []) {
@@ -64,64 +57,121 @@ class MaintenanceScopeQuery
         try {
             return $db->query($sql, $params)->getResultArray();
         } catch (\Throwable $e) {
-            log_message('error', 'MaintenanceScopeQuery::listRecords failed: ' . $e->getMessage());
+            log_message('error', 'MaintenanceScopeQuery::listRecords: ' . $e->getMessage());
 
             return [];
         }
     }
 
-    /**
-     * @return list<array<string, mixed>>
-     */
+    /** @return list<array<string, mixed>> */
     public static function unitsForFacility(BaseConnection $db, int $facilityId): array
     {
-        if ($facilityId <= 0 || ! $db->tableExists('units')) {
+        if ($facilityId <= 0) {
             return [];
         }
 
         $sql = 'SELECT u.id, u.unit_number, u.floor, u.status
             FROM units u
-            WHERE u.facility_id = ?';
-        $params = [$facilityId];
-
-        if ($db->fieldExists('deleted_at', 'units')) {
-            $sql .= ' AND u.deleted_at IS NULL';
-        }
-
-        $sql .= ' ORDER BY u.unit_number ASC';
+            WHERE u.facility_id = ?
+              AND u.deleted_at IS NULL
+            ORDER BY u.unit_number ASC';
 
         try {
-            return $db->query($sql, $params)->getResultArray();
+            return $db->query($sql, [$facilityId])->getResultArray();
         } catch (\Throwable $e) {
-            log_message('error', 'MaintenanceScopeQuery::unitsForFacility failed: ' . $e->getMessage());
+            try {
+                return $db->query(
+                    'SELECT u.id, u.unit_number, u.floor, u.status FROM units u WHERE u.facility_id = ? ORDER BY u.unit_number ASC',
+                    [$facilityId]
+                )->getResultArray();
+            } catch (\Throwable $e2) {
+                log_message('error', 'MaintenanceScopeQuery::unitsForFacility: ' . $e2->getMessage());
 
-            return [];
+                return [];
+            }
         }
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
+    /** @return array<string, mixed>|null */
     public static function resolveFacility(BaseConnection $db, int $facilityId): ?array
     {
-        if ($facilityId <= 0 || ! $db->tableExists('facilities')) {
+        if ($facilityId <= 0) {
             return null;
         }
 
-        $sql = 'SELECT * FROM facilities WHERE id = ?';
-        $params = [$facilityId];
-
-        if ($db->fieldExists('deleted_at', 'facilities')) {
-            $sql .= ' AND deleted_at IS NULL';
+        try {
+            $row = $db->query(
+                'SELECT * FROM facilities WHERE id = ? AND deleted_at IS NULL LIMIT 1',
+                [$facilityId]
+            )->getRowArray();
+            if ($row) {
+                return $row;
+            }
+        } catch (\Throwable $e) {
+            // deleted_at column may not exist
         }
 
-        $sql .= ' LIMIT 1';
+        try {
+            return $db->query('SELECT * FROM facilities WHERE id = ? LIMIT 1', [$facilityId])->getRowArray() ?: null;
+        } catch (\Throwable $e) {
+            log_message('error', 'MaintenanceScopeQuery::resolveFacility: ' . $e->getMessage());
+
+            return null;
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function resolveUnit(BaseConnection $db, int $unitId): ?array
+    {
+        if ($unitId <= 0) {
+            return null;
+        }
+
+        $sql = 'SELECT u.*, f.name AS facility_name
+            FROM units u
+            LEFT JOIN facilities f ON f.id = u.facility_id
+            WHERE u.id = ?
+            LIMIT 1';
 
         try {
-            return $db->query($sql, $params)->getRowArray() ?: null;
+            return $db->query($sql, [$unitId])->getRowArray() ?: null;
         } catch (\Throwable $e) {
-            log_message('error', 'MaintenanceScopeQuery::resolveFacility failed: ' . $e->getMessage());
+            log_message('error', 'MaintenanceScopeQuery::resolveUnit: ' . $e->getMessage());
 
+            return null;
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function resolveAsset(BaseConnection $db, int $assetId): ?array
+    {
+        if ($assetId <= 0) {
+            return null;
+        }
+
+        $sql = 'SELECT a.*, f.name AS facility_name
+            FROM assets a
+            LEFT JOIN facilities f ON f.id = a.facility_id
+            WHERE a.id = ?
+            LIMIT 1';
+
+        try {
+            return $db->query($sql, [$assetId])->getRowArray() ?: null;
+        } catch (\Throwable $e) {
+            log_message('error', 'MaintenanceScopeQuery::resolveAsset: ' . $e->getMessage());
+
+            return null;
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function unitFacilityId(BaseConnection $db, int $unitId): ?int
+    {
+        try {
+            $row = $db->query('SELECT facility_id FROM units WHERE id = ? LIMIT 1', [$unitId])->getRowArray();
+
+            return isset($row['facility_id']) ? (int) $row['facility_id'] : null;
+        } catch (\Throwable $e) {
             return null;
         }
     }
