@@ -50,7 +50,7 @@ class Assets extends BaseController
         $pg     = $this->paginate(25);
         $total  = (clone $q)->countAllResults(false);
         $assets = $q->orderBy('a.health_score', 'ASC')->limit($pg['perPage'], $pg['offset'])->get()->getResultArray();
-        $facilities = $this->scopeFacilities($this->db->table('facilities')->where('status', 'active'))->get()->getResultArray();
+        $facilities = $this->scopedFacilitiesList('id, name');
         $stats = $this->codeService->dashboardStats();
 
         return view('assets/index', $this->viewData([

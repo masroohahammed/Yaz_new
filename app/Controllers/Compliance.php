@@ -52,8 +52,7 @@ class Compliance extends BaseController
         }
         $units = $q->orderBy('f.name', 'ASC')->orderBy('u.unit_number', 'ASC')->limit(200)->get()->getResultArray();
 
-        $facQ = $this->db->table('facilities')->where('status', 'active')->orderBy('name', 'ASC');
-        $facilities = $this->scopeFacilities($facQ)->get()->getResultArray();
+        $facilities = $this->scopedFacilitiesList('id, name');
 
         return view('compliance/unit_inspections', $this->viewData([
             'title'          => 'Move-In / Move-Out Inspections',

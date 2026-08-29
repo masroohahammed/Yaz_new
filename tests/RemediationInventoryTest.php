@@ -320,6 +320,20 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('short_code', $patch);
     }
 
+    public function testFacilityListScopeUsesFacilitiesIdColumn(): void
+    {
+        $base = file_get_contents($this->root . '/app/Controllers/BaseController.php');
+        $this->assertStringContainsString('function scopedFacilitiesList', $base);
+        $this->assertStringContainsString("scopeFacilities(\$q, 'id')", $base);
+        $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
+        $this->assertStringContainsString('scopedFacilitiesList', $leases);
+        $this->assertStringContainsString('applyLeaseFacilityScope', $leases);
+        $this->assertStringNotContainsString(
+            "scopeFacilities(\n            \$this->db->table('facilities')",
+            $leases
+        );
+    }
+
     public function testNoKitchenPosModuleWasInvented(): void
     {
         $this->assertFileDoesNotExist($this->root . '/app/Controllers/Kitchen.php');

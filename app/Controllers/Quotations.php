@@ -52,8 +52,7 @@ class Quotations extends BaseController
         $total = (clone $q)->countAllResults(false);
         $rows  = $q->orderBy('vq.created_at', 'DESC')->limit($pg['perPage'], $pg['offset'])->get()->getResultArray();
 
-        $facQ = $this->db->table('facilities')->where('status', 'active')->orderBy('name');
-        $facilities = $this->scopeFacilities($facQ)->get()->getResultArray();
+        $facilities = $this->scopedFacilitiesList('id, name');
 
         return view('quotations/index', $this->viewData([
             'title'       => 'Vendor Quotations',

@@ -432,8 +432,6 @@ class PmFinance extends BaseController
     /** @return list<array<string,mixed>> */
     private function facilitiesOptions(): array
     {
-        return $this->scopeFacilities(
-            $this->db->table('facilities')->where('status', 'active')->orderBy('name')
-        )->get()->getResultArray();
+        return $this->scopedFacilitiesList('id, name');
     }
 }

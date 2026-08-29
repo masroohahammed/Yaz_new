@@ -31,11 +31,11 @@ class Leases extends BaseController
         $q = $this->db->table(self::TABLE . ' lc')
             ->select('lc.*, t.full_name AS tenant_name, f.name AS facility_name, u.unit_number, u.unit_type, u.plate_number AS unit_plate_number')
             ->join('tenants t', 't.id = lc.tenant_id', 'left')
-            ->join('facilities f', 'f.id = lc.facility_id', 'left')
             ->join('units u', 'u.id = lc.unit_id', 'left')
+            ->join('facilities f', $this->leaseFacilityJoinSql(), 'left')
             ->where('lc.deleted_at', null);
         $this->scopeCompany($q, 'lc.company_id');
-        $this->scopeFacilities($q, 'lc.facility_id');
+        $this->applyLeaseFacilityScope($q);
 
         if ($filters['search'] !== '') {
             $q->groupStart()
@@ -49,7 +49,7 @@ class Leases extends BaseController
             $q->where('lc.status', $filters['status']);
         }
         if ($filters['facility'] > 0) {
-            $q->where('lc.facility_id', $filters['facility']);
+            $this->whereLeaseFacility($q, $filters['facility']);
         }
 
         $pg    = $this->paginate(25);
@@ -58,9 +58,7 @@ class Leases extends BaseController
             ->limit($pg['perPage'], $pg['offset'])
             ->get()->getResultArray();
 
-        $facilities = $this->scopeFacilities(
-            $this->db->table('facilities')->where('status', 'active')->orderBy('name')
-        )->get()->getResultArray();
+        $facilities = $this->scopedFacilitiesList('id, name');
 
         return view('leases/index', $this->viewData([
             'title'       => 'Lease Contracts',
@@ -848,11 +846,11 @@ class Leases extends BaseController
         $q = $this->db->table(self::TABLE . ' lc')
             ->select('lc.contract_number, t.full_name AS tenant_name, f.name AS facility_name, u.unit_number, lc.status, lc.start_date, lc.end_date, lc.rent_amount, lc.payment_frequency')
             ->join('tenants t', 't.id = lc.tenant_id', 'left')
-            ->join('facilities f', 'f.id = lc.facility_id', 'left')
             ->join('units u', 'u.id = lc.unit_id', 'left')
+            ->join('facilities f', $this->leaseFacilityJoinSql(), 'left')
             ->where('lc.deleted_at', null);
         $this->scopeCompany($q, 'lc.company_id');
-        $this->scopeFacilities($q, 'lc.facility_id');
+        $this->applyLeaseFacilityScope($q);
 
         $rows = $q->orderBy('lc.id', 'DESC')->get()->getResultArray();
 
@@ -982,11 +980,11 @@ class Leases extends BaseController
         $q = $this->db->table(self::TABLE . ' lc')
             ->select('lc.*, t.full_name AS tenant_name, t.phone AS tenant_phone, t.qid_no, t.passport_no, t.nationality, f.name AS facility_name, f.city AS facility_city, f.address AS facility_address, u.unit_number, u.unit_type, u.plate_number AS unit_plate_number')
             ->join('tenants t', 't.id = lc.tenant_id', 'left')
-            ->join('facilities f', 'f.id = lc.facility_id', 'left')
             ->join('units u', 'u.id = lc.unit_id', 'left')
+            ->join('facilities f', $this->leaseFacilityJoinSql(), 'left')
             ->where('lc.id', $id)
             ->where('lc.deleted_at', null);
-        $this->scopeFacilities($q, 'lc.facility_id');
+        $this->applyLeaseFacilityScope($q);
 
         return $q->get()->getRowArray() ?: null;
     }
@@ -1008,9 +1006,44 @@ class Leases extends BaseController
     /** @return list<array<string,mixed>> */
     private function facilityOptions(): array
     {
-        return $this->scopeFacilities(
-            $this->db->table('facilities')->select('id, name')->where('status', 'active')->orderBy('name')
-        )->get()->getResultArray();
+        return $this->scopedFacilitiesList('id, name');
+    }
+
+    private function leaseFacilityJoinSql(): string
+    {
+        return $this->db->fieldExists('facility_id', self::TABLE)
+            ? 'f.id = lc.facility_id'
+            : 'f.id = u.facility_id';
+    }
+
+    private function leaseFacilityScopeColumn(): string
+    {
+        return $this->db->fieldExists('facility_id', self::TABLE)
+            ? 'lc.facility_id'
+            : 'u.facility_id';
+    }
+
+    private function applyLeaseFacilityScope(object $q): void
+    {
+        if ($this->db->fieldExists('facility_id', self::TABLE)
+            || ($this->db->tableExists('units') && $this->db->fieldExists('facility_id', 'units'))) {
+            $this->scopeFacilities($q, $this->leaseFacilityScopeColumn());
+        }
+    }
+
+    private function whereLeaseFacility(object $q, int $facilityId): void
+    {
+        if ($facilityId < 1) {
+            return;
+        }
+        if ($this->db->fieldExists('facility_id', self::TABLE)) {
+            $q->where('lc.facility_id', $facilityId);
+
+            return;
+        }
+        if ($this->db->tableExists('units') && $this->db->fieldExists('facility_id', 'units')) {
+            $q->where('u.facility_id', $facilityId);
+        }
     }
 
     /** @return list<array<string,mixed>> */

@@ -270,9 +270,7 @@ class Sales extends BaseController
     /** @return list<array<string,mixed>> */
     private function facilityOptions(): array
     {
-        return $this->scopeFacilities(
-            $this->db->table('facilities')->select('id, name')->where('status', 'active')->orderBy('name')
-        )->get()->getResultArray();
+        return $this->scopedFacilitiesList('id, name');
     }
 
     /** @return list<array<string,mixed>> */

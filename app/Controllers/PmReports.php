@@ -631,14 +631,7 @@ class PmReports extends BaseController
     /** @return list<array<string, mixed>> */
     private function scopedActiveFacilities(): array
     {
-        $q = $this->db->table('facilities')->select('id, name, code')->where('status', 'active');
-        if ($this->db->fieldExists('deleted_at', 'facilities')) {
-            $q->where('deleted_at', null);
-        }
-        $this->scopeCompany($q, 'company_id');
-        $this->scopeFacilities($q, 'id');
-
-        return $q->orderBy('name')->get()->getResultArray();
+        return $this->scopedFacilitiesList('id, name, code');
     }
 
     /**

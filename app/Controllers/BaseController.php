@@ -248,6 +248,29 @@ abstract class BaseController extends Controller
     }
 
     /**
+     * Scope a query on the facilities table itself (uses facilities.id, not facility_id).
+     *
+     * @return list<array<string,mixed>>
+     */
+    protected function scopedFacilitiesList(string $select = 'id, name'): array
+    {
+        if (! $this->db->tableExists('facilities')) {
+            return [];
+        }
+
+        $q = $this->db->table('facilities')->select($select)->where('status', 'active');
+        if ($this->db->fieldExists('deleted_at', 'facilities')) {
+            $q->where('deleted_at', null);
+        }
+        if ($this->db->fieldExists('company_id', 'facilities')) {
+            $this->scopeCompany($q, 'company_id');
+        }
+        $this->scopeFacilities($q, 'id');
+
+        return $q->orderBy('name')->get()->getResultArray();
+    }
+
+    /**
      * SQL fragment + params for raw queries: AND alias.facility_id IN (...)
      *
      * @return array{0: string, 1: list<int|string>}

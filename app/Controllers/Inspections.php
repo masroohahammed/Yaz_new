@@ -52,9 +52,7 @@ class Inspections extends BaseController
             'title'      => 'Inspections',
             'inspections'=> $rows,
             'filters'    => $filters,
-            'facilities' => $this->scopeFacilities(
-                $this->db->table('facilities')->where('status', 'active')->orderBy('name')
-            )->get()->getResultArray(),
+            'facilities' => $this->scopedFacilitiesList('id, name'),
             'currentPage'=> $pg['page'],
         ]));
     }
@@ -78,9 +76,7 @@ class Inspections extends BaseController
         return view('inspections/form', $this->viewData([
             'title'      => 'New Inspection',
             'inspection' => null,
-            'facilities' => $this->scopeFacilities(
-                $this->db->table('facilities')->where('status', 'active')->orderBy('name')
-            )->get()->getResultArray(),
+            'facilities' => $this->scopedFacilitiesList('id, name'),
         ]));
     }
 

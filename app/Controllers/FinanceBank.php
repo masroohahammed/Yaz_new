@@ -849,10 +849,7 @@ class FinanceBank extends BaseController
     /** @return list<array<string,mixed>> */
     private function lookupFacilities(): array
     {
-        $q = $this->db->table('facilities')->select('id, name')->orderBy('name');
-        $this->scopeFacilities($q);
-
-        return $q->get()->getResultArray();
+        return $this->scopedFacilitiesList('id, name');
     }
 
     /** @return list<array<string,mixed>> */
