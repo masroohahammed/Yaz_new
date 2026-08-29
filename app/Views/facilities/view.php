@@ -184,6 +184,7 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
     <?= view('partials/inspection_reports_table', [
       'reports' => $inspectionReports ?? [],
       'showUnit' => true,
+      'facilityId' => (int) $facility['id'],
     ]) ?>
   </div>
 

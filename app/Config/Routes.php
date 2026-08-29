@@ -36,6 +36,10 @@ $routes->post('request',                 'PublicRequest::submit');
 $routes->get('request/units/(:num)',     'PublicRequest::unitsForFacility/$1');
 $routes->get('track/(:segment)',         'PublicRequest::track/$1');
 
+$routes->get('public/maintenance',       'PublicEntity::maintenance');
+$routes->post('public/maintenance',      'PublicEntity::maintenanceSubmit');
+$routes->get('public/inspections',       'PublicEntity::inspections');
+
 // Asset QR scan (public deep links)
 $routes->get('scan/asset/(:segment)',           'AssetScan::byToken/$1');
 $routes->get('scan/asset/id/(:num)',            'AssetScan::byId/$1');

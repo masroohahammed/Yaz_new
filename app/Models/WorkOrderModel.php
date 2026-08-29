@@ -264,6 +264,10 @@ class WorkOrderModel extends Model
             $builder->where('wo.priority', $filters['priority']);
         if (! empty($filters['facility_id']))
             $builder->where('wo.facility_id', (int) $filters['facility_id']);
+        if (! empty($filters['unit_id']))
+            $builder->where('wo.unit_id', (int) $filters['unit_id']);
+        if (! empty($filters['asset_id']))
+            $builder->where('wo.asset_id', (int) $filters['asset_id']);
         if (! empty($filters['search']))
             $builder->groupStart()
                     ->like('wo.title', $filters['search'])

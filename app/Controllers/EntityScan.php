@@ -115,9 +115,11 @@ class EntityScan extends BaseController
             ->orderBy('unit_number')
             ->get()->getResultArray();
 
-        $openMaintenance = $this->loadOpenMaintenance(['facility_id' => $facilityId]);
-        $maintenanceHistory = $this->loadMaintenanceHistory(['facility_id' => $facilityId]);
+        $openMaintenance = $this->loadOpenMaintenance($facilityId, null, null);
+        $maintenanceHistory = $this->loadMaintenanceHistory($facilityId, null, null);
         $inspectionCount = $this->countInspectionsForFacility($facilityId);
+
+        $scopeQs = 'facility_id=' . $facilityId;
 
         return view('entity_scan/landing', [
             'entityType'         => 'property',
@@ -131,7 +133,11 @@ class EntityScan extends BaseController
             'openMaintenance'    => $openMaintenance,
             'maintenanceHistory' => $maintenanceHistory,
             'inspectionCount'    => $inspectionCount,
-            'complaintAction'    => base_url('scan/property/' . ($facility['qr_token'] ?? $facilityId) . '/complaint'),
+            'inspectionsUrl'     => base_url('public/inspections?' . $scopeQs),
+            'maintenanceUrl'     => base_url('public/maintenance?' . $scopeQs),
+            'workOrdersUrl'      => base_url('workorders?facility_id=' . $facilityId),
+            'workOrderCreateUrl' => base_url('workorders/create?facility_id=' . $facilityId),
+            'detailsUrl'         => base_url('properties/view/' . $facilityId),
             'settings'           => $this->settings,
             'currency'           => $this->settings['currency'] ?? 'QAR',
         ]);
@@ -159,9 +165,11 @@ class EntityScan extends BaseController
         $qr      = new EntityQrService($this->db);
         $scanUrl = $qr->scanUrl('unit', $unit);
 
-        $openMaintenance = $this->loadOpenMaintenance(['unit_id' => $unitId]);
-        $maintenanceHistory = $this->loadMaintenanceHistory(['unit_id' => $unitId]);
+        $openMaintenance = $this->loadOpenMaintenance((int) ($unit['facility_id'] ?? 0), $unitId, null);
+        $maintenanceHistory = $this->loadMaintenanceHistory((int) ($unit['facility_id'] ?? 0), $unitId, null);
         $inspectionCount = $this->countInspectionsForUnit($unitId);
+
+        $scopeQs = 'unit_id=' . $unitId;
 
         return view('entity_scan/landing', [
             'entityType'         => 'unit',
@@ -175,7 +183,11 @@ class EntityScan extends BaseController
             'openMaintenance'    => $openMaintenance,
             'maintenanceHistory' => $maintenanceHistory,
             'inspectionCount'    => $inspectionCount,
-            'complaintAction'    => base_url('scan/unit/' . ($unit['qr_token'] ?? $unitId) . '/complaint'),
+            'inspectionsUrl'     => base_url('public/inspections?' . $scopeQs),
+            'maintenanceUrl'     => base_url('public/maintenance?' . $scopeQs),
+            'workOrdersUrl'      => base_url('workorders?facility_id=' . (int) ($unit['facility_id'] ?? 0) . '&unit_id=' . $unitId),
+            'workOrderCreateUrl' => base_url('workorders/create?facility_id=' . (int) ($unit['facility_id'] ?? 0) . '&unit_id=' . $unitId),
+            'detailsUrl'         => base_url('units/view/' . $unitId),
             'settings'           => $this->settings,
             'currency'           => $this->settings['currency'] ?? 'QAR',
         ]);
@@ -237,10 +249,9 @@ class EntityScan extends BaseController
     }
 
     /**
-     * @param array<string, int> $where
      * @return list<array<string, mixed>>
      */
-    private function loadOpenMaintenance(array $where): array
+    private function loadOpenMaintenance(?int $facilityId, ?int $unitId, ?int $assetId): array
     {
         if (! $this->db->tableExists('maintenance_requests')) {
             return [];
@@ -252,18 +263,21 @@ class EntityScan extends BaseController
             ->orderBy('mr.created_at', 'DESC')
             ->limit(10);
 
-        foreach ($where as $col => $val) {
-            $q->where('mr.' . $col, $val);
+        if ($unitId) {
+            $q->where('mr.unit_id', $unitId);
+        } elseif ($assetId && $this->db->fieldExists('asset_id', 'maintenance_requests')) {
+            $q->where('mr.asset_id', $assetId);
+        } elseif ($facilityId) {
+            $q->where('mr.facility_id', $facilityId);
         }
 
         return $q->get()->getResultArray();
     }
 
     /**
-     * @param array<string, int> $where
      * @return list<array<string, mixed>>
      */
-    private function loadMaintenanceHistory(array $where): array
+    private function loadMaintenanceHistory(?int $facilityId, ?int $unitId, ?int $assetId): array
     {
         if (! $this->db->tableExists('maintenance_requests')) {
             return [];
@@ -274,8 +288,12 @@ class EntityScan extends BaseController
             ->orderBy('mr.created_at', 'DESC')
             ->limit(8);
 
-        foreach ($where as $col => $val) {
-            $q->where('mr.' . $col, $val);
+        if ($unitId) {
+            $q->where('mr.unit_id', $unitId);
+        } elseif ($assetId && $this->db->fieldExists('asset_id', 'maintenance_requests')) {
+            $q->where('mr.asset_id', $assetId);
+        } elseif ($facilityId) {
+            $q->where('mr.facility_id', $facilityId);
         }
 
         return $q->get()->getResultArray();

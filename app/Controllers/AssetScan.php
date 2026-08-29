@@ -168,7 +168,11 @@ class AssetScan extends BaseController
             'openMaintenance'    => $openMaintenance,
             'maintenanceHistory' => $maintenanceHistory,
             'inspectionCount'    => 0,
-            'complaintAction'    => base_url('scan/asset/' . ($asset['qr_token'] ?? '') . '/complaint'),
+            'inspectionsUrl'     => base_url('public/inspections?asset_id=' . (int) $asset['id']),
+            'maintenanceUrl'     => base_url('public/maintenance?asset_id=' . (int) $asset['id']),
+            'workOrdersUrl'      => base_url('workorders?facility_id=' . (int) ($asset['facility_id'] ?? 0) . '&asset_id=' . (int) $asset['id']),
+            'workOrderCreateUrl' => base_url('workorders/create?facility_id=' . (int) ($asset['facility_id'] ?? 0) . '&asset_id=' . (int) $asset['id']),
+            'detailsUrl'         => base_url('asset-register/view/' . (int) $asset['id']),
             'settings'           => $this->settings,
             'currency'           => $this->settings['currency'] ?? 'QAR',
         ]);

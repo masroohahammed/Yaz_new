@@ -2,20 +2,27 @@
 /** @var list<array<string,mixed>> $reports */
 /** @var bool $showUnit */
 /** @var int|null $unitId */
+/** @var int|null $facilityId */
+/** @var list<array<string,mixed>> $facilityUnits */
 $reports = $reports ?? [];
 $showUnit = (bool) ($showUnit ?? false);
 $unitId = isset($unitId) ? (int) $unitId : null;
+$facilityId = isset($facilityId) ? (int) $facilityId : null;
+$facilityUnits = $facilityUnits ?? [];
 ?>
 <div class="fm-card">
   <div class="card-header-fm d-flex justify-content-between align-items-center flex-wrap gap-2">
     <h5 class="mb-0"><i class="bi bi-clipboard2-check me-2"></i>Inspection Reports</h5>
-    <?php if ($unitId): ?>
     <div class="d-flex gap-1 flex-wrap">
+      <?php if ($unitId): ?>
       <a href="<?= base_url('units/checklist/' . $unitId . '/move_in') ?>" class="btn btn-sm btn-success">Move-In</a>
       <a href="<?= base_url('units/checklist/' . $unitId . '/move_out') ?>" class="btn btn-sm btn-warning">Move-Out</a>
       <a href="<?= base_url('units/checklist/' . $unitId . '/routine') ?>" class="btn btn-sm btn-outline-secondary">Routine</a>
+      <?php elseif ($facilityId): ?>
+      <a href="<?= base_url('public/inspections?facility_id=' . $facilityId) ?>" class="btn btn-sm btn-fm-primary"><i class="bi bi-plus-circle me-1"></i>Start Inspection</a>
+      <a href="<?= base_url('compliance/unit-inspections?facility_id=' . $facilityId) ?>" class="btn btn-sm btn-fm-outline">All unit forms</a>
+      <?php endif; ?>
     </div>
-    <?php endif; ?>
   </div>
   <div class="fm-card-body p-0">
     <?php if (empty($reports)): ?>

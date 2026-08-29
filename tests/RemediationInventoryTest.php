@@ -408,5 +408,9 @@ final class RemediationInventoryTest extends TestCase
         $patch = file_get_contents($this->root . '/database/patches/fm-erp-complete.sql');
         $this->assertStringContainsString('qr_scan_logs', $patch);
         $this->assertStringContainsString('qr_token', $patch);
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString('public/maintenance', $routes);
+        $this->assertStringContainsString('public/inspections', $routes);
+        $this->assertFileExists($this->root . '/app/Controllers/PublicEntity.php');
     }
 }
