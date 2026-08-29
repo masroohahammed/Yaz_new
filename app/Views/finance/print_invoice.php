@@ -100,7 +100,7 @@ tfoot td{font-weight:700;background:rgba(<?= _ir($p) ?>,.06)}
     </div>
     <div class="finfo">Generated: <?= date('d M Y H:i') ?> | <?= esc($inv['invoice_number']) ?></div>
   </div>
-  <?= $this->include('layouts/_doc_footer', ['settings' => $settings, 'plain' => true]) ?>
+  <?= $this->include('layouts/_doc_footer', ['settings' => $settings, 'companyBranding' => $companyBranding ?? null, 'plain' => true]) ?>
 </div>
 <script>window.onload=()=>window.print()</script>
 </body>

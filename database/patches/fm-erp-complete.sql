@@ -151,6 +151,16 @@ ALTER TABLE `lease_contracts`
 ALTER TABLE `units`
   ADD COLUMN IF NOT EXISTS `plate_number` VARCHAR(30) NULL;
 
+-- 9) Landlord short code (reports / index)
+ALTER TABLE `landlords`
+  ADD COLUMN IF NOT EXISTS `short_code` VARCHAR(20) NULL AFTER `full_name`;
+
+UPDATE `landlords`
+SET `short_code` = UPPER(TRIM(SUBSTRING(`notes`, LOCATE('Code:', `notes`) + 5, 20)))
+WHERE (`short_code` IS NULL OR `short_code` = '')
+  AND `notes` LIKE '%Code:%'
+  AND LOCATE('Code:', `notes`) > 0;
+
 DROP PROCEDURE IF EXISTS fm_add_index_if_missing;
 
 -- After applying: ROTATE THE DATABASE PASSWORD. Previous password was in source.

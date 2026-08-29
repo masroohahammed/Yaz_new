@@ -284,21 +284,40 @@ final class RemediationInventoryTest extends TestCase
         $this->assertFileExists($this->root . '/app/Views/leases/parking_contract_print.php');
         $print = file_get_contents($this->root . '/app/Views/leases/parking_contract_print.php');
         foreach ([
-            'PARKING SPACE LEASE AGREEMENT',
+            'Parking Space Lease Agreement',
             'عقد ايجار موقف تحت مبنى العقار',
-            'البند الرابع : الشروط العامة',
-            'Article Four: General Terms and Conditions',
+            'Article Four: General Terms',
+            'البند الرابع: الشروط العامة',
+            'col-en',
+            'col-ar',
+            'DM Sans',
+            'Cairo',
             '_doc_letterhead',
             '_doc_footer',
         ] as $needle) {
             $this->assertStringContainsString($needle, $print);
         }
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString("get('units/(:num)/parking-contract/print'", $routes);
+        $this->assertFileExists($this->root . '/app/Services/CompanyBrandingService.php');
+        $this->assertStringContainsString('function fm_company_branding', file_get_contents($this->root . '/app/Helpers/fm_helper.php'));
         $svc = file_get_contents($this->root . '/app/Services/ParkingContractService.php');
         $this->assertStringContainsString('header_title_deed_no', $svc);
         $this->assertStringContainsString('parking_owner_name_ar', $svc);
         $settings = file_get_contents($this->root . '/app/Views/settings/index.php');
         $this->assertStringContainsString('company_cr', $settings);
         $this->assertStringContainsString('company_po_box', $settings);
+    }
+
+    public function testLandlordReportsUseHashTabsAndShortCode(): void
+    {
+        $view = file_get_contents($this->root . '/app/Views/pm_reports/landlord.php');
+        $this->assertStringContainsString('fm-entity-tabs', $view);
+        $this->assertStringContainsString('hashchange', $view);
+        $this->assertStringContainsString('short_code', $view);
+        $this->assertFileExists($this->root . '/app/Database/Migrations/2026-08-29-100800_LandlordShortCode.php');
+        $patch = file_get_contents($this->root . '/database/patches/fm-erp-complete.sql');
+        $this->assertStringContainsString('short_code', $patch);
     }
 
     public function testNoKitchenPosModuleWasInvented(): void

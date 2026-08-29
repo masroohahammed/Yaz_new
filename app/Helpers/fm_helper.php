@@ -212,6 +212,21 @@ if (! function_exists('fm_logo_data_uri')) {
     }
 }
 
+if (! function_exists('fm_company_branding')) {
+    /**
+     * Letterhead data from companies table merged over system_settings.
+     *
+     * @param array<string,string> $systemSettings
+     * @return array{company_id: int, settings: array<string,string>, logoUrl: string, logoB64: string, row: array<string,mixed>|null}
+     */
+    function fm_company_branding(array $systemSettings = [], ?int $companyId = null): array
+    {
+        $db = \Config\Database::connect();
+
+        return (new \App\Services\CompanyBrandingService($db))->branding($systemSettings, $companyId);
+    }
+}
+
 if (! function_exists('fm_sequence_from_code')) {
     /** Last numeric segment from codes like WO-2026-0001 (PHP 8+ safe for end()). */
     function fm_sequence_from_code(string $code, string $delimiter = '-'): int

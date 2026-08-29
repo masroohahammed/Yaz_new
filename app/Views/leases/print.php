@@ -37,14 +37,17 @@
 <div class="page">
   <div class="header">
     <div class="logo">
-      <?php if (!empty($companyLogoUrl)): ?>
-        <img src="<?= esc($companyLogoUrl) ?>" alt="Logo">
+      <?php
+      $logoSrc = $companyLogoB64 ?? $companyLogoUrl ?? '';
+      if ($logoSrc !== ''): ?>
+        <img src="<?= esc($logoSrc) ?>" alt="Logo">
       <?php endif; ?>
     </div>
     <div class="co-info">
       <?= esc($settings['company_name'] ?? '') ?><br>
       <?= esc($settings['company_address'] ?? '') ?><br>
       <?= esc($settings['company_phone'] ?? '') ?>
+      <?php if (! empty($settings['company_email'])): ?><br><?= esc($settings['company_email']) ?><?php endif; ?>
     </div>
   </div>
 

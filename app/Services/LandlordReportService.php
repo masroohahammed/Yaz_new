@@ -57,7 +57,11 @@ class LandlordReportService
         if (! $this->db->tableExists('landlords')) {
             return [];
         }
-        $q = $this->db->table('landlords')->select('id, full_name, status')->where('deleted_at', null)->orderBy('full_name');
+        $select = 'id, full_name, status';
+        if ($this->db->fieldExists('short_code', 'landlords')) {
+            $select .= ', short_code';
+        }
+        $q = $this->db->table('landlords')->select($select)->where('deleted_at', null)->orderBy('full_name');
         if ($companyId && $this->db->fieldExists('company_id', 'landlords')) {
             $q->where('company_id', $companyId);
         }

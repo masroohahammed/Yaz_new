@@ -9,6 +9,7 @@
 <?php if ($ro): ?>
   <dl class="row mb-0">
     <dt class="col-sm-3">Name</dt><dd class="col-sm-9"><?= esc($landlord['full_name']) ?></dd>
+    <dt class="col-sm-3">Short code</dt><dd class="col-sm-9"><?= esc($landlord['short_code'] ?? '—') ?></dd>
     <dt class="col-sm-3">Phone</dt><dd class="col-sm-9"><?= esc($landlord['phone'] ?? '—') ?></dd>
     <dt class="col-sm-3">Email</dt><dd class="col-sm-9"><?= esc($landlord['email'] ?? '—') ?></dd>
     <dt class="col-sm-3">Status</dt><dd class="col-sm-9"><?= esc($landlord['status']) ?></dd>
@@ -19,6 +20,7 @@
   <div class="row g-3">
     <div class="col-md-6"><label class="form-label">Full name</label><input name="full_name" class="form-control" required value="<?= esc(old('full_name', $landlord['full_name'] ?? '')) ?>"></div>
     <div class="col-md-6"><label class="form-label">Arabic name</label><input name="full_name_ar" class="form-control" value="<?= esc(old('full_name_ar', $landlord['full_name_ar'] ?? '')) ?>"></div>
+    <div class="col-md-4"><label class="form-label">Short code</label><input name="short_code" class="form-control text-uppercase" maxlength="20" placeholder="e.g. MOHD" value="<?= esc(old('short_code', $landlord['short_code'] ?? '')) ?>"></div>
     <div class="col-md-4"><label class="form-label">Phone</label><input name="phone" class="form-control" value="<?= esc(old('phone', $landlord['phone'] ?? '')) ?>"></div>
     <div class="col-md-4"><label class="form-label">Email</label><input name="email" type="email" class="form-control" value="<?= esc(old('email', $landlord['email'] ?? '')) ?>"></div>
     <div class="col-md-4"><label class="form-label">Status</label><select name="status" class="form-select"><?php foreach (['active','inactive'] as $s): ?><option value="<?= $s ?>" <?= old('status',$landlord['status']??'active')===$s?'selected':'' ?>><?= ucfirst($s) ?></option><?php endforeach; ?></select></div>

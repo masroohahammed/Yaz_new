@@ -4,15 +4,21 @@
  *
  * @var array  $settings
  * @var bool   $plain
+ * @var array|null $companyBranding
  */
+if (is_array($companyBranding ?? null)) {
+    $settings = $companyBranding['settings'] ?? $settings;
+}
 $phone   = trim((string) ($settings['company_phone'] ?? ''));
 $cr      = trim((string) ($settings['company_cr'] ?? ''));
+$vat     = trim((string) ($settings['company_vat'] ?? ''));
 $poBox   = trim((string) ($settings['company_po_box'] ?? ''));
 $addr    = trim((string) ($settings['company_address'] ?? ''));
 $email   = trim((string) ($settings['company_email'] ?? ''));
 $website = trim((string) ($settings['company_website'] ?? ''));
+$name    = trim((string) ($settings['company_name'] ?? ''));
 
-if ($phone === '' && $cr === '' && $poBox === '' && $addr === '' && $email === '' && $website === '') {
+if ($phone === '' && $cr === '' && $vat === '' && $poBox === '' && $addr === '' && $email === '' && $website === '' && $name === '') {
     return;
 }
 
@@ -32,6 +38,9 @@ if ($phoneFmt !== '') {
 }
 if ($cr !== '') {
     $parts[] = 'C.R No:' . $cr;
+}
+if ($vat !== '') {
+    $parts[] = 'VAT:' . $vat;
 }
 if ($poBox !== '') {
     $parts[] = 'PO.BOX:' . $poBox;

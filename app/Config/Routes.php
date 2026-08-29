@@ -65,6 +65,7 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->post('properties/(:num)/units/store', 'Units::store/$1');
     $routes->get('properties/units/view/(:num)', 'Units::view/$1');
     $routes->get('properties/units/(:num)/parking-contract', 'Units::parkingContract/$1');
+    $routes->get('properties/units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
     $routes->post('properties/units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
 
     // Maintenance alias (helpdesk / maintenance_requests)
@@ -196,6 +197,7 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('units',                         'Units::all');
     $routes->get('units/view/(:num)',             'Units::view/$1');
     $routes->get('units/(:num)/parking-contract', 'Units::parkingContract/$1');
+    $routes->get('units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
     $routes->post('units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
     $routes->get('units/(:num)',                  'Units::index/$1');
     $routes->get('units/edit/(:num)',             'Units::edit/$1');

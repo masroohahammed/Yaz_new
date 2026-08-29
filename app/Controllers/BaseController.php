@@ -169,9 +169,21 @@ abstract class BaseController extends Controller
         }
 
         helper('fm');
-        $base['companyLogoUrl'] = $this->logoUrl();
-        if (! empty($extra['usePdf'])) {
-            $base['companyLogoB64'] = fm_logo_data_uri($this->settings['company_logo'] ?? '');
+        $useBranding = ! empty($extra['usePdf']) || ! empty($extra['useCompanyBranding']);
+        if ($useBranding) {
+            $branding = fm_company_branding(
+                $this->settings,
+                isset($extra['companyId']) ? (int) $extra['companyId'] : null
+            );
+            $base['settings']         = $branding['settings'];
+            $base['companyLogoUrl']   = $branding['logoUrl'];
+            $base['companyLogoB64']   = $branding['logoB64'];
+            $base['companyBranding']  = $branding;
+        } else {
+            $base['companyLogoUrl'] = $this->logoUrl();
+            if (! empty($extra['usePdf'])) {
+                $base['companyLogoB64'] = fm_logo_data_uri($this->settings['company_logo'] ?? '');
+            }
         }
 
         return array_merge($base, $extra);

@@ -29,8 +29,11 @@ class Landlords extends BaseController
                 ->like('l.full_name', $search)
                 ->orLike('l.phone', $search)
                 ->orLike('l.email', $search)
-                ->orLike('l.id_number', $search)
-                ->groupEnd();
+                ->orLike('l.id_number', $search);
+            if ($this->db->fieldExists('short_code', 'landlords')) {
+                $q->orLike('l.short_code', $search);
+            }
+            $q->groupEnd();
         }
         if ($status !== '') {
             $q->where('l.status', $status);
@@ -538,7 +541,7 @@ class Landlords extends BaseController
     /** @return array<string,mixed> */
     private function landlordPayload(): array
     {
-        return [
+        $payload = [
             'company_id'     => $this->pmCompanyId(),
             'full_name'      => esc($this->request->getPost('full_name')),
             'full_name_ar'   => esc($this->request->getPost('full_name_ar')) ?: null,
@@ -557,6 +560,12 @@ class Landlords extends BaseController
             'status'         => $this->request->getPost('status'),
             'notes'          => esc($this->request->getPost('notes')) ?: null,
         ];
+        if ($this->db->fieldExists('short_code', 'landlords')) {
+            $code = strtoupper(trim((string) $this->request->getPost('short_code')));
+            $payload['short_code'] = $code !== '' ? esc(substr($code, 0, 20)) : null;
+        }
+
+        return $payload;
     }
 
     private function migrationView()

@@ -13,8 +13,9 @@
   <button class="btn btn-fm-outline btn-sm" type="submit">Filter</button>
 </form>
 <div class="form-card p-0"><div class="table-responsive"><table class="table table-registry table-sm mb-0">
-<thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>ID</th><th>Status</th><th></th></tr></thead>
+<thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Email</th><th>ID</th><th>Status</th><th></th></tr></thead>
 <tbody><?php foreach ($landlords as $l): ?><tr>
+<td class="small fw-semibold"><?= esc($l['short_code'] ?? '—') ?></td>
 <td class="fw-semibold"><?= esc($l['full_name']) ?></td><td><?= esc($l['phone'] ?? '—') ?></td><td><?= esc($l['email'] ?? '—') ?></td>
 <td class="small"><?= esc($l['id_number'] ?? '—') ?></td><td><span class="badge bg-secondary"><?= esc($l['status']) ?></span></td>
 <td class="text-end">
@@ -23,7 +24,7 @@
   <a href="<?= base_url('landlords/'.$l['id'].'/revenue') ?>" class="btn btn-sm btn-fm-outline"><i class="bi bi-graph-up"></i></a>
   <a href="<?= base_url('landlords/'.$l['id'].'/edit') ?>" class="btn btn-sm btn-fm-outline">Edit</a>
 </td>
-</tr><?php endforeach; ?><?php if (empty($landlords)): ?><tr><td colspan="6" class="text-center text-muted py-4">No landlords.</td></tr><?php endif; ?></tbody>
+</tr><?php endforeach; ?><?php if (empty($landlords)): ?><tr><td colspan="7" class="text-center text-muted py-4">No landlords.</td></tr><?php endif; ?></tbody>
 </table></div></div>
 <?php endif; ?>
 <?= $this->endSection() ?>

@@ -32,12 +32,33 @@ $jump = [
   ['occupancy', 'Occupancy', 'bi-grid'],
   ['statement', 'Statement', 'bi-journal-text'],
 ];
+$activeTab = 'overview';
+foreach ($jump as [$tid]) {
+  if (($tabHash ?? '') === $tid) {
+    $activeTab = $tid;
+    break;
+  }
+}
 ?>
+<style>
+  .lr-tab-pane .fm-card { margin-bottom: 0; }
+  .lr-tab-pane .fm-table th, .lr-tab-pane .fm-table td { padding: .45rem .65rem; font-size: .78rem; }
+  .lr-section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .65rem; }
+  .lr-section-head h5 { margin: 0; font-size: 1rem; font-weight: 600; }
+  @media print {
+    .fm-entity-tabs, .no-print { display: none !important; }
+    .tab-pane { display: block !important; opacity: 1 !important; }
+  }
+</style>
+
 <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
   <div>
     <h1><i class="bi bi-person-badge me-2"></i>Landlord Reports</h1>
     <div class="small text-muted">
       <?= ! empty($landlord['full_name']) ? esc($landlord['full_name']) : 'Select a landlord' ?>
+      <?php if (! empty($landlord['short_code'])): ?>
+      · <span class="badge bg-light text-dark border"><?= esc($landlord['short_code']) ?></span>
+      <?php endif; ?>
       · <?= esc($from) ?> → <?= esc($to) ?>
     </div>
   </div>
@@ -57,7 +78,7 @@ $jump = [
       <label class="form-label small">Landlord</label>
       <select name="landlord" class="form-select form-select-sm" <?= ! empty($forcedLandlord) ? 'disabled' : '' ?>>
         <?php foreach ($landlords as $l): ?>
-        <option value="<?= (int) $l['id'] ?>" <?= $landlordId === (int) $l['id'] ? 'selected' : '' ?>><?= esc($l['full_name']) ?></option>
+        <option value="<?= (int) $l['id'] ?>" <?= $landlordId === (int) $l['id'] ? 'selected' : '' ?>><?= esc($l['full_name']) ?><?php if (! empty($l['short_code'])): ?> (<?= esc($l['short_code']) ?>)<?php endif; ?></option>
         <?php endforeach; ?>
       </select>
       <?php if (! empty($forcedLandlord)): ?><input type="hidden" name="landlord" value="<?= $landlordId ?>"><?php endif; ?>
@@ -86,13 +107,19 @@ $jump = [
   </form>
 </div></div>
 
-<div class="d-flex flex-wrap gap-1 mb-3 no-print">
+<ul class="nav fm-entity-tabs mb-0 no-print" role="tablist" id="lr-tabs">
   <?php foreach ($jump as [$id, $label, $icon]): ?>
-  <a href="#lr-<?= $id ?>" class="btn btn-fm-outline btn-sm"><i class="bi <?= $icon ?> me-1"></i><?= $label ?></a>
+  <li class="nav-item" role="presentation">
+    <a class="nav-link <?= $activeTab === $id ? 'active' : '' ?>" id="tab-<?= $id ?>-tab"
+       data-bs-toggle="tab" href="#tab-<?= $id ?>" role="tab" data-tab-id="<?= $id ?>">
+      <i class="bi <?= $icon ?> me-1"></i><?= $label ?>
+    </a>
+  </li>
   <?php endforeach; ?>
-</div>
+</ul>
 
-<section id="lr-overview" class="mb-4">
+<div class="tab-content fm-tab-pane lr-tab-pane">
+<section id="tab-overview" class="tab-pane fade <?= $activeTab === 'overview' ? 'show active' : '' ?>" role="tabpanel">
   <h5 class="mb-2">Overview</h5>
   <div class="row g-2 mb-2">
     <?php
@@ -124,8 +151,8 @@ $jump = [
   <p class="small text-muted mb-0">Properties and buildings are the same <code>facilities</code> records. Rent uses <code>lease_payments</code>; expenses use approved <code>expenses</code>.</p>
 </section>
 
-<section id="lr-units" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-units" class="tab-pane fade <?= $activeTab === 'units' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Unit reports</h5>
     <div class="d-flex gap-2 no-print">
       <?php $exportBtns('units'); ?>
@@ -134,10 +161,11 @@ $jump = [
   </div>
   <div class="fm-card"><div class="fm-card-body p-0 table-responsive">
     <table class="fm-table table-sm mb-0">
-      <thead><tr><th>Property</th><th>Unit</th><th>Type</th><th>Floor</th><th>Area</th><th>Tenant</th><th>Rent</th><th>Contract</th><th>Status</th></tr></thead>
+      <thead><tr><th>Landlord</th><th>Property</th><th>Unit</th><th>Type</th><th>Floor</th><th>Area</th><th>Tenant</th><th>Rent</th><th>Contract</th><th>Status</th></tr></thead>
       <tbody>
       <?php foreach ($units as $u): ?>
       <tr>
+        <td class="small fw-semibold"><?= esc($landlord['short_code'] ?? '—') ?></td>
         <td class="small"><?= esc($u['facility_name'] ?? '') ?></td>
         <td class="small fw-semibold"><?= esc($u['unit_number'] ?? '') ?></td>
         <td class="small"><?= esc($u['unit_type'] ?? '—') ?></td>
@@ -149,14 +177,14 @@ $jump = [
         <td><span class="fm-badge badge-status-<?= esc($u['status'] ?? '') ?>"><?= esc($u['status'] ?? '') ?></span></td>
       </tr>
       <?php endforeach; ?>
-      <?php if (empty($units)): ?><tr><td colspan="9" class="text-muted text-center py-3">No units for this landlord/property filter.</td></tr><?php endif; ?>
+      <?php if (empty($units)): ?><tr><td colspan="10" class="text-muted text-center py-3">No units for this landlord/property filter.</td></tr><?php endif; ?>
       </tbody>
     </table>
   </div></div>
 </section>
 
-<section id="lr-tenants" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-tenants" class="tab-pane fade <?= $activeTab === 'tenants' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Tenant reports</h5>
     <div class="d-flex gap-2 no-print"><?php $exportBtns('tenants'); ?></div>
   </div>
@@ -182,8 +210,8 @@ $jump = [
   </div></div>
 </section>
 
-<section id="lr-collections" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-collections" class="tab-pane fade <?= $activeTab === 'collections' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Collection / rent</h5>
     <div class="d-flex gap-2 no-print">
       <?php $exportBtns('collections'); ?>
@@ -215,8 +243,8 @@ $jump = [
   </div></div>
 </section>
 
-<section id="lr-pending" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-pending" class="tab-pane fade <?= $activeTab === 'pending' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Pending collections</h5>
     <div class="d-flex gap-2 no-print"><?php $exportBtns('pending'); ?></div>
   </div>
@@ -242,8 +270,8 @@ $jump = [
   </div></div>
 </section>
 
-<section id="lr-cheques" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-cheques" class="tab-pane fade <?= $activeTab === 'cheques' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Cheque reports</h5>
     <div class="d-flex gap-2 no-print">
       <?php $exportBtns('cheques'); ?>
@@ -277,8 +305,8 @@ $jump = [
   </div></div>
 </section>
 
-<section id="lr-maintenance" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-maintenance" class="tab-pane fade <?= $activeTab === 'maintenance' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Maintenance</h5>
     <div class="d-flex gap-2 no-print"><?php $exportBtns('maintenance'); ?></div>
   </div>
@@ -306,7 +334,7 @@ $jump = [
   </div></div>
 </section>
 
-<section id="lr-revenue" class="mb-4">
+<section id="tab-revenue" class="tab-pane fade <?= $activeTab === 'revenue' ? 'show active' : '' ?>" role="tabpanel">
   <h5 class="mb-2">Revenue</h5>
   <?php $p = $pnl; ?>
   <div class="row g-2">
@@ -316,8 +344,8 @@ $jump = [
   </div>
 </section>
 
-<section id="lr-expenses" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-expenses" class="tab-pane fade <?= $activeTab === 'expenses' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Expenses</h5>
     <div class="d-flex gap-2 no-print">
       <?php $exportBtns('expenses'); ?>
@@ -344,8 +372,8 @@ $jump = [
   </div></div>
 </section>
 
-<section id="lr-pnl" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-pnl" class="tab-pane fade <?= $activeTab === 'pnl' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Profit &amp; loss</h5>
     <div class="d-flex gap-2 no-print"><?php $exportBtns('pnl'); ?></div>
   </div>
@@ -374,14 +402,14 @@ $jump = [
   </div></div>
 </section>
 
-<section id="lr-contracts" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-contracts" class="tab-pane fade <?= $activeTab === 'contracts' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Contracts / leases</h5>
     <div class="d-flex gap-2 no-print">
       <?php $exportBtns('contracts'); ?>
-      <a class="btn btn-fm-outline btn-sm" href="<?= current_url() . '?' . $qs . '&expiry_days=30' ?>#lr-contracts">30d</a>
-      <a class="btn btn-fm-outline btn-sm" href="<?= current_url() . '?' . $qs . '&expiry_days=60' ?>#lr-contracts">60d</a>
-      <a class="btn btn-fm-outline btn-sm" href="<?= current_url() . '?' . $qs . '&expiry_days=90' ?>#lr-contracts">90d</a>
+      <a class="btn btn-fm-outline btn-sm" href="<?= current_url() . '?' . $qs . '&expiry_days=30#contracts' ?>">30d</a>
+      <a class="btn btn-fm-outline btn-sm" href="<?= current_url() . '?' . $qs . '&expiry_days=60#contracts' ?>">60d</a>
+      <a class="btn btn-fm-outline btn-sm" href="<?= current_url() . '?' . $qs . '&expiry_days=90#contracts' ?>">90d</a>
       <a class="btn btn-fm-outline btn-sm" href="<?= base_url('reports/pm/leases?' . $qs) ?>">Lease expiry</a>
     </div>
   </div>
@@ -413,8 +441,8 @@ $jump = [
   </div></div>
 </section>
 
-<section id="lr-occupancy" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-occupancy" class="tab-pane fade <?= $activeTab === 'occupancy' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Occupancy</h5>
     <div class="d-flex gap-2 no-print"><?php $exportBtns('occupancy'); ?></div>
   </div>
@@ -457,8 +485,8 @@ $jump = [
   <?php endif; ?>
 </section>
 
-<section id="lr-statement" class="mb-4">
-  <div class="d-flex justify-content-between align-items-center mb-2">
+<section id="tab-statement" class="tab-pane fade <?= $activeTab === 'statement' ? 'show active' : '' ?>" role="tabpanel">
+  <div class="lr-section-head">
     <h5 class="mb-0">Landlord statement</h5>
     <div class="d-flex gap-2 no-print"><?php $exportBtns('statement'); ?></div>
   </div>
@@ -483,4 +511,32 @@ $jump = [
     </table>
   </div></div>
 </section>
+</div>
+
+<script>
+(function () {
+  var tabIds = <?= json_encode(array_column($jump, 0)) ?>;
+  function showTab(id) {
+    if (tabIds.indexOf(id) === -1) return;
+    var link = document.querySelector('#lr-tabs a[data-tab-id="' + id + '"]');
+    if (link && window.bootstrap && bootstrap.Tab) {
+      bootstrap.Tab.getOrCreateInstance(link).show();
+    }
+  }
+  function syncHash() {
+    var id = (location.hash || '').replace(/^#/, '');
+    if (id) showTab(id);
+  }
+  document.querySelectorAll('#lr-tabs a[data-tab-id]').forEach(function (a) {
+    a.addEventListener('shown.bs.tab', function () {
+      var id = a.getAttribute('data-tab-id');
+      if (id && location.hash !== '#' + id) {
+        history.replaceState(null, '', '#' + id);
+      }
+    });
+  });
+  syncHash();
+  window.addEventListener('hashchange', syncHash);
+})();
+</script>
 <?= $this->endSection() ?>

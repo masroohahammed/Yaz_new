@@ -690,6 +690,7 @@ class Leases extends BaseController
             'contract'    => $contract,
             'templateEn'  => $templateEn,
             'templateAr'  => $templateAr,
+            'usePdf'      => true,
         ]));
     }
 
