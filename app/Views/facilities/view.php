@@ -46,24 +46,25 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
 </div>
 
 <!-- Tabs -->
-<ul class="nav nav-tabs mb-3">
-  <li class="nav-item"><a class="nav-link active" href="#tab-overview"  data-bs-toggle="tab">Overview</a></li>
-  <li class="nav-item"><a class="nav-link"        href="#tab-units"     data-bs-toggle="tab"><i class="bi bi-grid me-1"></i>Units <span class="badge bg-secondary ms-1"><?= $totalUnits ?></span></a></li>
+<ul class="nav fm-entity-tabs mb-0" role="tablist">
+  <li class="nav-item"><a class="nav-link active" href="#tab-overview" data-bs-toggle="tab" role="tab"><i class="bi bi-speedometer2 me-1"></i>Overview</a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-units" data-bs-toggle="tab" role="tab"><i class="bi bi-grid me-1"></i>Units <span class="badge bg-secondary ms-1"><?= $totalUnits ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-inspections" data-bs-toggle="tab" role="tab"><i class="bi bi-clipboard2-check me-1"></i>Inspection Reports <span class="badge bg-secondary ms-1"><?= count($inspectionReports ?? []) ?></span></a></li>
   <?php if ($isPm): ?>
-  <li class="nav-item"><a class="nav-link" href="#tab-finance" data-bs-toggle="tab"><i class="bi bi-cash-stack me-1"></i>Finance</a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-leases" data-bs-toggle="tab">Leases <span class="badge bg-secondary ms-1"><?= count($leaseContracts ?? []) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-finance" data-bs-toggle="tab" role="tab"><i class="bi bi-cash-stack me-1"></i>Finance</a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-leases" data-bs-toggle="tab" role="tab"><i class="bi bi-file-earmark-text me-1"></i>Leases <span class="badge bg-secondary ms-1"><?= count($leaseContracts ?? []) ?></span></a></li>
   <?php endif; ?>
   <?php if ($isFm): ?>
-  <li class="nav-item"><a class="nav-link" href="#tab-assets" data-bs-toggle="tab">Assets <span class="badge bg-secondary ms-1"><?= count($assets??[]) ?></span></a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-wo" data-bs-toggle="tab">Work Orders <span class="badge bg-secondary ms-1"><?= count($openWO??[]) ?></span></a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-maintenance" data-bs-toggle="tab">Maintenance</a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-assets" data-bs-toggle="tab" role="tab"><i class="bi bi-cpu me-1"></i>Assets <span class="badge bg-secondary ms-1"><?= count($assets ?? []) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-wo" data-bs-toggle="tab" role="tab"><i class="bi bi-tools me-1"></i>Work Orders <span class="badge bg-secondary ms-1"><?= count($openWO ?? []) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-maintenance" data-bs-toggle="tab" role="tab"><i class="bi bi-wrench me-1"></i>Maintenance</a></li>
   <?php endif; ?>
   <?php if ($isPm && ! $isFm): ?>
-  <li class="nav-item"><a class="nav-link" href="#tab-maintenance" data-bs-toggle="tab">Maintenance <span class="badge bg-secondary">View</span></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-maintenance" data-bs-toggle="tab" role="tab"><i class="bi bi-wrench me-1"></i>Maintenance <span class="badge bg-secondary">View</span></a></li>
   <?php endif; ?>
 </ul>
 
-<div class="tab-content">
+<div class="tab-content fm-tab-pane">
 
   <!-- Overview Tab -->
   <div class="tab-pane fade show active" id="tab-overview">
@@ -124,7 +125,8 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
           <?php endif; ?>
         </div>
         <?php else: ?>
-        <table class="fm-table">
+        <div class="table-responsive">
+        <table class="table table-registry table-sm mb-0">
           <thead><tr><th>Unit</th><th>Type</th><?php if (!empty($hasParkingUnits)): ?><th>Plate No.</th><?php endif; ?><th>Status</th><th>Tenant</th><th>Contract End</th><th>Rent</th><th></th></tr></thead>
           <tbody>
           <?php foreach($facilityUnits as $u):
@@ -169,9 +171,18 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
           <?php endforeach; ?>
           </tbody>
         </table>
+        </div>
         <?php endif; ?>
       </div>
     </div>
+  </div>
+
+  <!-- Inspection Reports Tab -->
+  <div class="tab-pane fade" id="tab-inspections">
+    <?= view('partials/inspection_reports_table', [
+      'reports' => $inspectionReports ?? [],
+      'showUnit' => true,
+    ]) ?>
   </div>
 
   <?php if ($isPm): ?>
@@ -196,6 +207,7 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
         <a href="<?= base_url('contracts/create?facility_id='.$facility['id']) ?>" class="btn btn-fm-primary btn-sm">New lease</a>
       </div>
       <div class="fm-card-body p-0">
+        <div class="table-responsive">
         <table class="table table-registry table-sm mb-0">
           <thead><tr><th>Contract</th><th>Tenant</th><th>Unit</th><th>Period</th><th>Rent</th><th>Status</th></tr></thead>
           <tbody>
@@ -212,6 +224,7 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
           <?php if (empty($leaseContracts)): ?><tr><td colspan="6" class="text-center text-muted py-3">No lease contracts</td></tr><?php endif; ?>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   </div>
@@ -225,7 +238,8 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
         <a href="<?= base_url('asset-register/create?facility_id='.$facility['id']) ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus me-1"></i>Add Asset</a>
       </div>
       <div class="fm-card-body p-0">
-        <table class="fm-table">
+        <div class="table-responsive">
+        <table class="table table-registry table-sm mb-0">
           <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Status</th><th>Health</th></tr></thead>
           <tbody>
           <?php foreach($assets??[] as $a): ?>
@@ -240,6 +254,7 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
           <?php if(empty($assets)): ?><tr><td colspan="5" class="text-center py-3 text-muted">No assets</td></tr><?php endif; ?>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   </div>
@@ -252,7 +267,8 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
         <a href="<?= base_url('finance/contracts/create?facility_id='.$facility['id']) ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus me-1"></i>New Contract</a>
       </div>
       <div class="fm-card-body p-0">
-        <table class="fm-table">
+        <div class="table-responsive">
+        <table class="table table-registry table-sm mb-0">
           <thead><tr><th>Contract #</th><th>Client / Tenant</th><th>Type</th><th>Period</th><th>Value</th><th>Status</th></tr></thead>
           <tbody>
           <?php foreach($contracts??[] as $c): $expiring = strtotime($c['end_date']) < strtotime('+60 days') && $c['status']==='active'; ?>
@@ -276,6 +292,7 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
           <?php if(empty($contracts)): ?><tr><td colspan="6" class="text-center py-3 text-muted">No contracts</td></tr><?php endif; ?>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   </div>
@@ -288,7 +305,8 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
         <a href="<?= base_url('workorders/create?facility_id='.$facility['id']) ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus me-1"></i>New WO</a>
       </div>
       <div class="fm-card-body p-0">
-        <table class="fm-table">
+        <div class="table-responsive">
+        <table class="table table-registry table-sm mb-0">
           <thead><tr><th>WO #</th><th>Title</th><th>Unit</th><th>Status</th><th>Priority</th><th>Assigned</th></tr></thead>
           <tbody>
           <?php foreach($openWO??[] as $w): ?>
@@ -304,6 +322,7 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
           <?php if(empty($openWO)): ?><tr><td colspan="6" class="text-center py-3 text-muted">No open work orders</td></tr><?php endif; ?>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   </div>
@@ -315,6 +334,7 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
         <?php if ($isFm): ?><a href="<?= base_url('maintenance/create?facility_id='.$facility['id']) ?>" class="btn btn-fm-primary btn-sm">New request</a><?php endif; ?>
       </div>
       <div class="fm-card-body p-0">
+        <div class="table-responsive">
         <table class="table table-registry table-sm mb-0">
           <thead><tr><th>Ticket</th><th>Unit</th><th>Category</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead>
           <tbody>
@@ -331,6 +351,7 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
           <?php if (empty($maintenanceHistory)): ?><tr><td colspan="6" class="text-center text-muted py-3">No maintenance records</td></tr><?php endif; ?>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   </div>
@@ -342,4 +363,5 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
 <?= view('documents/panel', ['module' => 'facility', 'refId' => (int)$facility['id'], 'embed' => true, 'documents' => $propertyDocuments ?? []]) ?>
 
 <?= view('facilities/_unit_modal') ?>
+<?= view('partials/entity_tab_hash') ?>
 <?= $this->endSection() ?>

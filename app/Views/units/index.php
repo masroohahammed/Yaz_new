@@ -60,7 +60,8 @@ $canViewUnit = $rbac->can($role, 'units.view');
 <?php if(($viewMode ?? 'grid') === 'list'): ?>
 <div class="fm-card">
   <div class="fm-card-body p-0">
-    <table class="fm-table">
+    <div class="table-responsive">
+    <table class="table table-registry table-sm mb-0">
       <thead><tr><th>Unit</th><th>Type</th><?php if (!empty($hasParkingUnits)): ?><th>Plate No.</th><?php endif; ?><th>Status</th><th>Tenant</th><th>Contract End</th><th>Rent</th><th></th></tr></thead>
       <tbody>
       <?php foreach($units as $u):
@@ -99,6 +100,7 @@ $canViewUnit = $rbac->can($role, 'units.view');
       <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 <?php else: ?>

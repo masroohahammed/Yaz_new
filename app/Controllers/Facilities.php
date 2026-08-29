@@ -227,6 +227,18 @@ class Facilities extends BaseController
                 ->get()->getResultArray();
         }
 
+        $inspectionReports = [];
+        if ($this->db->tableExists('unit_checklists')) {
+            $inspectionReports = $this->db->table('unit_checklists uc')
+                ->select('uc.*, u.unit_number, u.id AS unit_id, usr.name AS created_by_name')
+                ->join('units u', 'u.id = uc.unit_id', 'inner')
+                ->join('users usr', 'usr.id = uc.created_by', 'left')
+                ->where('u.facility_id', $id)
+                ->where('u.deleted_at', null)
+                ->orderBy('uc.created_at', 'DESC')
+                ->get()->getResultArray();
+        }
+
         return view('facilities/view', $this->viewData([
             'title'         => $facility['name'],
             'facility'      => $facility,
@@ -241,6 +253,7 @@ class Facilities extends BaseController
             'propertyDocuments' => $propertyDocuments,
             'openWO'        => $openWO,
             'hasParkingUnits' => $hasParkingUnits,
+            'inspectionReports' => $inspectionReports,
         ]));
     }
 

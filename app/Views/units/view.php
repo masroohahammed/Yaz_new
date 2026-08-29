@@ -137,20 +137,22 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
     $isFm = ($ws === 'fm' || $ws === 'both');
     ?>
     <!-- Tabs -->
-    <ul class="nav nav-tabs mb-3">
+    <ul class="nav fm-entity-tabs mb-0" role="tablist">
       <?php if($isFm): ?>
-      <li class="nav-item"><a class="nav-link active" href="#tab-wo" data-bs-toggle="tab">Work Orders <span class="badge bg-secondary ms-1"><?= count($workOrders) ?></span></a></li>
-      <li class="nav-item"><a class="nav-link" href="#tab-checklists" data-bs-toggle="tab">Checklists <span class="badge bg-secondary ms-1"><?= count($checklists) ?></span></a></li>
-      <li class="nav-item"><a class="nav-link" href="#tab-assets" data-bs-toggle="tab">Assets <span class="badge bg-secondary ms-1"><?= count($assets ?? []) ?></span></a></li>
+      <li class="nav-item"><a class="nav-link active" href="#tab-wo" data-bs-toggle="tab" role="tab"><i class="bi bi-tools me-1"></i>Work Orders <span class="badge bg-secondary ms-1"><?= count($workOrders) ?></span></a></li>
+      <?php endif; ?>
+      <li class="nav-item"><a class="nav-link" href="#tab-inspections" data-bs-toggle="tab" role="tab"><i class="bi bi-clipboard2-check me-1"></i>Inspection Reports <span class="badge bg-secondary ms-1"><?= count($checklists) ?></span></a></li>
+      <?php if($isFm): ?>
+      <li class="nav-item"><a class="nav-link" href="#tab-assets" data-bs-toggle="tab" role="tab"><i class="bi bi-box-seam me-1"></i>Assets <span class="badge bg-secondary ms-1"><?= count($assets ?? []) ?></span></a></li>
       <?php endif; ?>
       <?php if($isPm): ?>
-      <li class="nav-item"><a class="nav-link <?= !$isFm ? 'active' : '' ?>" href="#tab-tenants" data-bs-toggle="tab">Tenant / Contract</a></li>
-      <li class="nav-item"><a class="nav-link" href="#tab-rent" data-bs-toggle="tab">Rent Payments <span class="badge bg-secondary ms-1"><?= count($leasePayments ?? []) ?></span></a></li>
+      <li class="nav-item"><a class="nav-link <?= !$isFm ? 'active' : '' ?>" href="#tab-tenants" data-bs-toggle="tab" role="tab"><i class="bi bi-person-check me-1"></i>Tenant / Contract</a></li>
+      <li class="nav-item"><a class="nav-link" href="#tab-rent" data-bs-toggle="tab" role="tab"><i class="bi bi-cash-stack me-1"></i>Rent Payments <span class="badge bg-secondary ms-1"><?= count($leasePayments ?? []) ?></span></a></li>
       <?php endif; ?>
-      <li class="nav-item"><a class="nav-link <?= (!$isFm && !$isPm) ? 'active' : '' ?>" href="#tab-finance" data-bs-toggle="tab">Finance</a></li>
+      <li class="nav-item"><a class="nav-link <?= (!$isFm && !$isPm) ? 'active' : '' ?>" href="#tab-finance" data-bs-toggle="tab" role="tab"><i class="bi bi-receipt me-1"></i>Finance</a></li>
     </ul>
 
-    <div class="tab-content">
+    <div class="tab-content fm-tab-pane">
 
       <?php if($isFm): ?>
       <!-- Work Orders Tab (FM) -->
@@ -164,7 +166,8 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
             <?php if(empty($workOrders)): ?>
             <p class="text-muted text-center py-4 small">No work orders for this unit.</p>
             <?php else: ?>
-            <table class="fm-table">
+            <div class="table-responsive">
+            <table class="table table-registry table-sm mb-0">
               <thead><tr><th>WO #</th><th>Title</th><th>Status</th><th>Priority</th><th>Assigned</th><th>Date</th></tr></thead>
               <tbody>
               <?php foreach($workOrders as $w): ?>
@@ -179,45 +182,23 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
               <?php endforeach; ?>
               </tbody>
             </table>
-            <?php endif; ?>
-          </div>
-        </div>
-      </div>
-
-      <!-- Checklists Tab (FM) -->
-      <div class="tab-pane fade" id="tab-checklists">
-        <div class="fm-card mb-3">
-          <div class="card-header-fm">
-            <h5><i class="bi bi-clipboard2-check me-2"></i>Inspection Checklists</h5>
-            <div class="d-flex gap-1">
-              <a href="<?= base_url('units/checklist/'.$unit['id'].'/move_in') ?>"  class="btn btn-sm btn-success">Move-In</a>
-              <a href="<?= base_url('units/checklist/'.$unit['id'].'/move_out') ?>" class="btn btn-sm btn-warning">Move-Out</a>
-              <a href="<?= base_url('units/checklist/'.$unit['id'].'/routine') ?>"  class="btn btn-sm btn-outline-secondary">Routine</a>
             </div>
-          </div>
-          <div class="fm-card-body p-0">
-            <?php if(empty($checklists)): ?>
-            <p class="text-muted text-center py-4 small">No checklists yet.</p>
-            <?php else: ?>
-            <table class="fm-table">
-              <thead><tr><th>Type</th><th>Status</th><th>Created By</th><th>Date</th><th></th></tr></thead>
-              <tbody>
-              <?php foreach($checklists as $cl): ?>
-              <tr>
-                <td><span class="fw-semibold small"><?= ucfirst(str_replace('_',' ',$cl['type'])) ?></span></td>
-                <td><span class="fm-badge badge-status-<?= esc($cl['status']) ?>"><?= ucfirst($cl['status']) ?></span></td>
-                <td class="small text-muted"><?= esc($cl['created_by_name']??'—') ?></td>
-                <td class="small text-muted"><?= date('d M Y',strtotime($cl['created_at'])) ?></td>
-                <td><a href="<?= base_url('units/checklist/print/'.$cl['id']) ?>" class="btn-action bg-secondary text-white" title="Print" target="_blank"><i class="bi bi-printer"></i></a></td>
-              </tr>
-              <?php endforeach; ?>
-              </tbody>
-            </table>
             <?php endif; ?>
           </div>
         </div>
       </div>
+      <?php endif; // isFm ?>
 
+      <!-- Inspection Reports Tab -->
+      <div class="tab-pane fade" id="tab-inspections">
+        <?= view('partials/inspection_reports_table', [
+          'reports' => $checklists,
+          'showUnit' => false,
+          'unitId' => (int) $unit['id'],
+        ]) ?>
+      </div>
+
+      <?php if($isFm): ?>
       <!-- Assets Tab (FM) -->
       <div class="tab-pane fade" id="tab-assets">
         <div class="fm-card">
@@ -229,7 +210,8 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
             <?php if(empty($assets)): ?>
             <p class="text-muted text-center py-4 small">No assets found.</p>
             <?php else: ?>
-            <table class="fm-table">
+            <div class="table-responsive">
+            <table class="table table-registry table-sm mb-0">
               <thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Health</th><th>Status</th></tr></thead>
               <tbody>
               <?php foreach($assets as $a): ?>
@@ -243,6 +225,7 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
               <?php endforeach; ?>
               </tbody>
             </table>
+            </div>
             <?php endif; ?>
           </div>
         </div>
@@ -267,7 +250,8 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
             </div>
             <?php endif; ?>
             <?php if(!empty($leaseContracts)): ?>
-            <table class="fm-table mt-2">
+            <div class="table-responsive">
+            <table class="table table-registry table-sm mb-0 mt-2">
               <thead><tr><th>Contract #</th><th>Start</th><th>End</th><th>Rent</th><th>Status</th></tr></thead>
               <tbody>
               <?php foreach($leaseContracts as $lc): ?>
@@ -281,6 +265,7 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
               <?php endforeach; ?>
               </tbody>
             </table>
+            </div>
             <?php elseif(empty($unit['tenant_name'])): ?>
             <p class="text-muted small text-center py-3">No active lease. <a href="<?= base_url('contracts/create?unit_id='.$unit['id']) ?>">Create one</a>.</p>
             <?php endif; ?>
@@ -299,7 +284,8 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
             <?php if(empty($leasePayments)): ?>
             <p class="text-muted text-center py-4 small">No rent payments recorded.</p>
             <?php else: ?>
-            <table class="fm-table">
+            <div class="table-responsive">
+            <table class="table table-registry table-sm mb-0">
               <thead><tr><th>Payment #</th><th>Type</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead>
               <tbody>
               <?php foreach($leasePayments as $lp): ?>
@@ -313,6 +299,7 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
               <?php endforeach; ?>
               </tbody>
             </table>
+            </div>
             <?php endif; ?>
           </div>
         </div>
@@ -359,4 +346,5 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
   </div><!-- /.col-lg-8 -->
 </div>
 
+<?= view('partials/entity_tab_hash') ?>
 <?= $this->endSection() ?>
