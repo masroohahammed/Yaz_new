@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Services\MaintenanceScopeQuery;
+
 /**
  * Public entity-scoped maintenance and inspection pages (QR scan CTAs).
  */
@@ -15,7 +17,7 @@ class PublicEntity extends BaseController
         }
 
         $isLoggedIn = (bool) session()->get('user_id');
-        $records    = $this->loadMaintenanceRecords($scope);
+        $records    = MaintenanceScopeQuery::listRecords($this->db, $scope);
         $entityLabel = $this->entityLabel($scope);
         $units      = [];
 
@@ -165,12 +167,14 @@ class PublicEntity extends BaseController
         $assetId    = (int) ($this->request->getGet('asset_id') ?? $this->request->getPost('asset_id') ?? 0);
 
         if ($unitId > 0) {
-            $unit = $this->db->table('units u')
+            $unitQ = $this->db->table('units u')
                 ->select('u.*, f.name AS facility_name')
                 ->join('facilities f', 'f.id = u.facility_id', 'left')
-                ->where('u.id', $unitId)
-                ->where('u.deleted_at', null)
-                ->get()->getRowArray();
+                ->where('u.id', $unitId);
+            if ($this->db->fieldExists('deleted_at', 'units')) {
+                $unitQ->where('u.deleted_at', null);
+            }
+            $unit = $unitQ->get()->getRowArray();
             if (! $unit) {
                 return null;
             }
@@ -186,12 +190,14 @@ class PublicEntity extends BaseController
         }
 
         if ($assetId > 0) {
-            $asset = $this->db->table('assets a')
+            $assetQ = $this->db->table('assets a')
                 ->select('a.*, f.name AS facility_name')
                 ->join('facilities f', 'f.id = a.facility_id', 'left')
-                ->where('a.id', $assetId)
-                ->where('a.deleted_at', null)
-                ->get()->getRowArray();
+                ->where('a.id', $assetId);
+            if ($this->db->fieldExists('deleted_at', 'assets')) {
+                $assetQ->where('a.deleted_at', null);
+            }
+            $asset = $assetQ->get()->getRowArray();
             if (! $asset) {
                 return null;
             }
@@ -207,10 +213,11 @@ class PublicEntity extends BaseController
         }
 
         if ($facilityId > 0) {
-            $facility = $this->db->table('facilities')
-                ->where('id', $facilityId)
-                ->where('deleted_at', null)
-                ->get()->getRowArray();
+            $facilityQ = $this->db->table('facilities')->where('id', $facilityId);
+            if ($this->db->fieldExists('deleted_at', 'facilities')) {
+                $facilityQ->where('deleted_at', null);
+            }
+            $facility = $facilityQ->get()->getRowArray();
             if (! $facility) {
                 return null;
             }
@@ -251,36 +258,6 @@ class PublicEntity extends BaseController
         }
 
         return http_build_query($parts);
-    }
-
-    /** @param array<string, mixed> $scope
-     * @return list<array<string, mixed>>
-     */
-    private function loadMaintenanceRecords(array $scope): array
-    {
-        if (! $this->db->tableExists('maintenance_requests')) {
-            return [];
-        }
-
-        $q = $this->db->table('maintenance_requests mr')
-            ->select('mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at, mr.requester_name, u.unit_number')
-            ->join('units u', 'u.id = mr.unit_id', 'left')
-            ->orderBy('mr.created_at', 'DESC')
-            ->limit(25);
-
-        $unitId = (int) ($scope['unit_id'] ?? 0);
-        $assetId = (int) ($scope['asset_id'] ?? 0);
-        $facilityId = (int) ($scope['facility_id'] ?? 0);
-
-        if ($unitId > 0) {
-            $q->where('mr.unit_id', $unitId);
-        } elseif ($assetId > 0 && $this->db->fieldExists('asset_id', 'maintenance_requests')) {
-            $q->where('mr.asset_id', $assetId);
-        } elseif ($facilityId > 0) {
-            $q->where('mr.facility_id', $facilityId);
-        }
-
-        return $q->get()->getResultArray();
     }
 
     /** @return list<array<string, mixed>> */

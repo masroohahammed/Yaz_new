@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\EntityQrService;
+use App\Services\MaintenanceScopeQuery;
 use App\Services\QrScanLogService;
 
 /**
@@ -253,50 +254,35 @@ class EntityScan extends BaseController
      */
     private function loadOpenMaintenance(?int $facilityId, ?int $unitId, ?int $assetId): array
     {
-        if (! $this->db->tableExists('maintenance_requests')) {
-            return [];
-        }
+        $scope = array_filter([
+            'facility_id' => $facilityId ?: null,
+            'unit_id'     => $unitId ?: null,
+            'asset_id'    => $assetId ?: null,
+        ]);
 
-        $q = $this->db->table('maintenance_requests mr')
-            ->select('mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at')
-            ->whereIn('mr.status', ['pending', 'verified', 'in_progress', 'open', 'assigned'])
-            ->orderBy('mr.created_at', 'DESC')
-            ->limit(10);
-
-        if ($unitId) {
-            $q->where('mr.unit_id', $unitId);
-        } elseif ($assetId && $this->db->fieldExists('asset_id', 'maintenance_requests')) {
-            $q->where('mr.asset_id', $assetId);
-        } elseif ($facilityId) {
-            $q->where('mr.facility_id', $facilityId);
-        }
-
-        return $q->get()->getResultArray();
+        return MaintenanceScopeQuery::listRecords(
+            $this->db,
+            $scope,
+            'mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at',
+            10,
+            ['pending', 'verified', 'in_progress', 'open', 'assigned']
+        );
     }
 
-    /**
-     * @return list<array<string, mixed>>
-     */
     private function loadMaintenanceHistory(?int $facilityId, ?int $unitId, ?int $assetId): array
     {
-        if (! $this->db->tableExists('maintenance_requests')) {
-            return [];
-        }
+        $scope = array_filter([
+            'facility_id' => $facilityId ?: null,
+            'unit_id'     => $unitId ?: null,
+            'asset_id'    => $assetId ?: null,
+        ]);
 
-        $q = $this->db->table('maintenance_requests mr')
-            ->select('mr.id, mr.ticket_number, mr.category, mr.status, mr.created_at')
-            ->orderBy('mr.created_at', 'DESC')
-            ->limit(8);
-
-        if ($unitId) {
-            $q->where('mr.unit_id', $unitId);
-        } elseif ($assetId && $this->db->fieldExists('asset_id', 'maintenance_requests')) {
-            $q->where('mr.asset_id', $assetId);
-        } elseif ($facilityId) {
-            $q->where('mr.facility_id', $facilityId);
-        }
-
-        return $q->get()->getResultArray();
+        return MaintenanceScopeQuery::listRecords(
+            $this->db,
+            $scope,
+            'mr.id, mr.ticket_number, mr.category, mr.status, mr.created_at',
+            8
+        );
     }
 
     private function countInspectionsForFacility(int $facilityId): int

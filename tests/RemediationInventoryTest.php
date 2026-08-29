@@ -460,10 +460,14 @@ final class RemediationInventoryTest extends TestCase
 
     public function testPublicMaintenanceUsesExplicitScopeFilters(): void
     {
+        $this->assertFileExists($this->root . '/app/Services/MaintenanceScopeQuery.php');
+        $service = file_get_contents($this->root . '/app/Services/MaintenanceScopeQuery.php');
+        $this->assertStringContainsString("->where(\$alias . '.unit_id', \$unitId)", $service);
+        $this->assertStringContainsString("->where(\$alias . '.facility_id', \$facilityId)", $service);
         $controller = file_get_contents($this->root . '/app/Controllers/PublicEntity.php');
-        $this->assertStringContainsString("->where('mr.unit_id', \$unitId)", $controller);
-        $this->assertStringContainsString("->where('mr.facility_id', \$facilityId)", $controller);
+        $this->assertStringContainsString('MaintenanceScopeQuery::listRecords', $controller);
         $this->assertStringNotContainsString('applyMaintenanceScope', $controller);
+        $this->assertStringNotContainsString('loadMaintenanceRecords', $controller);
         $view = file_get_contents($this->root . '/app/Views/public/maintenance.php');
         $this->assertStringContainsString('form_open_multipart', $view);
         $this->assertStringContainsString('requester_name', $view);
