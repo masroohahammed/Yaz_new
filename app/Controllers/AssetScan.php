@@ -169,7 +169,7 @@ class AssetScan extends BaseController
             'maintenanceHistory' => $maintenanceHistory,
             'inspectionCount'    => 0,
             'inspectionsUrl'     => base_url('public/inspections?asset_id=' . (int) $asset['id']),
-            'maintenanceUrl'     => base_url('public/maintenance?asset_id=' . (int) $asset['id']),
+            'maintenanceUrl'     => base_url('maintenance?asset_id=' . (int) $asset['id']),
             'workOrdersUrl'      => base_url('workorders?facility_id=' . (int) ($asset['facility_id'] ?? 0) . '&asset_id=' . (int) $asset['id']),
             'workOrderCreateUrl' => base_url('workorders/create?facility_id=' . (int) ($asset['facility_id'] ?? 0) . '&asset_id=' . (int) $asset['id']),
             'detailsUrl'         => base_url('asset-register/view/' . (int) $asset['id']),

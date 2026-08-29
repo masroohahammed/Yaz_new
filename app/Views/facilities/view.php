@@ -18,7 +18,7 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
 $canHelpdesk     = $rbac->can((string) $role, 'helpdesk');
 $maintenanceCreateUrl = $isFm
     ? base_url('maintenance/create?facility_id=' . (int) $facility['id'])
-    : base_url('public/maintenance?facility_id=' . (int) $facility['id']);
+    : base_url('maintenance?facility_id=' . (int) $facility['id']);
 ?>
 
 <div class="page-header">

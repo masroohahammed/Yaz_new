@@ -72,7 +72,7 @@ class Helpdesk extends BaseController
     public function create()
     {
         if ($this->currentWorkspace() === 'pm') {
-            return redirect()->to(base_url('maintenance'))
+            return redirect()->to(base_url('helpdesk'))
                 ->with('error', 'Maintenance creation is available in the Facility Management workspace only.');
         }
 

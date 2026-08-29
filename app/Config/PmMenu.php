@@ -13,7 +13,7 @@ class PmMenu extends BaseConfig
         ['key' => 'properties',   'label' => 'Properties',  'icon' => 'bi-building',          'url' => 'properties'],
         ['key' => 'landlords',    'label' => 'Landlords',    'icon' => 'bi-person-badge',      'url' => 'landlords'],
         ['key' => 'tenants',      'label' => 'Tenants',      'icon' => 'bi-people',            'url' => 'tenants'],
-        ['key' => 'maintenance',  'label' => 'Maintenance',  'icon' => 'bi-tools',             'url' => 'maintenance', 'badge' => 'view'],
+        ['key' => 'maintenance',  'label' => 'Maintenance',  'icon' => 'bi-tools',             'url' => 'helpdesk', 'badge' => 'view'],
         ['key' => 'scan',         'label' => 'QR Scanner',   'icon' => 'bi-qr-code-scan',      'url' => 'scan'],
 
         ['type' => 'heading', 'label' => 'Leasing & Finance'],

@@ -51,55 +51,62 @@ of “order”, revenue, voided, and cancelled amounts.
 
 ## Public maintenance deploy (fixes whereKey SQL error)
 
-After merging branch `cursor/fm-erp-remediation-a002`, upload or pull these files to production:
+### Why production showed the SQL error
+
+Production uses `app.baseURL = https://pfms.alyazwa.com/public/` (app lives in the `/public/` subfolder).
+The browser URL `https://pfms.alyazwa.com/public/maintenance` maps to CI route **`maintenance`**, not `public/maintenance`.
+
+Previously, route `maintenance` pointed to **Helpdesk** (auth + query builder). The fix registers **`maintenance` → PublicMaintenance** (no auth, raw SQL only). Staff ticket list moved to **`helpdesk`**.
+
+### Files to upload
+
+After merging branch `cursor/fm-erp-remediation-a002`, upload or pull:
 
 1. `app/Controllers/PublicMaintenance.php` **(new — required)**
 2. `app/Services/MaintenanceScopeQuery.php`
 3. `app/Views/public/maintenance.php`
-4. `app/Config/Routes.php`
-5. `app/Controllers/PublicEntity.php` (inspections only; maintenance moved out)
+4. `app/Config/Routes.php` **(critical — wires maintenance → PublicMaintenance)**
+5. `app/Controllers/PublicEntity.php`
+6. `app/Config/FmMenu.php` and `app/Config/PmMenu.php` (sidebar → helpdesk)
+7. Updated views/controllers that link to `maintenance` (not `public/maintenance`)
 
-Then clear PHP opcache and restart PHP-FPM:
-
-```bash
-php -r "if (function_exists('opcache_reset')) { opcache_reset(); echo 'ok'; }"
-sudo systemctl restart php-fpm   # or your host's PHP service name
-```
-
-**Verify deployment** (build must be `2026-08-29-6`):
-
-Preferred — uses the same route as the maintenance page (no extra path segment):
+Ensure production `.env` has:
 
 ```
-GET https://your-domain/public/maintenance?ping=1
+app.baseURL = 'https://pfms.alyazwa.com/public/'
 ```
 
-Expected JSON: `{"ok":true,"build":"2026-08-29-6","service":"2026-08-29-6","controller":"App\\Controllers\\PublicMaintenance"}`
+Then clear PHP opcache and restart PHP-FPM.
 
-Alternate ping URLs (require `Routes.php` on server):
-
-```
-GET https://your-domain/maintenance-ping
-GET https://your-domain/public/maintenance/ping
-```
-
-Or check the response header on the live page:
+**Verify deployment** (build must be `2026-08-29-7`):
 
 ```
-curl -sI "https://your-domain/public/maintenance?facility_id=9103" | grep -i x-fm-maintenance-build
+GET https://pfms.alyazwa.com/public/maintenance?ping=1
 ```
 
-Should show: `X-FM-Maintenance-Build: 2026-08-29-6`
+Expected JSON: `{"ok":true,"build":"2026-08-29-7",...,"controller":"App\\Controllers\\PublicMaintenance"}`
 
-View page source — look for:
+Live form (no login required):
+
+```
+GET https://pfms.alyazwa.com/public/maintenance?facility_id=9103
+```
+
+Page source must contain:
 
 ```html
-<!-- fm-maintenance-build: 2026-08-29-6 -->
+<!-- fm-maintenance-build: 2026-08-29-7 -->
 ```
 
-If `/public/maintenance/ping` is **404** but `/public/maintenance?ping=1` works, production is missing the updated `Routes.php` — upload it and restart PHP.
+Response header:
 
-If you still see the old SQL error or an older build marker, production is running stale controller files (partial deploy or opcache).
+```
+X-FM-Maintenance-Build: 2026-08-29-7
+```
+
+Staff maintenance **list** is now at `/public/helpdesk` (sidebar updated).
+
+If you still see the SQL error, `Routes.php` or `PublicMaintenance.php` was not deployed — the old Helpdesk route is still handling `/public/maintenance`.
 
 ## Production debugging
 

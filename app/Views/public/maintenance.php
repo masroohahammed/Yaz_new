@@ -47,7 +47,7 @@ $oldUnit = (int) old('unit_id');
     <h2 class="h6 fw-bold mb-1"><i class="bi bi-wrench-adjustable me-1"></i>Submit Maintenance Request</h2>
     <p class="text-muted small mb-3">Describe the issue and attach a photo if helpful. A ticket number will be generated for tracking.</p>
 
-    <?= form_open_multipart(base_url('public/maintenance?' . $qs)) ?>
+    <?= form_open_multipart(base_url('maintenance?' . $qs)) ?>
     <input type="hidden" name="facility_id" value="<?= (int) ($scope['facility_id'] ?? 0) ?>">
     <input type="hidden" name="unit_id" id="hiddenUnitId" value="<?= (int) ($scope['unit_id'] ?? $oldUnit) ?>">
     <input type="hidden" name="asset_id" value="<?= (int) ($scope['asset_id'] ?? 0) ?>">

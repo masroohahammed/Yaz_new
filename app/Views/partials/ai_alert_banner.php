@@ -10,7 +10,7 @@ $moduleMeta = [
     'lease_payment'       => ['icon' => 'bi-cash-coin', 'label' => 'Payment', 'url' => 'finance/invoices'],
     'cheque'              => ['icon' => 'bi-bank2', 'label' => 'Cheque', 'url' => 'finance'],
     'tenant'              => ['icon' => 'bi-person-badge', 'label' => 'Tenant', 'url' => 'tenants'],
-    'maintenance_request' => ['icon' => 'bi-tools', 'label' => 'Maintenance', 'url' => 'maintenance'],
+    'maintenance_request' => ['icon' => 'bi-tools', 'label' => 'Maintenance', 'url' => 'helpdesk'],
     'facility'            => ['icon' => 'bi-building', 'label' => 'Property', 'url' => 'properties'],
 ];
 $counts = ['critical' => 0, 'warning' => 0, 'info' => 0];

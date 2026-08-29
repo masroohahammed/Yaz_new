@@ -83,7 +83,7 @@
         </div>
         <div class="d-flex justify-content-between align-items-center small">
           <span class="text-muted">Open maintenance (view)</span>
-          <a href="<?= base_url('maintenance') ?>" class="badge bg-secondary text-decoration-none"><?= (int) $openMaintenance ?></a>
+          <a href="<?= base_url('helpdesk') ?>" class="badge bg-secondary text-decoration-none"><?= (int) $openMaintenance ?></a>
         </div>
       </div>
     </div>
@@ -185,7 +185,7 @@
 <div class="fm-card mt-3">
   <div class="card-header-fm">
     <h5><i class="bi bi-tools me-2"></i>Maintenance history <span class="badge bg-secondary-subtle text-secondary">Read-only</span></h5>
-    <a href="<?= base_url('maintenance') ?>" class="btn btn-fm-outline btn-sm">Open list</a>
+    <a href="<?= base_url('helpdesk') ?>" class="btn btn-fm-outline btn-sm">Open list</a>
   </div>
   <div class="fm-card-body p-0">
     <table class="fm-table">

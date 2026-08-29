@@ -36,12 +36,17 @@ $routes->post('request',                 'PublicRequest::submit');
 $routes->get('request/units/(:num)',     'PublicRequest::unitsForFacility/$1');
 $routes->get('track/(:segment)',         'PublicRequest::track/$1');
 
-$routes->get('public/maintenance',        'PublicMaintenance::index');
-$routes->get('public/maintenance/ping',   'PublicMaintenance::ping');
-$routes->get('public/maintenance-ping',   'PublicMaintenance::ping');
-$routes->get('maintenance-ping',          'PublicMaintenance::ping');
-$routes->post('public/maintenance',       'PublicMaintenance::submit');
-$routes->get('public/inspections',       'PublicEntity::inspections');
+// Public entity maintenance — URI is "maintenance" when app.baseURL is https://domain/public/
+// (production pfms.alyazwa.com). Legacy "public/maintenance" alias for root baseURL dev setups.
+$routes->get('maintenance',                 'PublicMaintenance::index');
+$routes->get('maintenance/ping',            'PublicMaintenance::ping');
+$routes->get('maintenance-ping',            'PublicMaintenance::ping');
+$routes->post('maintenance',                'PublicMaintenance::submit');
+$routes->get('public/maintenance',          'PublicMaintenance::index');
+$routes->get('public/maintenance/ping',     'PublicMaintenance::ping');
+$routes->get('public/maintenance-ping',     'PublicMaintenance::ping');
+$routes->post('public/maintenance',         'PublicMaintenance::submit');
+$routes->get('public/inspections',          'PublicEntity::inspections');
 
 // Asset QR scan (public deep links)
 $routes->get('scan/asset/(:segment)',           'AssetScan::byToken/$1');
@@ -86,8 +91,7 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('properties/qrcode/(:num)',        'Facilities::qrcode/$1');
     $routes->get('units/qrcode/(:num)',             'Units::qrcode/$1');
 
-    // Maintenance alias (helpdesk / maintenance_requests)
-    $routes->get('maintenance',                   'Helpdesk::index');
+    // Maintenance staff routes (list is helpdesk; public entity form is maintenance — no auth)
     $routes->get('maintenance/create',            'Helpdesk::create');
     $routes->get('maintenance/view/(:num)',       'Helpdesk::show/$1');
     $routes->get('maintenance/(:num)',            'Helpdesk::show/$1');

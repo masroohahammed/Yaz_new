@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
 class PublicMaintenance extends Controller
 {
     /** Bump when deploying — visible in page source as fm-maintenance-build */
-    public const MAINTENANCE_BUILD = '2026-08-29-6';
+    public const MAINTENANCE_BUILD = '2026-08-29-7';
 
     /** @var \CodeIgniter\Database\BaseConnection */
     protected $db;
@@ -38,9 +38,9 @@ class PublicMaintenance extends Controller
 
     /**
      * Deploy verification — any of:
-     *   GET public/maintenance?ping=1          (works without extra route)
-     *   GET public/maintenance/ping            (needs Routes.php)
-     *   GET maintenance-ping                   (flat alias)
+     *   GET maintenance?ping=1                (production: /public/maintenance?ping=1)
+     *   GET maintenance/ping
+     *   GET maintenance-ping
      */
     public function ping()
     {
@@ -133,7 +133,7 @@ class PublicMaintenance extends Controller
 
         $qs = $this->scopeQueryString($scope);
 
-        return redirect()->to(base_url('public/maintenance?' . $qs))
+        return redirect()->to(base_url('maintenance?' . $qs))
             ->with('success', 'Maintenance request submitted. Ticket: ' . $ticket);
     }
 

@@ -26,7 +26,7 @@ $typeLabel = match ($entityType) {
 };
 
 $inspectionsUrl     = $inspectionsUrl ?? base_url('public/inspections');
-$maintenanceUrl     = $maintenanceUrl ?? base_url('public/maintenance');
+$maintenanceUrl     = $maintenanceUrl ?? base_url('maintenance');
 $workOrdersUrl      = $workOrdersUrl ?? base_url('workorders');
 $workOrderCreateUrl = $workOrderCreateUrl ?? base_url('workorders/create');
 $detailsUrl         = $detailsUrl ?? '#';
