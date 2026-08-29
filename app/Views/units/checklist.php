@@ -79,12 +79,20 @@ $items = $defaultItems[$type] ?? $defaultItems['routine'];
 
 <!-- Checklist Items -->
 <div class="fm-card mb-3">
-  <div class="card-header-fm"><h5><i class="bi bi-list-check me-2"></i><?= $typeLabel ?> Items</h5></div>
-  <div class="fm-card-body">
+  <div class="card-header-fm d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h5><i class="bi bi-list-check me-2"></i><?= $typeLabel ?> Items</h5>
+    <div class="d-flex align-items-center gap-2" style="min-width:180px">
+      <span class="small text-muted" id="checklistProgressLabel">0 / <?= count($items) ?> checked</span>
+      <div class="inspection-progress-wrap flex-grow-1" style="max-width:120px">
+        <div class="inspection-progress-bar" id="checklistProgressBar" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+  <div class="fm-card-body" id="checklistItems">
     <?php foreach($items as $i => $item): ?>
-    <div class="d-flex align-items-start gap-3 py-2 border-bottom border-light">
+    <div class="d-flex align-items-start gap-3 py-2 border-bottom border-light checklist-item-row">
       <div class="form-check mt-1">
-        <input class="form-check-input" type="checkbox" name="items[<?= $item['id'] ?>]" value="1"
+        <input class="form-check-input checklist-check" type="checkbox" name="items[<?= $item['id'] ?>]" value="1"
           id="item_<?= $item['id'] ?>" style="width:20px;height:20px;border-color:<?= $primaryColor ?>">
       </div>
       <div class="flex-grow-1">
@@ -94,7 +102,7 @@ $items = $defaultItems[$type] ?? $defaultItems['routine'];
             placeholder="Notes / observations (optional)">
         </div>
       </div>
-      <select name="item_status[<?= $item['id'] ?>]" class="form-select form-select-sm" style="width:100px">
+      <select name="item_status[<?= $item['id'] ?>]" class="form-select form-select-sm checklist-status" style="width:100px">
         <option value="ok">✓ OK</option>
         <option value="issue">⚠ Issue</option>
         <option value="na">— N/A</option>
@@ -147,7 +155,7 @@ $items = $defaultItems[$type] ?? $defaultItems['routine'];
 </div>
 
 <!-- Actions -->
-<div class="d-flex gap-2 no-print">
+<div class="inspection-sticky-actions d-flex gap-2 flex-wrap no-print">
   <button type="submit" name="submit_action" value="draft" class="btn btn-fm-outline">
     <i class="bi bi-save me-2"></i>Save as Draft
   </button>
@@ -158,6 +166,38 @@ $items = $defaultItems[$type] ?? $defaultItems['routine'];
 </div>
 
 <?= form_close() ?>
+
+<script>
+(function() {
+  const items = document.querySelectorAll('.checklist-item-row');
+  const bar = document.getElementById('checklistProgressBar');
+  const label = document.getElementById('checklistProgressLabel');
+  const total = items.length || 1;
+
+  function updateProgress() {
+    let done = 0;
+    items.forEach(function(row) {
+      const cb = row.querySelector('.checklist-check');
+      const checked = cb && cb.checked;
+      row.classList.toggle('item-checked', checked);
+      if (checked) done++;
+    });
+    bar.style.width = Math.round((done / total) * 100) + '%';
+    label.textContent = done + ' / ' + total + ' checked';
+  }
+
+  items.forEach(function(row) {
+    const cb = row.querySelector('.checklist-check');
+    if (cb) cb.addEventListener('change', updateProgress);
+    row.querySelector('.checklist-status')?.addEventListener('change', function() {
+      const cb2 = row.querySelector('.checklist-check');
+      if (this.value === 'issue' && cb2) { cb2.checked = true; }
+      updateProgress();
+    });
+  });
+  updateProgress();
+})();
+</script>
 
 <style>
 @media print {

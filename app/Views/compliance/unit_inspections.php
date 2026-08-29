@@ -51,7 +51,7 @@
           <td class="small"><?= esc($u['floor'] ?? '—') ?></td>
           <td><span class="fm-badge"><?= ucfirst($u['status'] ?? '') ?></span></td>
           <td class="small text-muted"><?= esc($u['tenant_name'] ?? '—') ?></td>
-          <td class="text-end text-nowrap">
+          <td class="text-end text-nowrap inspection-unit-actions">
             <a href="<?= base_url('units/checklist/'.$u['id'].'/move_in') ?>" class="btn btn-sm btn-success"><i class="bi bi-box-arrow-in-right me-1"></i>Move-In</a>
             <a href="<?= base_url('units/checklist/'.$u['id'].'/move_out') ?>" class="btn btn-sm btn-warning"><i class="bi bi-box-arrow-right me-1"></i>Move-Out</a>
             <a href="<?= base_url('units/checklist/'.$u['id'].'/routine') ?>" class="btn btn-sm btn-fm-outline">Routine</a>

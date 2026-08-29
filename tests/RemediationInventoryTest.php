@@ -426,4 +426,25 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('unit_checklists', $patch);
         $this->assertStringContainsString('AUTO_INCREMENT', $patch);
     }
+
+    public function testInspectionUiUsesInteractiveWorkspacePatterns(): void
+    {
+        $css = file_get_contents($this->root . '/public/assets/css/fm-workspace-ui.css');
+        foreach (['inspection-type-card', 'inspection-condition-btn', 'inspection-progress-bar', 'inspection-row-clickable'] as $cls) {
+            $this->assertStringContainsString('.' . $cls, $css);
+        }
+        $index = file_get_contents($this->root . '/app/Views/inspections/index.php');
+        $checklist = file_get_contents($this->root . '/app/Views/inspections/checklist.php');
+        $form = file_get_contents($this->root . '/app/Views/inspections/form.php');
+        $view = file_get_contents($this->root . '/app/Views/inspections/view.php');
+        $partial = file_get_contents($this->root . '/app/Views/partials/inspection_reports_table.php');
+        $this->assertStringContainsString('table-registry', $index);
+        $this->assertStringContainsString('kpi-card', $index);
+        $this->assertStringContainsString('inspection-condition-btn', $checklist);
+        $this->assertStringContainsString('inspection-type-card', $form);
+        $this->assertStringContainsString('Area Breakdown', $view);
+        $this->assertStringContainsString('inspection-row-clickable', $partial);
+        $unitChecklist = file_get_contents($this->root . '/app/Views/units/checklist.php');
+        $this->assertStringContainsString('checklistProgressBar', $unitChecklist);
+    }
 }

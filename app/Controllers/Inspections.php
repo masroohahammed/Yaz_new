@@ -27,34 +27,27 @@ class Inspections extends BaseController
             'status'      => $this->request->getGet('status') ?? '',
         ];
 
-        $q = $this->db->table(self::TABLE . ' ic')
-            ->select('ic.*, u.unit_number, f.name AS property_name')
-            ->join('units u', 'u.id = ic.unit_id', 'left')
-            ->join('facilities f', 'f.id = u.facility_id', 'left');
-
-        $this->scopeFacilities($q, 'u.facility_id');
-
-        if ($filters['property_id'] > 0) {
-            $q->where('u.facility_id', $filters['property_id']);
-        }
-        if ($filters['type'] !== '') {
-            $q->where('ic.type', $filters['type']);
-        }
-        if ($filters['status'] !== '') {
-            $q->where('ic.status', $filters['status']);
-        }
+        $totalCount = $this->countInspections($filters);
+        $draftCount = $this->countInspections($filters, 'draft', true);
+        $completedCount = $this->countInspections($filters, 'completed', true);
 
         $pg = $this->paginate(25);
-        $rows = $q->orderBy('ic.created_at', 'DESC')
+        $rows = $this->inspectionListQuery($filters)
+            ->select('ic.*, u.unit_number, u.facility_id, f.name AS property_name')
+            ->orderBy('ic.created_at', 'DESC')
             ->limit($pg['perPage'], $pg['offset'])
             ->get()->getResultArray();
 
         return view('inspections/index', $this->viewData([
-            'title'      => 'Inspections',
-            'inspections'=> $rows,
-            'filters'    => $filters,
-            'facilities' => $this->scopedFacilitiesList('id, name'),
-            'currentPage'=> $pg['page'],
+            'title'          => 'Inspections',
+            'inspections'    => $rows,
+            'filters'        => $filters,
+            'facilities'     => $this->scopedFacilitiesList('id, name'),
+            'currentPage'    => $pg['page'],
+            'perPage'        => $pg['perPage'],
+            'totalCount'     => $totalCount,
+            'draftCount'     => $draftCount,
+            'completedCount' => $completedCount,
         ]));
     }
 
@@ -75,9 +68,11 @@ class Inspections extends BaseController
     public function create()
     {
         return view('inspections/form', $this->viewData([
-            'title'      => 'New Inspection',
-            'inspection' => null,
-            'facilities' => $this->scopedFacilitiesList('id, name'),
+            'title'          => 'New Inspection',
+            'inspection'     => null,
+            'facilities'     => $this->scopedFacilitiesList('id, name'),
+            'preselectProperty' => (int) ($this->request->getGet('property_id') ?? 0),
+            'preselectUnit'     => (int) ($this->request->getGet('unit_id') ?? 0),
         ]));
     }
 
@@ -135,6 +130,7 @@ class Inspections extends BaseController
             'title'      => 'Inspection Checklist',
             'inspection' => $row,
             'areas'      => $this->decodeAreas($row),
+            'savedData'  => $this->decodeItems($row),
         ]));
     }
 
@@ -235,6 +231,33 @@ class Inspections extends BaseController
         $this->logActivity('delete', self::TABLE, $id, 'Inspection deleted');
 
         return redirect()->to(base_url('pm-inspections'))->with('success', 'Inspection removed.');
+    }
+
+    private function inspectionListQuery(array $filters, ?string $status = null, bool $ignoreStatusFilter = false)
+    {
+        $q = $this->db->table(self::TABLE . ' ic')
+            ->join('units u', 'u.id = ic.unit_id', 'left')
+            ->join('facilities f', 'f.id = u.facility_id', 'left');
+        $this->scopeFacilities($q, 'u.facility_id');
+
+        if ($filters['property_id'] > 0) {
+            $q->where('u.facility_id', $filters['property_id']);
+        }
+        if ($filters['type'] !== '') {
+            $q->where('ic.type', $filters['type']);
+        }
+        if ($status !== null && $status !== '') {
+            $q->where('ic.status', $status);
+        } elseif (! $ignoreStatusFilter && ($filters['status'] ?? '') !== '') {
+            $q->where('ic.status', $filters['status']);
+        }
+
+        return $q;
+    }
+
+    private function countInspections(array $filters, ?string $status = null, bool $ignoreStatusFilter = false): int
+    {
+        return (int) $this->inspectionListQuery($filters, $status, $ignoreStatusFilter)->countAllResults();
     }
 
     private function findInspection(int $id): ?array
