@@ -1,0 +1,334 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Models\FacilityModel;
+use App\Models\CompanyModel;
+use App\Models\UserModel;
+
+/**
+ * Facilities — manages facility CRUD.
+ * Now includes company selection on create/edit.
+ */
+class Facilities extends BaseController
+{
+    private FacilityModel $model;
+
+    public function initController(\CodeIgniter\HTTP\RequestInterface $request,
+                                   \CodeIgniter\HTTP\ResponseInterface $response,
+                                   \Psr\Log\LoggerInterface $logger): void
+    {
+        parent::initController($request, $response, $logger);
+        $this->model = new FacilityModel();
+    }
+
+    // ----------------------------------------------------------
+    // Index
+    // ----------------------------------------------------------
+
+    public function index()
+    {
+        $user     = $this->currentUser();
+        $filters  = $this->request->getGet();
+
+        $builder = $this->model->scopeForUser($user);
+
+        if (! empty($filters['status']))   $builder->where('facilities.status', $filters['status']);
+        if (! empty($filters['company_id'])) $builder->where('facilities.company_id', $filters['company_id']);
+        if (! empty($filters['search']))   $builder->groupStart()
+                                                    ->like('facilities.name', $filters['search'])
+                                                    ->orLike('facilities.code', $filters['search'])
+                                                    ->groupEnd();
+
+        $facilities = $this->db->table('facilities f')
+            ->select('f.*, c.name AS company_name, u.name AS manager_name')
+            ->join('companies c', 'c.id = f.company_id', 'left')
+            ->join('users u',     'u.id = f.manager_id', 'left')
+            ->where('f.deleted_at', null)
+            ->orderBy('f.name', 'ASC')
+            ->get()->getResultArray();
+
+        $companyModel = new CompanyModel();
+        $companies    = $companyModel->where('status', 'active')->findAll();
+
+        return view('facilities/index', $this->viewData([
+            'title'      => 'Properties',
+            'pageTitle'  => 'Properties',
+            'facilities' => $facilities,
+            'companies'  => $companies,
+            'filters'    => $filters,
+        ]));
+    }
+
+    // ----------------------------------------------------------
+    // Create
+    // ----------------------------------------------------------
+
+    public function create()
+    {
+        $this->requirePermission('facilities.create');
+
+        $companyModel = new CompanyModel();
+        $userModel    = new UserModel();
+
+        $companies = $companyModel->where('status', 'active')->findAll();
+        $managers  = $userModel->getUsersByRole('facility_manager');
+        $landlords = $this->db->tableExists('landlords')
+            ? $this->db->table('landlords')->where('status', 'active')->where('deleted_at', null)->orderBy('full_name')->get()->getResultArray()
+            : [];
+
+        return view('facilities/create', [
+            'pageTitle' => 'Add Facility',
+            'companies' => $companies,
+            'managers'  => $managers,
+            'landlords' => $landlords,
+            'facility'  => [],
+        ]);
+    }
+
+    public function store()
+    {
+        $this->requirePermission('facilities.create');
+
+        $rules = [
+            'name'       => 'required|min_length[2]|max_length[200]',
+            'code'       => 'required|max_length[20]|is_unique[facilities.code]',
+            'city'       => 'required|max_length[100]',
+            'country'    => 'required|max_length[100]',
+            'company_id' => 'required|is_natural_no_zero',
+        ];
+
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $post = $this->request->getPost();
+
+        $data = [
+            'name'                    => $post['name'],
+            'code'                    => strtoupper($post['code']),
+            'address'                 => $post['address'] ?? null,
+            'city'                    => $post['city'],
+            'country'                 => $post['country'],
+            'company_id'              => $post['company_id'],
+            'manager_id'              => $post['manager_id'] ?: null,
+            'area_sqm'                => $post['area_sqm'] ?: null,
+            'floors'                  => $post['floors'] ?: 1,
+            'status'                  => $post['status'] ?? 'active',
+            'category'                => $post['category'] ?: null,
+            'property_type'           => $post['property_type'] ?: null,
+            'listing_status'          => $post['listing_status'] ?: null,
+            'for_sale'                => !empty($post['for_sale']) ? 1 : 0,
+            'sale_price'              => $post['sale_price'] ?: null,
+            'landlord_id'             => $post['landlord_id'] ?: null,
+            'expected_monthly_income' => $post['expected_monthly_income'] ?: null,
+            'landlord_share_pct'      => $post['landlord_share_pct'] ?: null,
+            'management_fee_pct'      => $post['management_fee_pct'] ?: null,
+            'finance_notes'           => $post['finance_notes'] ?: null,
+        ];
+
+        $id = $this->model->insert($data);
+        $this->logActivity('create', 'facilities', $id, 'Facility created: ' . $data['name']);
+
+        return redirect()->to('/facilities/' . $id)->with('success', 'Facility created successfully.');
+    }
+
+    // ----------------------------------------------------------
+    // Show
+    // ----------------------------------------------------------
+
+    public function show(int $id)
+    {
+        return $this->viewFacility($id);
+    }
+
+    /** Rich facility dashboard with units, contracts, assets, and work orders. */
+    public function viewFacility(int $id)
+    {
+        $facility = $this->db->table('facilities f')
+            ->select('f.*, c.name AS company_name, u.name AS manager_name')
+            ->join('companies c', 'c.id = f.company_id', 'left')
+            ->join('users u',     'u.id = f.manager_id', 'left')
+            ->where('f.id', $id)
+            ->where('f.deleted_at', null)
+            ->get()->getRowArray();
+
+        if (! $facility) {
+            return redirect()->to(base_url('facilities'))->with('error', 'Facility not found.');
+        }
+
+        $facilityUnits = $this->db->table('units')
+            ->where('facility_id', $id)
+            ->where('deleted_at', null)
+            ->orderBy('unit_number', 'ASC')
+            ->get()->getResultArray();
+
+        $units = $facilityUnits;
+        $occupied = count(array_filter($facilityUnits, static fn ($u) => ($u['status'] ?? '') === 'occupied'));
+
+        $kpi = [
+            'total_units'    => count($facilityUnits),
+            'occupied_units' => $occupied,
+        ];
+
+        $assets = $this->db->table('assets')
+            ->where('facility_id', $id)
+            ->where('deleted_at', null)
+            ->get()->getResultArray();
+
+        $contracts = $this->db->table('contracts')
+            ->where('facility_id', $id)
+            ->orderBy('end_date', 'DESC')
+            ->get()->getResultArray();
+
+        $openWO = $this->db->table('work_orders w')
+            ->select('w.*, u.name AS assigned_name, un.unit_number')
+            ->join('users u', 'u.id = w.assigned_to', 'left')
+            ->join('units un', 'un.id = w.unit_id', 'left')
+            ->where('w.facility_id', $id)
+            ->whereIn('w.status', ['new', 'assigned', 'in_progress', 'on_hold'])
+            ->where('w.deleted_at', null)
+            ->orderBy('w.created_at', 'DESC')
+            ->limit(50)
+            ->get()->getResultArray();
+
+        $leaseContracts = [];
+        if ($this->db->tableExists('lease_contracts')) {
+            $leaseContracts = $this->db->table('lease_contracts lc')
+                ->select('lc.*, t.full_name AS tenant_name, u.unit_number')
+                ->join('tenants t', 't.id = lc.tenant_id', 'left')
+                ->join('units u', 'u.id = lc.unit_id', 'left')
+                ->where('lc.facility_id', $id)
+                ->where('lc.deleted_at', null)
+                ->orderBy('lc.end_date', 'DESC')
+                ->get()->getResultArray();
+        }
+
+        $maintenanceHistory = $this->db->table('maintenance_requests mr')
+            ->select('mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at, u.unit_number')
+            ->join('units u', 'u.id = mr.unit_id', 'left')
+            ->where('mr.facility_id', $id)
+            ->orderBy('mr.created_at', 'DESC')
+            ->limit(20)
+            ->get()->getResultArray();
+
+        $workspace = $this->currentWorkspace();
+        $hasParkingUnits = (bool) array_filter(
+            $facilityUnits,
+            static fn ($u) => strtolower((string) ($u['unit_type'] ?? '')) === 'parking'
+        );
+
+        $propertyDocuments = [];
+        if ($this->db->tableExists('documents') && $this->db->fieldExists('module', 'documents')) {
+            $propertyDocuments = $this->db->table('documents')
+                ->where('module', 'facility')
+                ->where('ref_id', $id)
+                ->orderBy('created_at', 'DESC')
+                ->get()->getResultArray();
+        }
+
+        return view('facilities/view', $this->viewData([
+            'title'         => $facility['name'],
+            'facility'      => $facility,
+            'facilityUnits' => $facilityUnits,
+            'units'         => $units,
+            'kpi'           => $kpi,
+            'assets'        => $assets,
+            'contracts'     => $contracts,
+            'leaseContracts'=> $leaseContracts,
+            'maintenanceHistory' => $maintenanceHistory,
+            'workspace'     => $workspace,
+            'propertyDocuments' => $propertyDocuments,
+            'openWO'        => $openWO,
+            'hasParkingUnits' => $hasParkingUnits,
+        ]));
+    }
+
+    // ----------------------------------------------------------
+    // Edit / Update
+    // ----------------------------------------------------------
+
+    public function edit(int $id)
+    {
+        $this->requirePermission('facilities.edit');
+
+        $facility     = $this->model->find($id);
+        if (! $facility) return redirect()->to('/facilities')->with('error', 'Facility not found.');
+
+        $companyModel = new CompanyModel();
+        $userModel    = new UserModel();
+        $landlords    = $this->db->tableExists('landlords')
+            ? $this->db->table('landlords')->where('status', 'active')->where('deleted_at', null)->orderBy('full_name')->get()->getResultArray()
+            : [];
+
+        return view('facilities/create', [
+            'pageTitle' => 'Edit Facility — ' . $facility['name'],
+            'facility'  => $facility,
+            'companies' => $companyModel->where('status', 'active')->findAll(),
+            'managers'  => $userModel->getUsersByRole('facility_manager'),
+            'landlords' => $landlords,
+        ]);
+    }
+
+    public function update(int $id)
+    {
+        $this->requirePermission('facilities.edit');
+
+        $facility = $this->model->find($id);
+        if (! $facility) return redirect()->to('/facilities')->with('error', 'Facility not found.');
+
+        $rules = [
+            'name'       => 'required|min_length[2]|max_length[200]',
+            'code'       => "required|max_length[20]|is_unique[facilities.code,id,{$id}]",
+            'city'       => 'required|max_length[100]',
+            'country'    => 'required|max_length[100]',
+            'company_id' => 'required|is_natural_no_zero',
+        ];
+
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $post = $this->request->getPost();
+
+        $this->model->update($id, [
+            'name'                    => $post['name'],
+            'code'                    => strtoupper($post['code']),
+            'address'                 => $post['address'] ?? null,
+            'city'                    => $post['city'],
+            'country'                 => $post['country'],
+            'company_id'              => $post['company_id'],
+            'manager_id'              => $post['manager_id'] ?: null,
+            'area_sqm'                => $post['area_sqm'] ?: null,
+            'floors'                  => $post['floors'] ?: 1,
+            'status'                  => $post['status'] ?? 'active',
+            'category'                => $post['category'] ?: null,
+            'property_type'           => $post['property_type'] ?: null,
+            'listing_status'          => $post['listing_status'] ?: null,
+            'for_sale'                => !empty($post['for_sale']) ? 1 : 0,
+            'sale_price'              => $post['sale_price'] ?: null,
+            'landlord_id'             => $post['landlord_id'] ?: null,
+            'expected_monthly_income' => $post['expected_monthly_income'] ?: null,
+            'landlord_share_pct'      => $post['landlord_share_pct'] ?: null,
+            'management_fee_pct'      => $post['management_fee_pct'] ?: null,
+            'finance_notes'           => $post['finance_notes'] ?: null,
+        ]);
+
+        $this->logActivity('update', 'facilities', $id, 'Facility updated');
+        return redirect()->to('/facilities/' . $id)->with('success', 'Facility updated.');
+    }
+
+    // ----------------------------------------------------------
+    // Delete (soft)
+    // ----------------------------------------------------------
+
+    public function delete(int $id)
+    {
+        $this->requireRole(['super_admin']);
+
+        $this->model->delete($id);
+        $this->logActivity('delete', 'facilities', $id, 'Facility soft-deleted');
+
+        return redirect()->to('/facilities')->with('success', 'Facility removed.');
+    }
+}

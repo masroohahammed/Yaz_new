@@ -1,0 +1,115 @@
+<?php
+
+namespace App\Controllers\Traits;
+
+use App\Services\ParkingContractService;
+
+trait ParkingContractTrait
+{
+    /**
+     * @param array<string, mixed> $d
+     */
+    protected function renderParkingContractDocument(array $d, bool $wantPdf = false): \CodeIgniter\HTTP\Response|string
+    {
+        $svc = new ParkingContractService($this->db);
+        $durationMonths = $svc->durationMonths(
+            (string) ($d['start_date'] ?? ''),
+            (string) ($d['end_date'] ?? '')
+        );
+        $contractDate = (string) ($d['contract_date'] ?? date('Y-m-d'));
+
+        $data = $this->viewData([
+            'title'          => 'Parking Contract',
+            'd'              => $d,
+            'durationMonths' => $durationMonths,
+            'englishDay'     => $svc->englishDayName($contractDate),
+            'arabicDay'      => $svc->arabicDayName($contractDate),
+            'usePdf'         => true,
+            'pdfUrl'         => '',
+        ]);
+
+        if ($wantPdf && class_exists(\Dompdf\Dompdf::class)) {
+            $html = view('leases/parking_contract_print', $data);
+            $dompdf = new \Dompdf\Dompdf();
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            $filename = 'Parking_Contract_' . preg_replace('/[^A-Za-z0-9_-]/', '_', (string) ($d['parking_unit_no'] ?? 'unit')) . '.pdf';
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/pdf')
+                ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->setBody($dompdf->output());
+        }
+
+        return view('leases/parking_contract_print', $data);
+    }
+
+    /** @param array<string, mixed> $unit */
+    protected function isParkingUnitRow(array $unit): bool
+    {
+        return strtolower(trim((string) ($unit['unit_type'] ?? ''))) === 'parking';
+    }
+
+    /**
+     * @param array<string, mixed> $d
+     */
+    protected function persistParkingContractFields(int $unitId, ?int $leaseId, array $d): void
+    {
+        if ($this->db->fieldExists('plate_number', 'units') && ! empty($d['plate_number'])) {
+            $this->db->table('units')->where('id', $unitId)->update([
+                'plate_number' => esc((string) $d['plate_number']),
+            ]);
+        }
+
+        if ($leaseId && $this->db->tableExists('lease_contracts')) {
+            $patch = [];
+            if ($this->db->fieldExists('contract_kind', 'lease_contracts')) {
+                $patch['contract_kind'] = 'parking';
+            }
+            if ($this->db->fieldExists('plate_number', 'lease_contracts') && ! empty($d['plate_number'])) {
+                $patch['plate_number'] = esc((string) $d['plate_number']);
+            }
+            if ($this->db->fieldExists('vehicle_type', 'lease_contracts') && ! empty($d['vehicle_type'])) {
+                $patch['vehicle_type'] = esc((string) $d['vehicle_type']);
+            }
+            if ($this->db->fieldExists('vehicle_description', 'lease_contracts')) {
+                $patch['vehicle_description'] = esc((string) ($d['vehicle_description'] ?? ''));
+            }
+            if ($this->db->fieldExists('title_deed_no', 'lease_contracts')) {
+                $patch['title_deed_no'] = esc((string) ($d['title_deed_no'] ?? ''));
+            }
+            if ($this->db->fieldExists('zone_no', 'lease_contracts')) {
+                $patch['zone_no'] = esc((string) ($d['zone_no'] ?? ''));
+            }
+            if ($this->db->fieldExists('street_no', 'lease_contracts')) {
+                $patch['street_no'] = esc((string) ($d['street_no'] ?? ''));
+            }
+            if ($this->db->fieldExists('building_no', 'lease_contracts')) {
+                $patch['building_no'] = esc((string) ($d['building_no'] ?? ''));
+            }
+            if ($this->db->fieldExists('tenant_qid', 'lease_contracts')) {
+                $qid = trim((string) ($d['tenant_qid'] ?? ''));
+                $patch['tenant_qid'] = $qid !== '' ? esc($qid) : null;
+            }
+            if ($patch !== []) {
+                $patch['updated_at'] = date('Y-m-d H:i:s');
+                $this->db->table('lease_contracts')->where('id', $leaseId)->update($patch);
+            }
+
+            if (! empty($patch['tenant_qid']) && $this->db->fieldExists('qid_no', 'tenants')) {
+                $leaseRow = $this->db->table('lease_contracts')
+                    ->select('tenant_id')
+                    ->where('id', $leaseId)
+                    ->get()->getRowArray();
+                $tenantId = (int) ($leaseRow['tenant_id'] ?? 0);
+                if ($tenantId > 0) {
+                    $this->db->table('tenants')->where('id', $tenantId)->update([
+                        'qid_no'     => $patch['tenant_qid'],
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            }
+        }
+    }
+}

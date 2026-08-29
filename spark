@@ -1,0 +1,18 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * CodeIgniter spark CLI entrypoint.
+ */
+
+define('FCPATH', __DIR__ . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR);
+
+chdir(FCPATH);
+
+require FCPATH . '../app/Config/Paths.php';
+
+$paths = new Config\Paths();
+
+require rtrim($paths->systemDirectory, '\\/ ') . DIRECTORY_SEPARATOR . 'Boot.php';
+
+exit(CodeIgniter\Boot::bootSpark($paths));

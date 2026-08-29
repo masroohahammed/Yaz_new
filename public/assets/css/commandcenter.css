@@ -1,0 +1,502 @@
+/* CommandCenter theme — light shell, burgundy accent, white cards */
+
+/* Inter removed — DM Sans is the single application font */
+
+:root {
+    --cc-bg:           #f8f9fa;
+    --cc-card:         #ffffff;
+    --cc-border:       #e9ecef;
+    --cc-text:         #212529;
+    --cc-muted:        #6c757d;
+    --cc-burgundy:     #4a0e2e;
+    --cc-burgundy-lit: #76002b;
+    --cc-shadow:       0 2px 12px rgba(0, 0, 0, 0.06);
+    --cc-radius:       10px;
+    --sidebar-width:   220px;
+}
+
+body.fm-layout {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    background: var(--cc-bg);
+    color: var(--cc-text);
+}
+
+/* ---- Light sidebar (CommandCenter) ---- */
+.sidebar.cc-sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    max-width: var(--sidebar-width);
+    background: #fff;
+    color: var(--cc-text);
+    border-right: 1px solid var(--cc-border);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.04);
+}
+
+.cc-sidebar .sidebar-brand {
+    border-bottom: 1px solid var(--cc-border);
+}
+
+.cc-sidebar .sidebar-brand-text {
+    color: #111;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.cc-sidebar .sidebar-item {
+    color: #495057;
+    border-radius: 8px;
+    position: relative;
+}
+
+.cc-sidebar .sidebar-item:hover {
+    background: #f1f3f5;
+    color: #111;
+}
+
+.cc-sidebar .sidebar-item.active {
+    background: var(--primary-color, var(--cc-burgundy));
+    color: #fff;
+    font-weight: 600;
+}
+
+.cc-sidebar .sidebar-item.active i {
+    color: #fff;
+}
+
+.cc-sidebar .sidebar-item.active::after {
+    display: none;
+}
+
+.cc-sidebar .sidebar-footer {
+    border-top: 1px solid var(--cc-border) !important;
+}
+
+.cc-sidebar .sidebar-footer .text-white {
+    color: #111 !important;
+}
+
+.cc-sidebar .btn-cc-primary {
+    background: var(--primary-color, var(--cc-burgundy));
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+/* ---- Topbar with search ---- */
+.topbar.cc-topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--cc-border);
+    gap: 1rem;
+}
+
+.cc-search {
+    flex: 1;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.cc-search .form-control {
+    background: #f1f3f5;
+    border: none;
+    border-radius: 999px;
+    padding-left: 2.5rem;
+    font-size: 0.875rem;
+}
+
+.cc-search .bi-search {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cc-muted);
+}
+
+.topbar-actions .btn {
+    color: var(--cc-muted);
+}
+
+.topbar-actions .btn:hover {
+    color: var(--primary-color, var(--cc-burgundy));
+}
+
+/* ---- Cards & KPI (stat cards) ---- */
+.fm-card,
+.cc-card {
+    background: var(--cc-card);
+    border: 1px solid var(--cc-border);
+    border-radius: var(--cc-radius);
+    box-shadow: var(--cc-shadow);
+}
+
+.card-header-fm {
+    background: transparent;
+}
+
+.kpi-card {
+    background: var(--cc-card) !important;
+    border: 1px solid var(--cc-border) !important;
+    border-radius: var(--cc-radius) !important;
+    box-shadow: var(--cc-shadow) !important;
+    padding: 1.25rem !important;
+}
+
+.kpi-card .kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #faf5f8;
+    color: var(--primary-color, var(--cc-burgundy));
+    font-size: 1.1rem;
+}
+
+.kpi-card .kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.kpi-card .kpi-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--cc-muted);
+    font-weight: 600;
+}
+
+.kpi-card .kpi-sub {
+    font-size: 0.72rem;
+    color: var(--cc-muted);
+}
+
+/* ---- Tables (registry style) ---- */
+.fm-table thead th,
+.table-fm thead th {
+    background: #fafafa !important;
+    color: var(--cc-muted) !important;
+    border-bottom: 2px solid var(--cc-border) !important;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.fm-table tbody tr:hover,
+.table-fm tbody tr:hover {
+    background: #f8f9fa !important;
+}
+
+/* ---- Forms on burgundy panel ---- */
+.cc-panel-primary {
+    background: var(--primary-color, var(--cc-burgundy));
+    color: #fff;
+    border-radius: var(--cc-radius);
+    padding: 1.25rem;
+}
+
+.cc-panel-primary .form-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.8rem;
+}
+
+.cc-panel-primary .form-control,
+.cc-panel-primary .form-select {
+    background: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ---- Facility / regional card grid ---- */
+.cc-grid-card {
+    border-radius: var(--cc-radius);
+    overflow: hidden;
+    background: var(--cc-card);
+    border: 1px solid var(--cc-border);
+    box-shadow: var(--cc-shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cc-grid-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.cc-grid-card .cc-grid-img {
+    height: 140px;
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+    position: relative;
+}
+
+.cc-grid-card .cc-grid-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* ---- Work order lifecycle — one row ---- */
+.wo-lifecycle-card {
+    overflow: hidden;
+}
+
+.wo-lifecycle-row {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+}
+
+.wo-lifecycle-track {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-width: max-content;
+    gap: 0;
+}
+
+.wo-lifecycle-step {
+    flex: 0 0 auto;
+    text-align: center;
+    width: 72px;
+}
+
+.wo-lifecycle-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f3f5;
+    color: var(--cc-muted);
+    border: 2px solid #dee2e6;
+    margin: 0 auto 4px;
+    font-size: 0.9rem;
+}
+
+.wo-lifecycle-step.is-done .wo-lifecycle-icon {
+    background: #d1fae5;
+    border-color: #10b981;
+    color: #065f46;
+}
+
+.wo-lifecycle-step.is-current .wo-lifecycle-icon {
+    background: var(--primary-color, var(--cc-burgundy));
+    border-color: var(--primary-color, var(--cc-burgundy));
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(74, 14, 46, 0.15);
+}
+
+.wo-lifecycle-label {
+    font-size: 0.62rem;
+    line-height: 1.15;
+    color: var(--cc-muted);
+    font-weight: 500;
+    max-width: 72px;
+    margin: 0 auto;
+}
+
+.wo-lifecycle-step.is-current .wo-lifecycle-label {
+    color: var(--primary-color, var(--cc-burgundy));
+    font-weight: 700;
+}
+
+.wo-lifecycle-step.is-done .wo-lifecycle-label {
+    color: #065f46;
+}
+
+.wo-lifecycle-line {
+    flex: 0 0 24px;
+    height: 2px;
+    background: #dee2e6;
+    margin: 0 2px;
+    margin-bottom: 22px;
+}
+
+.wo-lifecycle-line.is-done {
+    background: #10b981;
+}
+
+/* Legacy workflow stepper — force single row */
+.workflow-stepper {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.35rem;
+    padding-bottom: 6px;
+}
+
+.workflow-step {
+    flex-shrink: 0;
+}
+
+/* ---- Buttons ---- */
+.btn-fm-primary,
+.btn-primary-brand {
+    background: var(--primary-color, var(--cc-burgundy)) !important;
+    border-color: var(--primary-color, var(--cc-burgundy)) !important;
+    border-radius: 8px !important;
+    font-weight: 600;
+}
+
+.btn-fm-outline {
+    border-color: var(--primary-color, var(--cc-burgundy)) !important;
+    color: var(--primary-color, var(--cc-burgundy)) !important;
+    border-radius: 8px !important;
+}
+
+.text-primary-brand {
+    color: var(--primary-color, var(--cc-burgundy)) !important;
+}
+
+.page-header h1 {
+    font-weight: 700;
+    color: #111;
+}
+
+/* FAB style */
+.cc-fab {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--primary-color, var(--cc-burgundy));
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 16px rgba(74, 14, 46, 0.35);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* ---- Layout: full width, topbar flush, no top gap ---- */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body.fm-layout {
+    padding: 0;
+    margin: 0;
+}
+
+.fm-layout {
+    width: 100%;
+    max-width: 100vw;
+}
+
+.main-wrapper {
+    width: calc(100% - var(--sidebar-width, 220px));
+    max-width: 100%;
+    margin-left: var(--sidebar-width, 220px);
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar.cc-topbar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    margin: 0;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.main-content {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 0;
+    padding-top: 1rem !important;
+}
+
+/* Dashboard KPI responsive (13" laptop / tablet) */
+@media (min-width: 576px) and (max-width: 1399.98px) {
+    .kpi-card .kpi-value {
+        font-size: 1.35rem;
+    }
+    .kpi-card .kpi-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 1199.98px) {
+    .main-wrapper {
+        width: 100%;
+        margin-left: 0;
+    }
+    .cc-search {
+        max-width: 280px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .cc-search {
+        display: none !important;
+    }
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.75rem;
+    }
+    .row.g-3 > [class*="col-"] {
+        min-width: 0;
+    }
+}
+
+/* Modals above sticky topbar */
+.modal {
+    z-index: 1060;
+}
+.modal-backdrop {
+    z-index: 1055;
+}
+
+/* WO action modals */
+.modal-dialog-centered {
+    max-height: calc(100vh - 2rem);
+}
+
+/* Layout overrides — flush topbar, full width (no top gap) */
+html, body { margin: 0 !important; padding: 0 !important; }
+.fm-layout { display: block !important; width: 100% !important; }
+.sidebar.cc-sidebar { position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; width: var(--sidebar-width, 220px) !important; z-index: 1040 !important; }
+.main-wrapper {
+    margin-left: var(--sidebar-width, 220px) !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 100vh;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+}
+.topbar.cc-topbar {
+    position: sticky !important;
+    top: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    flex-shrink: 0 !important;
+    z-index: 1030 !important;
+}
+.main-content { flex: 1; margin-top: 0 !important; padding-top: 0.75rem !important; }
+@media (max-width: 1199.98px) {
+    .main-wrapper { margin-left: 0 !important; width: 100% !important; }
+}
+.wo-workflow-page { width: 100%; max-width: 100%; }

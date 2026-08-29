@@ -1,0 +1,116 @@
+/**
+ * Crimson Horizon theme layer — extends CommandCenter shell.
+ * Urbanist + DM Sans, rounded cards, floating tables, inline filters.
+ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Urbanist:wght@500;600;700&display=swap');
+
+:root {
+  --ch-font-display: "Urbanist", "DM Sans", system-ui, sans-serif;
+  --ch-font-body: "DM Sans", system-ui, sans-serif;
+  --ch-radius-card: 16px;
+  --ch-radius-btn: 10px;
+  --ch-shadow-card: 0 8px 30px rgba(74, 14, 46, 0.08);
+}
+
+body.fm-layout {
+  font-family: var(--ch-font-body);
+  background: #f4f0f2;
+}
+
+h1, h2, h3, h4, h5, .page-header h1 {
+  font-family: var(--ch-font-display);
+  letter-spacing: -0.02em;
+}
+
+.ch-sidebar.cc-sidebar {
+  background: #fff;
+  border-right: 1px solid #ece4e8;
+}
+
+.sidebar-workspace-badge {
+  display: block;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.sidebar-section-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9ca3af;
+  padding: 0.85rem 0.75rem 0.35rem;
+  font-weight: 600;
+}
+
+.form-card,
+.fm-card,
+.kpi-card {
+  border-radius: var(--ch-radius-card);
+  border: 1px solid rgba(118, 0, 43, 0.08);
+  box-shadow: var(--ch-shadow-card);
+  background: #fff;
+}
+
+.form-card {
+  padding: 25px;
+}
+
+.filters-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  padding: 1rem 1.25rem;
+  background: #fff;
+  border-radius: var(--ch-radius-card);
+  box-shadow: var(--ch-shadow-card);
+  margin-bottom: 1rem;
+}
+
+.table-registry {
+  background: #fff;
+  border-radius: var(--ch-radius-card);
+  overflow: hidden;
+  box-shadow: var(--ch-shadow-card);
+}
+
+.table-registry thead th {
+  background: #faf7f8;
+  border-bottom: 1px solid #ece4e8;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b5a62;
+  font-weight: 600;
+}
+
+.btn-fm-primary,
+.btn-primary {
+  border-radius: var(--ch-radius-btn);
+}
+
+.cc-topbar {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #ece4e8;
+}
+
+.cc-search input {
+  border-radius: 999px;
+  background: #f8f4f6;
+  border-color: transparent;
+  padding-left: 2.25rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  color: var(--primary, #76002b);
+}
+
+@media print {
+  .sidebar, .cc-topbar, .btn, .filters-inline { display: none !important; }
+  .main-wrapper { margin: 0 !important; }
+  .form-card, .table-registry { box-shadow: none; border: 1px solid #ddd; }
+}

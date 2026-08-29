@@ -1,0 +1,20 @@
+# =============================================================================
+# FM ERP — public/uploads/.htaccess
+# Allow static file serving but block PHP/script execution in upload folder.
+# =============================================================================
+Options -Indexes -ExecCGI
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Block any script execution attempt
+    RewriteRule \.(php|php[0-9]|phtml|phar|pl|py|sh|cgi|asp|aspx|jsp)$ - [F,NC,L]
+</IfModule>
+
+# Only allow safe file types to be served
+<FilesMatch "\.(php|php[0-9]|phtml|phar|pl|py|sh|cgi)$">
+    <IfModule authz_core_module>
+        Require all denied
+    </IfModule>
+    <IfModule !authz_core_module>
+        Deny from all
+    </IfModule>
+</FilesMatch>

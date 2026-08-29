@@ -1,0 +1,244 @@
+/**
+ * Theme shell — sidebar from settings, unified spacing, forms, alerts.
+ * Load after commandcenter.css and crimson-horizon.css.
+ */
+
+/* Layout: sidebar shell (not legacy top navbar) */
+body.fm-layout {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  background: var(--fm-surface, #f4f0f2);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--fm-text, #1a2332);
+}
+
+/* ── Themed sidebar ── */
+.sidebar.cc-sidebar.ch-sidebar,
+.sidebar.cc-sidebar {
+  background: var(--fm-sidebar-bg) !important;
+  color: var(--fm-sidebar-text) !important;
+  border-right: 1px solid var(--fm-sidebar-border) !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+.sidebar.cc-sidebar .sidebar-brand {
+  border-bottom: 1px solid var(--fm-sidebar-border) !important;
+  min-height: 64px;
+}
+
+.sidebar.cc-sidebar .sidebar-brand-text {
+  color: var(--fm-sidebar-brand-text) !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+}
+
+.sidebar.cc-sidebar .sidebar-logo {
+  max-height: 40px;
+  max-width: 120px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.sidebar.cc-sidebar .sidebar-logo-placeholder {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.sidebar.cc-sidebar .sidebar-workspace-badge {
+  color: var(--fm-sidebar-text-muted) !important;
+}
+
+.sidebar.cc-sidebar .sidebar-section-label {
+  color: var(--fm-sidebar-text-muted) !important;
+  padding: 0.75rem 0.75rem 0.25rem;
+  font-size: 0.65rem;
+}
+
+.sidebar.cc-sidebar .sidebar-item {
+  color: var(--fm-sidebar-link) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+.sidebar.cc-sidebar .sidebar-item:hover {
+  background: var(--fm-sidebar-hover) !important;
+  color: #fff !important;
+}
+
+.sidebar.cc-sidebar .sidebar-item.active {
+  background: var(--fm-sidebar-active) !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.sidebar.cc-sidebar .sidebar-item.active::after {
+  background: var(--secondary-color, #c7ba9a) !important;
+}
+
+.sidebar.cc-sidebar .sidebar-footer {
+  border-top: 1px solid var(--fm-sidebar-border) !important;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.sidebar.cc-sidebar .sidebar-footer .sidebar-user-name {
+  color: var(--fm-sidebar-text) !important;
+  font-size: 0.8125rem;
+}
+
+.sidebar.cc-sidebar .sidebar-footer .sidebar-user-role {
+  color: var(--fm-sidebar-text-muted) !important;
+  font-size: 0.72rem;
+}
+
+.sidebar.cc-sidebar .sidebar-footer .btn,
+.sidebar.cc-sidebar #sidebarClose {
+  color: var(--fm-sidebar-text) !important;
+}
+
+/* ── Page structure ── */
+.main-content {
+  padding: 1.25rem 1.5rem 1.75rem !important;
+}
+
+.page-header {
+  gap: 1rem;
+  margin-bottom: 1.25rem !important;
+}
+
+.page-header h1 {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: var(--fm-navy, var(--primary-color)) !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.page-header .small,
+.page-header .text-muted {
+  font-size: 0.8125rem !important;
+}
+
+/* ── Cards ── */
+.fm-card {
+  margin-bottom: 1rem;
+}
+
+.fm-card-body {
+  padding: 1.15rem 1.25rem !important;
+}
+
+.fm-card-body.p-0 {
+  padding: 0 !important;
+}
+
+.card-header-fm {
+  padding: 0.85rem 1.25rem !important;
+}
+
+.card-header-fm h5,
+.card-header-fm h4 {
+  font-size: 0.9rem !important;
+  color: var(--fm-navy, var(--primary-color)) !important;
+}
+
+/* ── Forms (uniform) ── */
+.form-label {
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  color: var(--fm-text, #1a2332) !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.form-control,
+.form-select {
+  font-size: 0.875rem !important;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 8px !important;
+  border-color: var(--fm-border, #e2e8f0) !important;
+}
+
+.form-control-sm,
+.form-select-sm {
+  font-size: 0.8125rem !important;
+  padding: 0.35rem 0.65rem !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 118, 0, 43), 0.12) !important;
+}
+
+.form-text {
+  font-size: 0.75rem !important;
+  margin-top: 0.25rem;
+}
+
+/* ── Alerts / validation ── */
+.alert {
+  font-size: 0.875rem !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 10px !important;
+  margin-bottom: 1rem !important;
+}
+
+.alert ul {
+  font-size: 0.875rem;
+  margin-bottom: 0;
+}
+
+.text-danger,
+.invalid-feedback {
+  font-size: 0.8125rem !important;
+}
+
+/* ── Buttons (theme primary) ── */
+.btn-fm-primary {
+  background: var(--primary-color) !important;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.25) !important;
+}
+
+.btn-fm-primary:hover {
+  background: var(--primary-hover, var(--primary-color)) !important;
+}
+
+.btn-fm-outline {
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.btn-fm-outline:hover {
+  background: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+/* ── Tables in cards ── */
+.fm-table th {
+  background: var(--fm-navy, var(--primary-color)) !important;
+  font-size: 0.72rem !important;
+  padding: 0.65rem 0.9rem !important;
+}
+
+.fm-table td {
+  font-size: 0.8125rem !important;
+  padding: 0.6rem 0.9rem !important;
+}
+
+/* ── Spacing helpers ── */
+.row.g-3 {
+  --bs-gutter-x: 1rem;
+  --bs-gutter-y: 1rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem !important;
+}
+
+.filters-inline {
+  gap: 0.75rem !important;
+}

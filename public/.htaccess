@@ -1,0 +1,70 @@
+# =============================================================================
+# FM ERP — public/.htaccess  |  Apache 2.4+  |  CodeIgniter 4
+# =============================================================================
+
+Options -Indexes -MultiViews
+ServerSignature Off
+
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    Options +FollowSymlinks
+    RewriteEngine On
+    RewriteBase /
+
+    # Pass Authorization header (JWT)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Remove trailing slash (skip directories)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Serve real files and directories directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Everything else → CI front controller
+    RewriteRule ^([\s\S]*)$ index.php/$1 [L,NC,QSA]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    ErrorDocument 404 index.php
+</IfModule>
+
+<FilesMatch "\.(env|log|ini|sh|sql|bak|swp|lock|dist|gitignore)$">
+    <IfModule authz_core_module>
+        Require all denied
+    </IfModule>
+    <IfModule !authz_core_module>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg             "access plus 1 year"
+    ExpiresByType image/png              "access plus 1 year"
+    ExpiresByType image/gif              "access plus 1 year"
+    ExpiresByType image/webp             "access plus 1 year"
+    ExpiresByType image/x-icon          "access plus 1 year"
+    ExpiresByType text/css               "access plus 1 month"
+    ExpiresByType text/javascript        "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css
+    AddOutputFilterByType DEFLATE text/javascript application/javascript application/json
+</IfModule>
+
+AddDefaultCharset UTF-8
