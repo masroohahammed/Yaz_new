@@ -6,6 +6,7 @@ $data = $items ?? [];
 $areas = $data['areas'] ?? [];
 $ratings = $data['ratings'] ?? [];
 $notes = $data['notes'] ?? [];
+$photos = $data['photos'] ?? [];
 $typeLabel = ucfirst(str_replace('_', ' ', (string) ($i['type'] ?? 'routine')));
 $dateVal = $i['inspection_date'] ?? $i['created_at'] ?? '';
 $dateFmt = $dateVal ? date('d M Y', strtotime((string) $dateVal)) : '—';
@@ -89,6 +90,7 @@ $issueCount = count(array_filter($ratings, fn ($r) => in_array($r, ['poor', 'dam
         <?php
           $rating = $ratings[$idx] ?? '';
           $note = $notes[$idx] ?? '';
+          $photo = $photos[$idx] ?? '';
           $badgeClass = $rating ? 'condition-badge-' . $rating : '';
         ?>
         <div class="d-flex align-items-start gap-3 px-4 py-3 border-bottom <?= in_array($rating, ['poor', 'damaged'], true) ? 'sla-warn' : '' ?>">
@@ -101,7 +103,14 @@ $issueCount = count(array_filter($ratings, fn ($r) => in_array($r, ['poor', 'dam
             <span class="text-muted small">Not rated</span>
             <?php endif; ?>
             <?php if ($note): ?>
-            <div class="small text-muted mt-1"><?= esc($note) ?></div>
+            <div class="small text-muted mt-1"><i class="bi bi-chat-left-text me-1"></i><?= esc($note) ?></div>
+            <?php endif; ?>
+            <?php if ($photo): ?>
+            <div class="mt-2">
+              <a href="<?= base_url($photo) ?>" target="_blank" rel="noopener">
+                <img src="<?= base_url($photo) ?>" alt="Photo for <?= esc($area) ?>" class="rounded border inspection-area-photo-thumb">
+              </a>
+            </div>
             <?php endif; ?>
           </div>
         </div>

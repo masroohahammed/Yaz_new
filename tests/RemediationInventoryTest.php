@@ -446,6 +446,28 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('inspection-row-clickable', $partial);
         $unitChecklist = file_get_contents($this->root . '/app/Views/units/checklist.php');
         $this->assertStringContainsString('checklistProgressBar', $unitChecklist);
+        $this->assertStringContainsString('area_photo[]', $checklist);
+        $this->assertStringContainsString('existing_photo[]', $checklist);
+        $this->assertStringContainsString('inspection-area-photo-thumb', $view);
+        $print = file_get_contents($this->root . '/app/Views/inspections/print.php');
+        $this->assertStringContainsString('Area Breakdown', $print);
+        $this->assertStringContainsString('$photos', $print);
+        $inspections = file_get_contents($this->root . '/app/Controllers/Inspections.php');
+        $this->assertStringContainsString('InspectionPhotoService::storeUpload', $inspections);
+        $this->assertStringContainsString("'photos' => \$photos", $inspections);
+        $this->assertStringContainsString('submitBtn.disabled', $form);
+    }
+
+    public function testPublicMaintenanceUsesExplicitScopeFilters(): void
+    {
+        $controller = file_get_contents($this->root . '/app/Controllers/PublicEntity.php');
+        $this->assertStringContainsString("->where('mr.unit_id', \$unitId)", $controller);
+        $this->assertStringContainsString("->where('mr.facility_id', \$facilityId)", $controller);
+        $this->assertStringNotContainsString('applyMaintenanceScope', $controller);
+        $view = file_get_contents($this->root . '/app/Views/public/maintenance.php');
+        $this->assertStringContainsString('form_open_multipart', $view);
+        $this->assertStringContainsString('requester_name', $view);
+        $this->assertStringContainsString('category', $view);
     }
 
     public function testPropertyMaintenanceTabHasCreateButton(): void

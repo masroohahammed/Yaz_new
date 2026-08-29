@@ -295,34 +295,11 @@
   border-color: color-mix(in srgb, var(--fm-theme) 35%, #e5e7eb);
 }
 
-.inspection-condition-btn.active[data-value="excellent"] {
-  background: #dcfce7;
-  border-color: #16a34a;
-  color: #15803d;
-}
-
-.inspection-condition-btn.active[data-value="good"] {
-  background: #dbeafe;
-  border-color: #2563eb;
-  color: #1d4ed8;
-}
-
-.inspection-condition-btn.active[data-value="fair"] {
-  background: #fef9c3;
-  border-color: #ca8a04;
-  color: #a16207;
-}
-
-.inspection-condition-btn.active[data-value="poor"] {
-  background: #ffedd5;
-  border-color: #ea580c;
-  color: #c2410c;
-}
-
-.inspection-condition-btn.active[data-value="damaged"] {
-  background: #fee2e2;
-  border-color: #dc2626;
-  color: #b91c1c;
+.inspection-condition-btn.active {
+  background: var(--fm-theme);
+  border-color: var(--fm-theme);
+  color: #fff;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--fm-theme) 28%, transparent);
 }
 
 .inspection-area-card {
@@ -335,6 +312,12 @@
 
 .inspection-area-card.area-complete {
   border-left: 3px solid #16a34a;
+}
+
+.inspection-area-photo-thumb {
+  max-height: 96px;
+  max-width: 140px;
+  object-fit: cover;
 }
 
 .inspection-progress-wrap {

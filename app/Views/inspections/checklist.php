@@ -7,6 +7,7 @@ $saved = $savedData ?? [];
 $areas = ! empty($saved['areas']) ? $saved['areas'] : $defaultAreas;
 $ratings = $saved['ratings'] ?? [];
 $notes = $saved['notes'] ?? [];
+$photos = $saved['photos'] ?? [];
 $conditions = ['excellent', 'good', 'fair', 'poor', 'damaged'];
 $typeLabel = ucfirst(str_replace('_', ' ', (string) ($i['type'] ?? 'routine')));
 $isDraft = ($i['status'] ?? 'draft') === 'draft';
@@ -32,7 +33,7 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
   </div>
 </div>
 
-<?= form_open(base_url('pm-inspections/checklist/' . $i['id']), ['id' => 'checklistForm']) ?>
+<?= form_open_multipart(base_url('pm-inspections/checklist/' . $i['id']), ['id' => 'checklistForm']) ?>
 <?= csrf_field() ?>
 
 <div class="fm-card mb-3">
@@ -47,7 +48,7 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
   </div>
   <div class="fm-card-body" id="areasContainer">
     <?php foreach ($areas as $idx => $area): ?>
-    <?php $rating = $ratings[$idx] ?? 'good'; $note = $notes[$idx] ?? ''; ?>
+    <?php $rating = $ratings[$idx] ?? 'good'; $note = $notes[$idx] ?? ''; $photo = $photos[$idx] ?? ''; ?>
     <div class="inspection-area-card" data-area-index="<?= $idx ?>">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
         <h6 class="mb-0 fw-bold"><i class="bi bi-geo-alt me-1 text-muted"></i><?= esc($area) ?></h6>
@@ -60,7 +61,18 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
         <button type="button" class="inspection-condition-btn<?= $rating === $c ? ' active' : '' ?>" data-value="<?= $c ?>"><?= ucfirst($c) ?></button>
         <?php endforeach; ?>
       </div>
-      <input type="text" name="item_notes[]" class="form-control form-control-sm area-notes" placeholder="Notes for <?= esc($area) ?> (optional)" value="<?= esc($note) ?>">
+      <input type="text" name="item_notes[]" class="form-control form-control-sm area-notes mb-2" placeholder="Notes for <?= esc($area) ?> (optional)" value="<?= esc($note) ?>">
+      <input type="hidden" name="existing_photo[]" class="existing-photo-input" value="<?= esc((string) $photo) ?>">
+      <div class="inspection-area-photo mb-0">
+        <?php if ($photo): ?>
+        <div class="inspection-area-photo-preview d-flex align-items-center gap-2 mb-2">
+          <img src="<?= base_url($photo) ?>" alt="" class="rounded border" style="max-height:72px;max-width:120px;object-fit:cover">
+          <button type="button" class="btn btn-sm btn-link text-danger p-0 remove-photo-btn"><i class="bi bi-trash me-1"></i>Remove photo</button>
+        </div>
+        <?php endif; ?>
+        <label class="form-label fw-semibold x-small mb-1"><i class="bi bi-camera me-1"></i>Photo (optional)</label>
+        <input type="file" name="area_photo[]" class="form-control form-control-sm area-photo-input" accept="image/*">
+      </div>
     </div>
     <?php endforeach; ?>
   </div>
@@ -122,6 +134,17 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
         updateProgress();
       });
     }
+    const removePhotoBtn = card.querySelector('.remove-photo-btn');
+    if (removePhotoBtn) {
+      removePhotoBtn.addEventListener('click', function() {
+        const existingInput = card.querySelector('.existing-photo-input');
+        if (existingInput) existingInput.value = '';
+        const preview = card.querySelector('.inspection-area-photo-preview');
+        if (preview) preview.remove();
+        const fileInput = card.querySelector('.area-photo-input');
+        if (fileInput) fileInput.value = '';
+      });
+    }
   }
 
   function updateProgress() {
@@ -163,7 +186,12 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
       '<input type="hidden" name="areas[]" value="' + name.trim().replace(/"/g, '&quot;') + '">' +
       '<input type="hidden" name="condition_rating[]" class="condition-input" value="good">' +
       '<div class="inspection-condition-group mb-2">' + btns + '</div>' +
-      '<input type="text" name="item_notes[]" class="form-control form-control-sm area-notes" placeholder="Notes (optional)">';
+      '<input type="text" name="item_notes[]" class="form-control form-control-sm area-notes mb-2" placeholder="Notes (optional)">' +
+      '<input type="hidden" name="existing_photo[]" class="existing-photo-input" value="">' +
+      '<div class="inspection-area-photo mb-0">' +
+        '<label class="form-label fw-semibold x-small mb-1"><i class="bi bi-camera me-1"></i>Photo (optional)</label>' +
+        '<input type="file" name="area_photo[]" class="form-control form-control-sm area-photo-input" accept="image/*">' +
+      '</div>';
     container.appendChild(div);
     bindAreaCard(div);
     updateProgress();

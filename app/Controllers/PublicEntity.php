@@ -17,13 +17,24 @@ class PublicEntity extends BaseController
         $isLoggedIn = (bool) session()->get('user_id');
         $records    = $this->loadMaintenanceRecords($scope);
         $entityLabel = $this->entityLabel($scope);
+        $units      = [];
+
+        if (($scope['type'] ?? '') === 'property' && ! empty($scope['facility_id'])) {
+            $units = $this->loadUnitsForFacility((int) $scope['facility_id']);
+        }
+
+        $user = session()->get('user_id')
+            ? $this->db->table('users')->select('name, email')->where('id', (int) session()->get('user_id'))->get()->getRowArray()
+            : null;
 
         return view('public/maintenance', [
             'title'       => 'Maintenance — ' . $entityLabel,
             'scope'       => $scope,
             'entityLabel' => $entityLabel,
             'records'     => $records,
+            'units'       => $units,
             'isLoggedIn'  => $isLoggedIn,
+            'user'        => $user,
             'settings'    => $this->settings,
             'backUrl'     => $scope['scan_url'] ?? base_url('request'),
         ]);
@@ -40,6 +51,7 @@ class PublicEntity extends BaseController
             'requester_name' => 'required|min_length[2]',
             'description'    => 'required|min_length[10]',
             'priority'       => 'required|in_list[critical,high,medium,low]',
+            'category'       => 'permit_empty|max_length[100]',
         ];
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
@@ -49,11 +61,23 @@ class PublicEntity extends BaseController
             return redirect()->back()->with('error', 'Maintenance module not available.');
         }
 
+        $unitId = (int) ($this->request->getPost('unit_id') ?? 0);
+        if ($unitId <= 0 && ! empty($scope['unit_id'])) {
+            $unitId = (int) $scope['unit_id'];
+        }
+        $facilityId = (int) ($scope['facility_id'] ?? 0);
+        if ($unitId > 0) {
+            $unitRow = $this->db->table('units')->select('facility_id')->where('id', $unitId)->get()->getRowArray();
+            if ($unitRow) {
+                $facilityId = (int) ($unitRow['facility_id'] ?? $facilityId);
+            }
+        }
+
         $ticket = 'TKT-' . date('Y') . '-' . strtoupper(substr(uniqid(), -6));
         $data = [
             'ticket_number'   => $ticket,
-            'facility_id'     => $scope['facility_id'] ?? null,
-            'unit_id'         => $scope['unit_id'] ?? null,
+            'facility_id'     => $facilityId > 0 ? $facilityId : null,
+            'unit_id'         => $unitId > 0 ? $unitId : null,
             'requester_name'  => esc($this->request->getPost('requester_name')),
             'requester_email' => esc($this->request->getPost('requester_email') ?? ''),
             'requester_phone' => esc($this->request->getPost('requester_phone') ?? ''),
@@ -68,7 +92,24 @@ class PublicEntity extends BaseController
             $data['asset_id'] = (int) $scope['asset_id'];
         }
         if ($this->db->fieldExists('scan_source', 'maintenance_requests')) {
-            $data['scan_source'] = 'qr_scan';
+            $data['scan_source'] = session()->get('user_id') ? 'staff_form' : 'public_form';
+        }
+
+        $image = $this->request->getFile('image');
+        if ($image && $image->isValid() && ! $image->hasMoved()) {
+            $dir = FCPATH . 'uploads/maintenance';
+            if (! is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+            $name = $image->getRandomName();
+            $image->move($dir, $name);
+            $path = 'uploads/maintenance/' . $name;
+            if ($this->db->fieldExists('image_path', 'maintenance_requests')) {
+                $data['image_path'] = $path;
+            }
+            if ($this->db->fieldExists('photo', 'maintenance_requests')) {
+                $data['photo'] = $path;
+            }
         }
 
         $this->db->table('maintenance_requests')->insert($data);
@@ -222,11 +263,41 @@ class PublicEntity extends BaseController
         }
 
         $q = $this->db->table('maintenance_requests mr')
-            ->select('mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at, mr.requester_name')
+            ->select('mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at, mr.requester_name, u.unit_number')
+            ->join('units u', 'u.id = mr.unit_id', 'left')
             ->orderBy('mr.created_at', 'DESC')
             ->limit(25);
 
-        $this->applyMaintenanceScope($q, $scope, 'mr');
+        $unitId = (int) ($scope['unit_id'] ?? 0);
+        $assetId = (int) ($scope['asset_id'] ?? 0);
+        $facilityId = (int) ($scope['facility_id'] ?? 0);
+
+        if ($unitId > 0) {
+            $q->where('mr.unit_id', $unitId);
+        } elseif ($assetId > 0 && $this->db->fieldExists('asset_id', 'maintenance_requests')) {
+            $q->where('mr.asset_id', $assetId);
+        } elseif ($facilityId > 0) {
+            $q->where('mr.facility_id', $facilityId);
+        }
+
+        return $q->get()->getResultArray();
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function loadUnitsForFacility(int $facilityId): array
+    {
+        if ($facilityId <= 0 || ! $this->db->tableExists('units')) {
+            return [];
+        }
+
+        $q = $this->db->table('units u')
+            ->select('u.id, u.unit_number, u.floor, u.status')
+            ->where('u.facility_id', $facilityId)
+            ->orderBy('u.unit_number', 'ASC');
+
+        if ($this->db->fieldExists('deleted_at', 'units')) {
+            $q->where('u.deleted_at', null);
+        }
 
         return $q->get()->getResultArray();
     }
@@ -258,19 +329,5 @@ class PublicEntity extends BaseController
         }
 
         return $q->get()->getResultArray();
-    }
-
-    /** @param array<string, mixed> $scope */
-    private function applyMaintenanceScope($q, array $scope, string $prefix = ''): void
-    {
-        $p = $prefix !== '' ? $prefix . '.' : '';
-
-        if (! empty($scope['unit_id'])) {
-            $q->where($p . 'unit_id', (int) $scope['unit_id']);
-        } elseif (! empty($scope['asset_id']) && $this->db->fieldExists('asset_id', 'maintenance_requests')) {
-            $q->where($p . 'asset_id', (int) $scope['asset_id']);
-        } elseif (! empty($scope['facility_id'])) {
-            $q->where($p . 'facility_id', (int) $scope['facility_id']);
-        }
     }
 }

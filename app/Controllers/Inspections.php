@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
 use App\Database\AutoIncrementRepair;
+use App\Services\InspectionPhotoService;
 
 /**
  * PM Inspections — move-in/move-out/periodic unit checklists.
@@ -68,11 +69,11 @@ class Inspections extends BaseController
     public function create()
     {
         return view('inspections/form', $this->viewData([
-            'title'          => 'New Inspection',
-            'inspection'     => null,
-            'facilities'     => $this->scopedFacilitiesList('id, name'),
-            'preselectProperty' => (int) ($this->request->getGet('property_id') ?? 0),
-            'preselectUnit'     => (int) ($this->request->getGet('unit_id') ?? 0),
+            'title'             => 'New Inspection',
+            'inspection'        => null,
+            'facilities'        => $this->scopedFacilitiesList('id, name'),
+            'preselectProperty' => (int) old('property_id', $this->request->getGet('property_id') ?? 0),
+            'preselectUnit'     => (int) old('unit_id', $this->request->getGet('unit_id') ?? 0),
         ]));
     }
 
@@ -84,17 +85,25 @@ class Inspections extends BaseController
 
         $propertyId = (int) $this->request->getPost('property_id');
         $unitId = (int) $this->request->getPost('unit_id');
-        $type = $this->request->getPost('inspection_type') ?: 'routine';
-        $validTypes = ['move_in', 'move_out', 'routine', 'handover', 'periodic'];
-        if ($type === 'periodic') {
-            $type = 'routine';
-        }
-        if (! in_array($type, $validTypes, true)) {
-            $type = 'routine';
+
+        if ($unitId > 0) {
+            $unitRow = $this->db->table('units')->select('id, facility_id')->where('id', $unitId)->get()->getRowArray();
+            if ($unitRow) {
+                if ($propertyId <= 0) {
+                    $propertyId = (int) ($unitRow['facility_id'] ?? 0);
+                } elseif ((int) ($unitRow['facility_id'] ?? 0) !== $propertyId) {
+                    return redirect()->back()->withInput()->with('error', 'Selected unit does not belong to the chosen property.');
+                }
+            }
         }
 
         if ($propertyId <= 0 || $unitId <= 0) {
-            return redirect()->back()->withInput()->with('error', 'Property and unit are required.');
+            return redirect()->back()->withInput()->with('error', 'Property and unit are required. Please wait for units to load and select a unit.');
+        }
+
+        $type = (string) ($this->request->getPost('inspection_type') ?: 'routine');
+        if (! in_array($type, ['move_in', 'move_out', 'routine'], true)) {
+            $type = 'routine';
         }
 
         AutoIncrementRepair::ensure($this->db, self::TABLE);
@@ -139,8 +148,24 @@ class Inspections extends BaseController
         $areas = $this->request->getPost('areas') ?? [];
         $ratings = $this->request->getPost('condition_rating') ?? [];
         $notes = $this->request->getPost('item_notes') ?? [];
+        $existingPhotos = $this->request->getPost('existing_photo') ?? [];
+        $uploadFiles = $this->request->getFileMultiple('area_photo') ?? [];
 
-        $payload = ['areas' => $areas, 'ratings' => $ratings, 'notes' => $notes];
+        $photos = [];
+        foreach ($areas as $idx => $area) {
+            $photoPath = trim((string) ($existingPhotos[$idx] ?? ''));
+
+            if (isset($uploadFiles[$idx]) && $uploadFiles[$idx]->isValid() && ! $uploadFiles[$idx]->hasMoved()) {
+                $newPath = InspectionPhotoService::storeUpload($uploadFiles[$idx]);
+                if ($newPath !== null) {
+                    $photoPath = $newPath;
+                }
+            }
+
+            $photos[] = $photoPath !== '' ? $photoPath : null;
+        }
+
+        $payload = ['areas' => $areas, 'ratings' => $ratings, 'notes' => $notes, 'photos' => $photos];
         $update = [
             'areas_json'         => json_encode($payload),
             'items_json'         => json_encode($payload),
