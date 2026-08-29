@@ -136,6 +136,21 @@ CALL fm_add_index_if_missing('commission_rules', 'idx_cr_company', '`company_id`
 CALL fm_add_index_if_missing('cheques', 'idx_chq_facility_date', '`facility_id`, `cheque_date`');
 CALL fm_add_index_if_missing('cheques', 'idx_chq_status', '`status`');
 
+-- 8) Parking lease contract columns (lease print / parking agreement)
+ALTER TABLE `lease_contracts`
+  ADD COLUMN IF NOT EXISTS `contract_kind` VARCHAR(20) NULL,
+  ADD COLUMN IF NOT EXISTS `tenant_qid` VARCHAR(30) NULL,
+  ADD COLUMN IF NOT EXISTS `plate_number` VARCHAR(30) NULL,
+  ADD COLUMN IF NOT EXISTS `vehicle_type` VARCHAR(60) NULL,
+  ADD COLUMN IF NOT EXISTS `vehicle_description` VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS `title_deed_no` VARCHAR(50) NULL,
+  ADD COLUMN IF NOT EXISTS `zone_no` VARCHAR(20) NULL,
+  ADD COLUMN IF NOT EXISTS `street_no` VARCHAR(20) NULL,
+  ADD COLUMN IF NOT EXISTS `building_no` VARCHAR(20) NULL;
+
+ALTER TABLE `units`
+  ADD COLUMN IF NOT EXISTS `plate_number` VARCHAR(30) NULL;
+
 DROP PROCEDURE IF EXISTS fm_add_index_if_missing;
 
 -- After applying: ROTATE THE DATABASE PASSWORD. Previous password was in source.

@@ -272,9 +272,33 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('clearance_date', $sql);
         $this->assertStringContainsString('management_fee', $sql);
         $this->assertStringContainsString('idx_chq_facility_date', $sql);
-        $this->assertFileExists($this->root . '/app/Database/Migrations/2026-08-29-100500_PerformanceQueryIndexes.php');
+        $this->assertStringContainsString('contract_kind', $sql);
         $this->assertFileExists($this->root . '/app/Database/Migrations/2026-08-29-100600_ChequeDatesAndExpenseCategories.php');
+        $this->assertFileExists($this->root . '/app/Database/Migrations/2026-08-29-100700_ParkingLeaseContractColumns.php');
         $this->assertFileExists($this->root . '/database/patches/2026-08-29-fm-erp-remediation.sql');
+    }
+
+    public function testParkingContractUsesOfficialLegalText(): void
+    {
+        $this->assertFileExists($this->root . '/app/Services/ParkingContractService.php');
+        $this->assertFileExists($this->root . '/app/Views/leases/parking_contract_print.php');
+        $print = file_get_contents($this->root . '/app/Views/leases/parking_contract_print.php');
+        foreach ([
+            'PARKING SPACE LEASE AGREEMENT',
+            'عقد ايجار موقف تحت مبنى العقار',
+            'البند الرابع : الشروط العامة',
+            'Article Four: General Terms and Conditions',
+            '_doc_letterhead',
+            '_doc_footer',
+        ] as $needle) {
+            $this->assertStringContainsString($needle, $print);
+        }
+        $svc = file_get_contents($this->root . '/app/Services/ParkingContractService.php');
+        $this->assertStringContainsString('header_title_deed_no', $svc);
+        $this->assertStringContainsString('parking_owner_name_ar', $svc);
+        $settings = file_get_contents($this->root . '/app/Views/settings/index.php');
+        $this->assertStringContainsString('company_cr', $settings);
+        $this->assertStringContainsString('company_po_box', $settings);
     }
 
     public function testNoKitchenPosModuleWasInvented(): void

@@ -31,6 +31,7 @@ Migrations in this release:
 - `2026-08-29-100400` reminder dismiss metadata
 - `2026-08-29-100500` dashboard / invoice / notification / HR indexes
 - `2026-08-29-100600` cheque `deposit_date` / `clearance_date` + expanded `expenses.category`
+- `2026-08-29-100700` parking lease columns on `lease_contracts` / `units.plate_number`
 
 SQL alternative (if you cannot run spark on the host) — **one file for all of the above**:
 

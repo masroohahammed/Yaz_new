@@ -36,6 +36,12 @@ class Settings extends BaseController
 
         $fields = [
             'company_name', 'company_tagline', 'company_address', 'company_phone', 'company_email',
+            'company_cr', 'company_po_box', 'company_website',
+            'parking_header_title_deed', 'parking_owner_name_ar', 'parking_owner_name_en', 'parking_owner_cr',
+            'parking_rep_company_ar', 'parking_rep_company_en', 'parking_rep_cr',
+            'parking_poa_no', 'parking_poa_date', 'parking_rep_name_ar', 'parking_rep_name_en',
+            'parking_rep_nationality_ar', 'parking_rep_nationality_en', 'parking_rep_qid',
+            'parking_collector_account',
             'currency', 'vat_enabled', 'vat_rate',
             'timezone', 'sla_breach_notify', 'smtp_host', 'smtp_user', 'smtp_port',
             'primary_color', 'secondary_color',

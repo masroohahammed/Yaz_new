@@ -85,6 +85,7 @@ td:last-child{text-align:right;font-weight:600}
     <div class="footer-brand"><?= esc($settings['company_name']??'FM ERP') ?></div>
     <div style="font-size:.68rem;color:#9ca3af">Printed: <?= date('d M Y H:i') ?> | <?= esc($est['est_number']) ?></div>
   </div>
+  <?= $this->include('layouts/_doc_footer', ['settings' => $settings, 'plain' => true]) ?>
 </div>
 <script>window.onload=()=>window.print()</script>
 </body>

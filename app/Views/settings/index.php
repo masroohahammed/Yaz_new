@@ -53,6 +53,38 @@
           <input type="email" name="company_email" class="form-control" value="<?= esc($settings['company_email'] ?? '') ?>" placeholder="accounts@company.com">
         </div>
       </div>
+      <div class="row g-2 mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Commercial registration (CR)</label>
+          <input type="text" name="company_cr" class="form-control" value="<?= esc($settings['company_cr'] ?? '') ?>" placeholder="159425">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">P.O. Box</label>
+          <input type="text" name="company_po_box" class="form-control" value="<?= esc($settings['company_po_box'] ?? '') ?>" placeholder="200199">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Website</label>
+          <input type="text" name="company_website" class="form-control" value="<?= esc($settings['company_website'] ?? '') ?>" placeholder="www.alyazwa.com">
+        </div>
+      </div>
+      <details class="mb-3 border rounded p-3">
+        <summary class="fw-semibold small">Parking contract legal parties (defaults for print)</summary>
+        <div class="row g-2 mt-2">
+          <div class="col-md-4"><label class="form-label small">Header title deed no.</label><input name="parking_header_title_deed" class="form-control form-control-sm" value="<?= esc($settings['parking_header_title_deed'] ?? '211207') ?>"></div>
+          <div class="col-md-4"><label class="form-label small">Owner (AR)</label><input name="parking_owner_name_ar" class="form-control form-control-sm" value="<?= esc($settings['parking_owner_name_ar'] ?? '') ?>"></div>
+          <div class="col-md-4"><label class="form-label small">Owner (EN)</label><input name="parking_owner_name_en" class="form-control form-control-sm" value="<?= esc($settings['parking_owner_name_en'] ?? '') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">Owner CR</label><input name="parking_owner_cr" class="form-control form-control-sm" value="<?= esc($settings['parking_owner_cr'] ?? '70823') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">Rep company (AR)</label><input name="parking_rep_company_ar" class="form-control form-control-sm" value="<?= esc($settings['parking_rep_company_ar'] ?? '') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">Rep company (EN)</label><input name="parking_rep_company_en" class="form-control form-control-sm" value="<?= esc($settings['parking_rep_company_en'] ?? '') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">Rep CR</label><input name="parking_rep_cr" class="form-control form-control-sm" value="<?= esc($settings['parking_rep_cr'] ?? '159425') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">POA no.</label><input name="parking_poa_no" class="form-control form-control-sm" value="<?= esc($settings['parking_poa_no'] ?? '98256/2024') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">POA date</label><input type="date" name="parking_poa_date" class="form-control form-control-sm" value="<?= esc($settings['parking_poa_date'] ?? '2024-03-12') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">Rep name (AR)</label><input name="parking_rep_name_ar" class="form-control form-control-sm" value="<?= esc($settings['parking_rep_name_ar'] ?? '') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">Rep name (EN)</label><input name="parking_rep_name_en" class="form-control form-control-sm" value="<?= esc($settings['parking_rep_name_en'] ?? '') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">Rep QID</label><input name="parking_rep_qid" class="form-control form-control-sm" value="<?= esc($settings['parking_rep_qid'] ?? '28563400749') ?>"></div>
+          <div class="col-md-3"><label class="form-label small">Collector account line</label><input name="parking_collector_account" class="form-control form-control-sm" value="<?= esc($settings['parking_collector_account'] ?? 'CR-159425 (AL YAZWA REAL ESTATE)') ?>"></div>
+        </div>
+      </details>
 
       <!-- Logo upload + preview -->
       <div class="mb-3">

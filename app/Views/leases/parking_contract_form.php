@@ -13,8 +13,8 @@
 
 <div class="form-card mb-3">
   <p class="small text-muted mb-3">
-    Review and edit fields below. English appears on the left and Arabic on the right in the printed contract.
-    Plate number and unit details are pre-filled from this parking unit.
+    Review fields below, then print. The document is generated as a full Arabic page followed by a full English page,
+    using your company logo and the legal text configured under Settings.
   </p>
   <form method="post" action="<?= esc($printUrl) ?>" target="_blank" id="parkingContractForm">
     <?= csrf_field() ?>
@@ -68,9 +68,21 @@
         <label class="form-label small fw-semibold">Tenant address</label>
         <input type="text" name="tenant_address" class="form-control form-control-sm" value="<?= esc($d['tenant_address'] ?? '') ?>">
       </div>
-
       <div class="col-md-4">
-        <label class="form-label small fw-semibold">Title deed no.</label>
+        <label class="form-label small fw-semibold">Tenant P.O. Box</label>
+        <input type="text" name="tenant_po_box" class="form-control form-control-sm" value="<?= esc($d['tenant_po_box'] ?? '') ?>" placeholder="------">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold">Cheque count</label>
+        <input type="number" min="1" name="cheque_count" class="form-control form-control-sm" value="<?= esc($d['cheque_count'] ?? $d['duration_months'] ?? '') ?>">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold">Header title deed no.</label>
+        <input type="text" name="header_title_deed_no" class="form-control form-control-sm" value="<?= esc($d['header_title_deed_no'] ?? '') ?>">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold">Property title deed no.</label>
         <input type="text" name="title_deed_no" class="form-control form-control-sm" value="<?= esc($d['title_deed_no'] ?? '') ?>">
       </div>
       <div class="col-md-4">
@@ -136,10 +148,33 @@
         <input type="text" name="collector_company" class="form-control form-control-sm" value="<?= esc($d['collector_company'] ?? '') ?>">
       </div>
       <div class="col-md-6">
+        <label class="form-label small fw-semibold">Collector account line</label>
+        <input type="text" name="collector_account" class="form-control form-control-sm" value="<?= esc($d['collector_account'] ?? '') ?>">
+      </div>
+      <div class="col-md-3">
         <label class="form-label small fw-semibold">Collector CR</label>
         <input type="text" name="collector_cr" class="form-control form-control-sm" value="<?= esc($d['collector_cr'] ?? '') ?>">
       </div>
     </div>
+
+    <details class="mt-3 border rounded p-3">
+      <summary class="small fw-semibold">Legal parties (owner / representative)</summary>
+      <div class="row g-3 mt-2">
+        <div class="col-md-4"><label class="form-label small">Owner (AR)</label><input name="owner_name_ar" class="form-control form-control-sm" value="<?= esc($d['owner_name_ar'] ?? '') ?>"></div>
+        <div class="col-md-4"><label class="form-label small">Owner (EN)</label><input name="owner_name_en" class="form-control form-control-sm" value="<?= esc($d['owner_name_en'] ?? '') ?>"></div>
+        <div class="col-md-4"><label class="form-label small">Owner CR</label><input name="owner_cr" class="form-control form-control-sm" value="<?= esc($d['owner_cr'] ?? '') ?>"></div>
+        <div class="col-md-4"><label class="form-label small">Rep company (AR)</label><input name="rep_company_ar" class="form-control form-control-sm" value="<?= esc($d['rep_company_ar'] ?? '') ?>"></div>
+        <div class="col-md-4"><label class="form-label small">Rep company (EN)</label><input name="rep_company_en" class="form-control form-control-sm" value="<?= esc($d['rep_company_en'] ?? '') ?>"></div>
+        <div class="col-md-4"><label class="form-label small">Rep CR</label><input name="rep_cr" class="form-control form-control-sm" value="<?= esc($d['rep_cr'] ?? '') ?>"></div>
+        <div class="col-md-3"><label class="form-label small">POA no.</label><input name="poa_no" class="form-control form-control-sm" value="<?= esc($d['poa_no'] ?? '') ?>"></div>
+        <div class="col-md-3"><label class="form-label small">POA date</label><input type="date" name="poa_date" class="form-control form-control-sm" value="<?= esc($d['poa_date'] ?? '') ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Rep name (AR)</label><input name="rep_name_ar" class="form-control form-control-sm" value="<?= esc($d['rep_name_ar'] ?? '') ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Rep name (EN)</label><input name="rep_name_en" class="form-control form-control-sm" value="<?= esc($d['rep_name_en'] ?? '') ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Rep QID</label><input name="rep_qid" class="form-control form-control-sm" value="<?= esc($d['rep_qid'] ?? '') ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Landlord phone</label><input name="landlord_phone" class="form-control form-control-sm" value="<?= esc($d['landlord_phone'] ?? '') ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Landlord P.O. Box</label><input name="landlord_po_box" class="form-control form-control-sm" value="<?= esc($d['landlord_po_box'] ?? '') ?>"></div>
+      </div>
+    </details>
 
     <div class="d-flex gap-2 flex-wrap mt-4">
       <button type="submit" class="btn btn-fm-primary btn-sm"><i class="bi bi-printer me-1"></i>Preview &amp; Print</button>
