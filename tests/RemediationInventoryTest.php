@@ -411,6 +411,7 @@ final class RemediationInventoryTest extends TestCase
         $routes = file_get_contents($this->root . '/app/Config/Routes.php');
         $this->assertStringContainsString('public/maintenance', $routes);
         $this->assertStringContainsString('public/inspections', $routes);
+        $this->assertFileExists($this->root . '/app/Controllers/PublicMaintenance.php');
         $this->assertFileExists($this->root . '/app/Controllers/PublicEntity.php');
     }
 
@@ -465,15 +466,26 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('mr.unit_id = ?', $service);
         $this->assertStringContainsString('mr.facility_id = ?', $service);
         $this->assertStringContainsString('$db->query($sql, $params)', $service);
-        $controller = file_get_contents($this->root . '/app/Controllers/PublicEntity.php');
+        $this->assertStringContainsString('insertRequest', $service);
+        $this->assertFileExists($this->root . '/app/Controllers/PublicMaintenance.php');
+        $controller = file_get_contents($this->root . '/app/Controllers/PublicMaintenance.php');
+        $this->assertStringContainsString('extends Controller', $controller);
+        $this->assertStringNotContainsString('extends BaseController', $controller);
         $this->assertStringContainsString('MaintenanceScopeQuery::listRecords', $controller);
         $this->assertStringContainsString('renderPropertyMaintenance', $controller);
         $this->assertStringContainsString('MAINTENANCE_BUILD', $controller);
-        $this->assertStringContainsString('maintenancePing', $controller);
-        $this->assertStringContainsString('maintenance/ping', file_get_contents($this->root . '/app/Config/Routes.php'));
+        $this->assertStringContainsString("'2026-08-29-5'", $controller);
+        $this->assertStringContainsString('function ping', $controller);
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString('PublicMaintenance::index', $routes);
+        $this->assertStringContainsString('PublicMaintenance::ping', $routes);
+        $this->assertStringContainsString('PublicMaintenance::submit', $routes);
+        $this->assertStringContainsString('maintenance/ping', $routes);
         $this->assertStringNotContainsString('applyMaintenanceScope', $controller);
         $this->assertStringNotContainsString('loadMaintenanceRecords', $controller);
         $this->assertStringNotContainsString('loadUnitsForFacility', $controller);
+        $entity = file_get_contents($this->root . '/app/Controllers/PublicEntity.php');
+        $this->assertStringNotContainsString('function maintenance', $entity);
         $view = file_get_contents($this->root . '/app/Views/public/maintenance.php');
         $this->assertStringContainsString('fm-maintenance-build', $view);
         $this->assertStringContainsString('form_open_multipart', $view);

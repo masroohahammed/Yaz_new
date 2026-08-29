@@ -49,6 +49,39 @@ This product is Facility + Property Management. There is no kitchen / POS regist
 Work-order status updates and invoice / lease-payment totals are the live equivalents
 of “order”, revenue, voided, and cancelled amounts.
 
+## Public maintenance deploy (fixes whereKey SQL error)
+
+After merging branch `cursor/fm-erp-remediation-a002`, upload or pull these files to production:
+
+1. `app/Controllers/PublicMaintenance.php` **(new — required)**
+2. `app/Services/MaintenanceScopeQuery.php`
+3. `app/Views/public/maintenance.php`
+4. `app/Config/Routes.php`
+5. `app/Controllers/PublicEntity.php` (inspections only; maintenance moved out)
+
+Then clear PHP opcache and restart PHP-FPM:
+
+```bash
+php -r "if (function_exists('opcache_reset')) { opcache_reset(); echo 'ok'; }"
+sudo systemctl restart php-fpm   # or your host's PHP service name
+```
+
+**Verify deployment** (must return build `2026-08-29-5`):
+
+```
+GET https://your-domain/public/maintenance/ping
+```
+
+Expected JSON: `{"ok":true,"build":"2026-08-29-5","service":"2026-08-29-5","controller":"App\\Controllers\\PublicMaintenance"}`
+
+Open `https://your-domain/public/maintenance?facility_id=9103` and view page source — look for:
+
+```html
+<!-- fm-maintenance-build: 2026-08-29-5 -->
+```
+
+If you still see the old error or an older build marker, production is running stale files (partial deploy or opcache).
+
 ## Production debugging
 
 `app/Config/Database.php` sets `DBDebug = false` when `CI_ENVIRONMENT = production`.

@@ -9,7 +9,7 @@ use CodeIgniter\Database\BaseConnection;
  */
 class MaintenanceScopeQuery
 {
-    public const BUILD = '2026-08-29-4';
+    public const BUILD = '2026-08-29-5';
 
     /**
      * @param array<string, mixed> $scope
@@ -35,7 +35,7 @@ class MaintenanceScopeQuery
         if ($unitId > 0) {
             $sql .= ' AND mr.unit_id = ?';
             $params[] = $unitId;
-        } elseif ($assetId > 0) {
+        } elseif ($assetId > 0 && self::hasColumn($db, 'maintenance_requests', 'asset_id')) {
             $sql .= ' AND mr.asset_id = ?';
             $params[] = $assetId;
         } elseif ($facilityId > 0) {
@@ -174,5 +174,62 @@ class MaintenanceScopeQuery
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    /**
+     * Insert a maintenance request using parameterized raw SQL (no query builder).
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function insertRequest(BaseConnection $db, array $data): void
+    {
+        $columns = [
+            'ticket_number', 'facility_id', 'unit_id', 'requester_name', 'requester_email',
+            'requester_phone', 'category', 'description', 'priority', 'status', 'approval_status',
+        ];
+        $values = [
+            $data['ticket_number'],
+            $data['facility_id'],
+            $data['unit_id'],
+            $data['requester_name'],
+            $data['requester_email'],
+            $data['requester_phone'],
+            $data['category'],
+            $data['description'],
+            $data['priority'],
+            $data['status'],
+            $data['approval_status'],
+        ];
+
+        if (! empty($data['asset_id']) && self::hasColumn($db, 'maintenance_requests', 'asset_id')) {
+            $columns[] = 'asset_id';
+            $values[] = (int) $data['asset_id'];
+        }
+        if (! empty($data['scan_source']) && self::hasColumn($db, 'maintenance_requests', 'scan_source')) {
+            $columns[] = 'scan_source';
+            $values[] = (string) $data['scan_source'];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+        $sql = 'INSERT INTO maintenance_requests (' . implode(', ', $columns) . ') VALUES (' . $placeholders . ')';
+
+        $db->query($sql, $values);
+    }
+
+    private static function hasColumn(BaseConnection $db, string $table, string $column): bool
+    {
+        static $cache = [];
+        $key = $table . '.' . $column;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        try {
+            $cache[$key] = $db->fieldExists($column, $table);
+        } catch (\Throwable $e) {
+            $cache[$key] = false;
+        }
+
+        return $cache[$key];
     }
 }
