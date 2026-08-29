@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\PmExpenseCategories;
 use CodeIgniter\Database\BaseConnection;
 
 /**
@@ -435,7 +436,16 @@ class LandlordReportService
             for ($i = 5; $i >= 0; $i--) {
                 $monthStart = date('Y-m-01', strtotime('-' . $i . ' months'));
                 $monthEnd   = date('Y-m-t', strtotime($monthStart));
-                $active     = (int) $this->db->table('lease_contracts')
+                $occupied   = (int) ($this->db->query("
+                    SELECT COUNT(DISTINCT unit_id) AS occupied
+                    FROM lease_contracts
+                    WHERE facility_id IN (" . $this->inList($facilityIds) . ")
+                      AND deleted_at IS NULL
+                      AND start_date <= ?
+                      AND (end_date IS NULL OR end_date >= ?)
+                      AND status NOT IN ('terminated','cancelled','draft')
+                ", array_merge($facilityIds, [$monthEnd, $monthStart]))->getRowArray()['occupied'] ?? 0);
+                $active = (int) $this->db->table('lease_contracts')
                     ->whereIn('facility_id', $facilityIds)
                     ->where('deleted_at', null)
                     ->where('start_date <=', $monthEnd)
@@ -445,7 +455,13 @@ class LandlordReportService
                     ->groupEnd()
                     ->whereNotIn('status', ['terminated', 'cancelled', 'draft'])
                     ->countAllResults();
-                $trend[] = ['month' => date('M Y', strtotime($monthStart)), 'active_leases' => $active];
+                $trend[] = [
+                    'month'          => date('M Y', strtotime($monthStart)),
+                    'occupied_units' => $occupied,
+                    'total_units'    => $tot,
+                    'active_leases'  => $active,
+                    'occupancy_pct'  => $tot > 0 ? round($occupied / $tot * 100, 1) : 0.0,
+                ];
             }
         }
 
@@ -529,14 +545,14 @@ class LandlordReportService
     }
 
     /**
-     * @return array{rental: float, other: float, parking: float, service: float, utility: float, late: float, gross: float, collected: float, pending: float, expenses: float, maintenance: float, net: float, margin: float, by_category: array<string,float>}
+     * @return array{rental: float, other: float, parking: float, service: float, utility: float, late: float, gross: float, collected: float, pending: float, expenses: float, maintenance: float, net: float, margin: float, by_category: array<string,float>, by_group: array<string,float>}
      */
     public function pnl(array $facilityIds, string $from, string $to): array
     {
         $empty = [
             'rental' => 0.0, 'other' => 0.0, 'parking' => 0.0, 'service' => 0.0, 'utility' => 0.0, 'late' => 0.0,
             'gross' => 0.0, 'collected' => 0.0, 'pending' => 0.0, 'expenses' => 0.0, 'maintenance' => 0.0,
-            'net' => 0.0, 'margin' => 0.0, 'by_category' => [],
+            'net' => 0.0, 'margin' => 0.0, 'by_category' => [], 'by_group' => [],
         ];
         if ($facilityIds === [] || ! $this->db->tableExists('lease_payments')) {
             return $empty;
@@ -580,19 +596,23 @@ class LandlordReportService
 
         $expRows = $this->expenses($facilityIds, $from, $to);
         $byCat   = [];
+        $byGroup = [];
         foreach ($expRows as $e) {
             if (($e['status'] ?? '') !== 'approved') {
                 continue;
             }
-            $cat = (string) ($e['category'] ?? 'other');
-            $amt = (float) ($e['amount'] ?? 0);
+            $cat   = (string) ($e['category'] ?? 'other');
+            $amt   = (float) ($e['amount'] ?? 0);
+            $group = PmExpenseCategories::groupKey($cat);
             $out['expenses'] += $amt;
-            $byCat[$cat] = ($byCat[$cat] ?? 0) + $amt;
-            if (in_array($cat, ['labor', 'spare_parts', 'vendor', 'emergency'], true)) {
+            $byCat[$cat]     = ($byCat[$cat] ?? 0) + $amt;
+            $byGroup[$group] = ($byGroup[$group] ?? 0) + $amt;
+            if ($group === 'maintenance') {
                 $out['maintenance'] += $amt;
             }
         }
         $out['by_category'] = $byCat;
+        $out['by_group']    = $byGroup;
         $out['net']         = $out['collected'] - $out['expenses'];
         $out['margin']      = $out['collected'] > 0 ? round($out['net'] / $out['collected'] * 100, 1) : 0.0;
 

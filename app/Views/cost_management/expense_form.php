@@ -18,8 +18,8 @@
       <label class="form-label">Category</label>
       <select name="category" class="form-select">
         <option value="">— select —</option>
-        <?php foreach (['maintenance','utilities','insurance','tax','management_fee','renovation','other'] as $c): ?>
-          <option value="<?= $c ?>"><?= str_replace('_',' ',ucfirst($c)) ?></option>
+        <?php foreach (\App\Support\PmExpenseCategories::labels() as $c => $lab): ?>
+          <option value="<?= $c ?>"><?= esc($lab) ?></option>
         <?php endforeach; ?>
       </select>
     </div>

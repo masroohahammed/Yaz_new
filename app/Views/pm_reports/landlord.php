@@ -9,8 +9,14 @@ $qs = http_build_query(array_filter([
   'facility' => ! empty($facilityId) ? $facilityId : null,
   'from' => $from ?? null,
   'to' => $to ?? null,
+  'expense_category' => ! empty($expCat) ? $expCat : null,
 ]));
-$export = static fn (string $sec) => base_url('reports/pm/landlord/export/' . $sec) . '?' . $qs;
+$export = static fn (string $sec, string $fmt = 'csv') => base_url('reports/pm/landlord/export/' . $sec) . '?' . $qs . '&format=' . $fmt;
+$exportBtns = static function (string $sec) use ($export): void { ?>
+    <a class="btn btn-fm-outline btn-sm" href="<?= $export($sec, 'csv') ?>">CSV</a>
+    <a class="btn btn-fm-outline btn-sm" href="<?= $export($sec, 'excel') ?>">Excel</a>
+    <a class="btn btn-fm-outline btn-sm" href="<?= $export($sec, 'pdf') ?>">PDF</a>
+<?php };
 $jump = [
   ['overview', 'Overview', 'bi-speedometer2'],
   ['units', 'Units', 'bi-door-closed'],
@@ -67,6 +73,15 @@ $jump = [
     </div>
     <div class="col-md-2"><label class="form-label small">From</label><input type="date" name="from" class="form-control form-control-sm" value="<?= esc($from) ?>"></div>
     <div class="col-md-2"><label class="form-label small">To</label><input type="date" name="to" class="form-control form-control-sm" value="<?= esc($to) ?>"></div>
+    <div class="col-md-3">
+      <label class="form-label small">Expense category</label>
+      <select name="expense_category" class="form-select form-select-sm">
+        <option value="">All categories</option>
+        <?php foreach (($expenseCategories ?? []) as $val => $lab): ?>
+        <option value="<?= esc($val) ?>" <?= ($expCat ?? '') === $val ? 'selected' : '' ?>><?= esc($lab) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
     <div class="col-md-2"><button type="submit" class="btn btn-fm-primary btn-sm w-100">Apply</button></div>
   </form>
 </div></div>
@@ -105,6 +120,7 @@ $jump = [
     </div>
     <?php endforeach; ?>
   </div>
+  <div class="d-flex gap-2 no-print mb-2"><?php $exportBtns('overview'); ?></div>
   <p class="small text-muted mb-0">Properties and buildings are the same <code>facilities</code> records. Rent uses <code>lease_payments</code>; expenses use approved <code>expenses</code>.</p>
 </section>
 
@@ -112,7 +128,7 @@ $jump = [
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Unit reports</h5>
     <div class="d-flex gap-2 no-print">
-      <a class="btn btn-fm-outline btn-sm" href="<?= $export('units') ?>">CSV</a>
+      <?php $exportBtns('units'); ?>
       <a class="btn btn-fm-outline btn-sm" href="<?= base_url('reports/pm/occupancy?' . $qs) ?>">Portfolio occupancy</a>
     </div>
   </div>
@@ -142,7 +158,7 @@ $jump = [
 <section id="lr-tenants" class="mb-4">
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Tenant reports</h5>
-    <a class="btn btn-fm-outline btn-sm no-print" href="<?= $export('tenants') ?>">CSV</a>
+    <div class="d-flex gap-2 no-print"><?php $exportBtns('tenants'); ?></div>
   </div>
   <div class="fm-card"><div class="fm-card-body p-0 table-responsive">
     <table class="fm-table table-sm mb-0">
@@ -170,7 +186,7 @@ $jump = [
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Collection / rent</h5>
     <div class="d-flex gap-2 no-print">
-      <a class="btn btn-fm-outline btn-sm" href="<?= $export('collections') ?>">CSV</a>
+      <?php $exportBtns('collections'); ?>
       <a class="btn btn-fm-outline btn-sm" href="<?= base_url('reports/pm/payments?' . $qs) ?>">Payments report</a>
     </div>
   </div>
@@ -202,7 +218,7 @@ $jump = [
 <section id="lr-pending" class="mb-4">
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Pending collections</h5>
-    <a class="btn btn-fm-outline btn-sm no-print" href="<?= $export('pending') ?>">CSV</a>
+    <div class="d-flex gap-2 no-print"><?php $exportBtns('pending'); ?></div>
   </div>
   <div class="fm-card"><div class="fm-card-body p-0 table-responsive">
     <table class="fm-table table-sm mb-0">
@@ -230,14 +246,14 @@ $jump = [
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Cheque reports</h5>
     <div class="d-flex gap-2 no-print">
-      <a class="btn btn-fm-outline btn-sm" href="<?= $export('cheques') ?>">CSV</a>
+      <?php $exportBtns('cheques'); ?>
       <a class="btn btn-fm-outline btn-sm" href="<?= base_url('reports/pm/cheques?' . $qs) ?>">PDC report</a>
     </div>
   </div>
   <div class="small text-muted mb-2">Upcoming <?= (int) ($ov['cheques_upcoming'] ?? 0) ?> · Overdue <?= (int) ($ov['cheques_overdue'] ?? 0) ?> · Cleared <?= (int) ($ov['cheques_cleared'] ?? 0) ?> · Bounced <?= (int) ($ov['cheques_bounced'] ?? 0) ?></div>
   <div class="fm-card"><div class="fm-card-body p-0 table-responsive">
     <table class="fm-table table-sm mb-0">
-      <thead><tr><th>Tenant</th><th>Property</th><th>Cheque #</th><th>Bank</th><th>Cheque date</th><th>Amount</th><th>Status</th></tr></thead>
+      <thead><tr><th>Tenant</th><th>Property</th><th>Cheque #</th><th>Bank</th><th>Cheque date</th><th>Deposited</th><th>Cleared</th><th>Amount</th><th>Status</th></tr></thead>
       <tbody>
       <?php foreach ($cheques as $c):
         $upcoming = ($c['status'] ?? '') === 'pending' && ($c['cheque_date'] ?? '') >= date('Y-m-d');
@@ -249,11 +265,13 @@ $jump = [
         <td class="small fw-semibold"><?= esc($c['cheque_no'] ?? '') ?></td>
         <td class="small"><?= esc($c['bank_name'] ?? '—') ?></td>
         <td class="small"><?= esc($c['cheque_date'] ?? '') ?></td>
+        <td class="small"><?= esc($c['deposit_date'] ?? '—') ?></td>
+        <td class="small"><?= esc($c['clearance_date'] ?? '—') ?></td>
         <td class="small"><?= number_format((float) ($c['amount'] ?? 0), 2) ?></td>
         <td><span class="fm-badge badge-status-<?= esc($c['status'] ?? '') ?>"><?= esc($c['status'] ?? '') ?></span></td>
       </tr>
       <?php endforeach; ?>
-      <?php if (empty($cheques)): ?><tr><td colspan="7" class="text-muted text-center py-3">No cheques in this period.</td></tr><?php endif; ?>
+      <?php if (empty($cheques)): ?><tr><td colspan="9" class="text-muted text-center py-3">No cheques in this period.</td></tr><?php endif; ?>
       </tbody>
     </table>
   </div></div>
@@ -262,7 +280,7 @@ $jump = [
 <section id="lr-maintenance" class="mb-4">
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Maintenance</h5>
-    <a class="btn btn-fm-outline btn-sm no-print" href="<?= $export('maintenance') ?>">CSV</a>
+    <div class="d-flex gap-2 no-print"><?php $exportBtns('maintenance'); ?></div>
   </div>
   <div class="fm-card"><div class="fm-card-body p-0 table-responsive">
     <table class="fm-table table-sm mb-0">
@@ -302,7 +320,7 @@ $jump = [
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Expenses</h5>
     <div class="d-flex gap-2 no-print">
-      <a class="btn btn-fm-outline btn-sm" href="<?= $export('expenses') ?>">CSV</a>
+      <?php $exportBtns('expenses'); ?>
       <a class="btn btn-fm-outline btn-sm" href="<?= base_url('reports/pm/expenses?' . $qs) ?>">Expense report</a>
     </div>
   </div>
@@ -329,7 +347,7 @@ $jump = [
 <section id="lr-pnl" class="mb-4">
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Profit &amp; loss</h5>
-    <a class="btn btn-fm-outline btn-sm no-print" href="<?= $export('pnl') ?>">CSV</a>
+    <div class="d-flex gap-2 no-print"><?php $exportBtns('pnl'); ?></div>
   </div>
   <div class="fm-card"><div class="fm-card-body">
     <div class="row small">
@@ -345,6 +363,13 @@ $jump = [
         <div class="d-flex justify-content-between"><span>Margin</span><strong><?= number_format((float) $p['margin'], 1) ?>%</strong></div>
       </div>
     </div>
+    <?php if (! empty($p['by_group'])): ?>
+    <div class="row small mt-3">
+      <?php foreach ($p['by_group'] as $g => $amt): ?>
+      <div class="col-6 col-md-3"><div class="d-flex justify-content-between"><span><?= esc(ucfirst(str_replace('_', ' ', (string) $g))) ?></span><strong><?= number_format((float) $amt, 2) ?></strong></div></div>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
     <p class="small text-muted mb-0 mt-2">Uses paid <code>lease_payments</code> and approved <code>expenses</code>. Ledger P&amp;L per property remains at <?= esc('finance/pm/property') ?>.</p>
   </div></div>
 </section>
@@ -353,7 +378,7 @@ $jump = [
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Contracts / leases</h5>
     <div class="d-flex gap-2 no-print">
-      <a class="btn btn-fm-outline btn-sm" href="<?= $export('contracts') ?>">CSV</a>
+      <?php $exportBtns('contracts'); ?>
       <a class="btn btn-fm-outline btn-sm" href="<?= current_url() . '?' . $qs . '&expiry_days=30' ?>#lr-contracts">30d</a>
       <a class="btn btn-fm-outline btn-sm" href="<?= current_url() . '?' . $qs . '&expiry_days=60' ?>#lr-contracts">60d</a>
       <a class="btn btn-fm-outline btn-sm" href="<?= current_url() . '?' . $qs . '&expiry_days=90' ?>#lr-contracts">90d</a>
@@ -391,7 +416,7 @@ $jump = [
 <section id="lr-occupancy" class="mb-4">
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Occupancy</h5>
-    <a class="btn btn-fm-outline btn-sm no-print" href="<?= $export('occupancy') ?>">CSV</a>
+    <div class="d-flex gap-2 no-print"><?php $exportBtns('occupancy'); ?></div>
   </div>
   <div class="small mb-2">Occupancy <?= esc($occupancy['occupancy_pct'] ?? 0) ?>% · Vacancy <?= esc($occupancy['vacancy_pct'] ?? 0) ?>%</div>
   <div class="fm-card mb-2"><div class="fm-card-body p-0 table-responsive">
@@ -412,18 +437,30 @@ $jump = [
     </table>
   </div></div>
   <?php if (! empty($occupancy['trend'])): ?>
-  <div class="small text-muted">Active-lease trend (from <code>lease_contracts</code> overlap, not a stored occupancy snapshot):
-    <?php foreach ($occupancy['trend'] as $tr): ?>
-      <span class="me-2"><?= esc($tr['month']) ?>: <?= (int) $tr['active_leases'] ?></span>
-    <?php endforeach; ?>
-  </div>
+  <div class="fm-card"><div class="fm-card-body p-0 table-responsive">
+    <table class="fm-table table-sm mb-0">
+      <thead><tr><th>Month</th><th>Occupied units</th><th>Active leases</th><th>Total units</th><th>Occupancy %</th></tr></thead>
+      <tbody>
+      <?php foreach ($occupancy['trend'] as $tr): ?>
+      <tr>
+        <td class="small"><?= esc($tr['month'] ?? '') ?></td>
+        <td><?= (int) ($tr['occupied_units'] ?? 0) ?></td>
+        <td><?= (int) ($tr['active_leases'] ?? 0) ?></td>
+        <td><?= (int) ($tr['total_units'] ?? 0) ?></td>
+        <td><?= esc($tr['occupancy_pct'] ?? 0) ?>%</td>
+      </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div></div>
+  <p class="small text-muted mt-1 mb-0">Monthly trend is derived from <code>lease_contracts</code> date overlap against current unit count. There is no occupancy snapshot table.</p>
   <?php endif; ?>
 </section>
 
 <section id="lr-statement" class="mb-4">
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">Landlord statement</h5>
-    <a class="btn btn-fm-outline btn-sm no-print" href="<?= $export('statement') ?>">CSV</a>
+    <div class="d-flex gap-2 no-print"><?php $exportBtns('statement'); ?></div>
   </div>
   <div class="fm-card"><div class="fm-card-body p-0 table-responsive">
     <table class="fm-table table-sm mb-0">

@@ -629,7 +629,7 @@ class Finance extends BaseController
         $this->db->table('expenses')->insert([
             'facility_id'    => (int)$this->request->getPost('facility_id'),
             'work_order_id'  => $this->request->getPost('work_order_id') ?: null,
-            'category'       => $this->request->getPost('category') ?? 'other',
+            'category'       => \App\Support\PmExpenseCategories::normalize($this->request->getPost('category')),
             'description'    => esc($this->request->getPost('description')),
             'amount'         => (float)$this->request->getPost('amount'),
             'currency'       => $this->settings['currency'] ?? 'QAR',
@@ -836,7 +836,7 @@ class Finance extends BaseController
         ]);
         $this->db->table('expenses')->insert([
             'facility_id'  => $pc['facility_id'],
-            'category'     => $pc['category'] ?? 'petty_cash',
+            'category'     => \App\Support\PmExpenseCategories::normalize($pc['category'] ?? 'other'),
             'description'  => 'Petty Cash: ' . $pc['purpose'],
             'amount'       => $pc['amount'],
             'currency'     => $this->settings['currency'] ?? 'QAR',

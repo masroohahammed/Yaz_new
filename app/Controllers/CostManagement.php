@@ -93,16 +93,24 @@ class CostManagement extends BaseController
             $this->assertFacilityAccess($facilityId);
         }
 
+        $title = esc($this->request->getPost('title'));
+        $notes = esc($this->request->getPost('notes')) ?: null;
         $row = [
-            'title'        => esc($this->request->getPost('title')),
             'amount'       => (float) $this->request->getPost('amount'),
             'expense_date' => $this->request->getPost('expense_date'),
-            'category'     => esc($this->request->getPost('category')) ?: null,
-            'notes'        => esc($this->request->getPost('notes')) ?: null,
+            'category'     => \App\Support\PmExpenseCategories::normalize($this->request->getPost('category')),
             'status'       => 'pending',
             'created_by'   => $this->currentUser()['id'] ?: null,
             'created_at'   => date('Y-m-d H:i:s'),
         ];
+        if ($this->db->fieldExists('description', 'expenses')) {
+            $row['description'] = $title . ($notes ? ' — ' . $notes : '');
+        } elseif ($this->db->fieldExists('title', 'expenses')) {
+            $row['title'] = $title;
+        }
+        if ($this->db->fieldExists('notes', 'expenses') && $notes) {
+            $row['notes'] = $notes;
+        }
 
         if ($this->db->fieldExists('facility_id', 'expenses')) {
             $row['facility_id'] = $facilityId;
@@ -113,7 +121,7 @@ class CostManagement extends BaseController
 
         $this->db->table('expenses')->insert($row);
         $id = (int) $this->db->insertID();
-        $this->logActivity('create', 'expenses', $id, 'Property expense: ' . $row['title']);
+        $this->logActivity('create', 'expenses', $id, 'Property expense: ' . $title);
 
         return redirect()->to(base_url('cost-management?section=expenses'))->with('success', 'Expense added.');
     }

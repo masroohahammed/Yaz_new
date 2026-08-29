@@ -33,6 +33,8 @@
     <div class="col-md-4"><strong>Bank:</strong> <?= esc($cheque['bank_name']??'—') ?></div>
     <div class="col-md-4"><strong>Date:</strong> <?= esc($cheque['cheque_date']??'—') ?></div>
     <div class="col-md-4"><strong>Received:</strong> <?= esc($cheque['received_date']??'—') ?></div>
+    <div class="col-md-4"><strong>Deposited:</strong> <?= esc($cheque['deposit_date']??'—') ?></div>
+    <div class="col-md-4"><strong>Cleared:</strong> <?= esc($cheque['clearance_date']??'—') ?></div>
     <div class="col-md-4"><strong>Tenant:</strong> <?= esc($cheque['tenant_name']??'—') ?></div>
     <div class="col-md-4"><strong>Contract:</strong> <?= esc($cheque['contract_number']??'—') ?></div>
     <div class="col-md-4"><strong>Property:</strong> <?= esc($cheque['facility_name']??'—') ?></div>

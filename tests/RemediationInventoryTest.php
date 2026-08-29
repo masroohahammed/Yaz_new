@@ -261,14 +261,20 @@ final class RemediationInventoryTest extends TestCase
 
     public function testMysqlPatchIsIdempotentAndDocumented(): void
     {
-        $patch = $this->root . '/database/patches/2026-08-29-fm-erp-remediation.sql';
+        $patch = $this->root . '/database/patches/fm-erp-complete.sql';
         $this->assertFileExists($patch);
         $sql = file_get_contents($patch);
         $this->assertStringContainsString('fm_add_index_if_missing', $sql);
         $this->assertStringContainsString('tenant_blacklist_history', $sql);
         $this->assertStringContainsString('maintenance_request_history', $sql);
         $this->assertStringContainsString('idx_inv_company', $sql);
+        $this->assertStringContainsString('deposit_date', $sql);
+        $this->assertStringContainsString('clearance_date', $sql);
+        $this->assertStringContainsString('management_fee', $sql);
+        $this->assertStringContainsString('idx_chq_facility_date', $sql);
         $this->assertFileExists($this->root . '/app/Database/Migrations/2026-08-29-100500_PerformanceQueryIndexes.php');
+        $this->assertFileExists($this->root . '/app/Database/Migrations/2026-08-29-100600_ChequeDatesAndExpenseCategories.php');
+        $this->assertFileExists($this->root . '/database/patches/2026-08-29-fm-erp-remediation.sql');
     }
 
     public function testNoKitchenPosModuleWasInvented(): void
@@ -295,7 +301,18 @@ final class RemediationInventoryTest extends TestCase
         $ctrl = file_get_contents($this->root . '/app/Controllers/PmReports.php');
         $this->assertStringContainsString('function scopedActiveFacilities', $ctrl);
         $this->assertStringContainsString('function landlordExport', $ctrl);
+        $this->assertStringContainsString('function tabularExport', $ctrl);
+        $this->assertStringContainsString("format === 'pdf'", $ctrl);
+        $this->assertStringContainsString("format === 'excel'", $ctrl);
         $menu = file_get_contents($this->root . '/app/Config/PmMenu.php');
         $this->assertStringContainsString('reports/pm/landlord', $menu);
+        $cheques = file_get_contents($this->root . '/app/Controllers/Cheques.php');
+        $this->assertStringContainsString('deposit_date', $cheques);
+        $this->assertStringContainsString('clearance_date', $cheques);
+        $this->assertFileExists($this->root . '/app/Support/PmExpenseCategories.php');
+        $cats = file_get_contents($this->root . '/app/Support/PmExpenseCategories.php');
+        foreach (['insurance', 'municipality', 'cleaning', 'security', 'management_fee'] as $cat) {
+            $this->assertStringContainsString("'" . $cat . "'", $cats);
+        }
     }
 }

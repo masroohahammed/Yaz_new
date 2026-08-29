@@ -30,15 +30,17 @@ Migrations in this release:
 - `2026-08-29-100300` drop duplicate `maintenance_requests.email` (data copied to `requester_email` first)
 - `2026-08-29-100400` reminder dismiss metadata
 - `2026-08-29-100500` dashboard / invoice / notification / HR indexes
+- `2026-08-29-100600` cheque `deposit_date` / `clearance_date` + expanded `expenses.category`
 
-SQL alternative (if you cannot run spark on the host):
+SQL alternative (if you cannot run spark on the host) — **one file for all of the above**:
 
 ```
-database/patches/2026-08-29-fm-erp-remediation.sql
+database/patches/fm-erp-complete.sql
 ```
 
-The SQL patch is idempotent (safe to re-run). It creates missing columns/tables and
-adds missing indexes only.
+The SQL patch is idempotent (safe to re-run). It creates missing columns/tables,
+expands `expenses.category` while keeping existing values, and adds missing indexes only.
+`database/patches/2026-08-29-fm-erp-remediation.sql` is the same statements (legacy path).
 
 Do **not** re-run old SQL from leftover ZIP archives.
 

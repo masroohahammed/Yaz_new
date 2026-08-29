@@ -1,7 +1,9 @@
--- SUPERSEDED: use the single complete patch instead:
---   database/patches/fm-erp-complete.sql
--- This file is kept so older DEPLOY notes still resolve. It is identical in effect
--- to fm-erp-complete.sql (same statements). Safe to re-run.
+-- FM ERP / PFMS — single complete patch
+-- Apply on an existing MySQL / MariaDB database AFTER taking a backup.
+-- Preferred: php spark migrate
+-- Safe to re-run. Compatible with MariaDB 10.4+ and MySQL 8.0.
+-- Covers remediation 100000–100600 plus landlord-report cheque dates and expense categories.
+-- Do not re-run old SQL from leftover ZIP archives.
 
 -- 1) Tenant blacklist audit
 ALTER TABLE `tenants`
@@ -67,7 +69,7 @@ ALTER TABLE `reminders`
   ADD COLUMN IF NOT EXISTS `dismissed_by` INT UNSIGNED NULL,
   ADD COLUMN IF NOT EXISTS `dismissed_at` DATETIME NULL;
 
--- 5) Cheque deposit / clearance dates
+-- 5) Cheque deposit / clearance dates (status actions already exist; columns did not)
 ALTER TABLE `cheques`
   ADD COLUMN IF NOT EXISTS `deposit_date` DATE NULL,
   ADD COLUMN IF NOT EXISTS `clearance_date` DATE NULL;
@@ -137,3 +139,4 @@ CALL fm_add_index_if_missing('cheques', 'idx_chq_status', '`status`');
 DROP PROCEDURE IF EXISTS fm_add_index_if_missing;
 
 -- After applying: ROTATE THE DATABASE PASSWORD. Previous password was in source.
+-- Landlord reports do not add tables. Occupancy trend is lease-overlap, not a snapshot table.

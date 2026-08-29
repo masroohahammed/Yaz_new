@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\Traits\PmModuleTrait;
 use App\Services\DashboardService;
 use App\Services\LandlordReportService;
+use App\Support\PmExpenseCategories;
 
 /**
  * Property Management reports hub and PM-scoped operational reports.
@@ -433,6 +434,7 @@ class PmReports extends BaseController
 
         $qs = http_build_query(array_filter([
             'landlord' => $landlordId, 'facility' => $facilityId ?: null, 'from' => $from, 'to' => $to,
+            'expense_category' => $expCat !== '' ? $expCat : null,
         ]));
 
         return view('pm_reports/landlord', $this->viewData([
@@ -466,6 +468,7 @@ class PmReports extends BaseController
             'occupancy'    => $occupancy,
             'statement'    => $statement,
             'pnl'          => $pnl,
+            'expenseCategories' => PmExpenseCategories::labels(),
             'exportBase'   => base_url('reports/pm/landlord/export') . '?' . $qs,
             'printUrl'     => current_url() . '?' . $qs,
         ]));
@@ -480,22 +483,31 @@ class PmReports extends BaseController
         $facilityId = (int) ($this->request->getGet('facility') ?? 0);
         $from       = (string) ($this->request->getGet('from') ?: date('Y-m-01'));
         $to         = (string) ($this->request->getGet('to') ?: date('Y-m-d'));
+        $expCat     = (string) ($this->request->getGet('expense_category') ?? '');
         $section    = preg_replace('/[^a-z_]/', '', $section) ?: 'overview';
+        $format     = strtolower((string) ($this->request->getGet('format') ?? 'csv'));
+        if ($format === 'xls') {
+            $format = 'excel';
+        }
+        if (! in_array($format, ['csv', 'pdf', 'excel'], true)) {
+            $format = 'csv';
+        }
 
         $facilityIds = $landlordId > 0
             ? $svc->facilityIdsForLandlord($landlordId, $companyId, $this->companyScope()->facilityIds(), $facilityId ?: null)
             : [];
 
-        [$headers, $rows] = $this->landlordExportRows($svc, $section, $facilityIds, $landlordId, $from, $to);
+        [$headers, $rows] = $this->landlordExportRows($svc, $section, $facilityIds, $landlordId, $from, $to, $expCat);
+        $filename = 'landlord_' . $section . '_' . date('Ymd');
 
-        return $this->csvResponse('landlord_' . $section . '_' . date('Ymd') . '.csv', $headers, $rows);
+        return $this->tabularExport($filename, 'Landlord ' . str_replace('_', ' ', $section), $headers, $rows, $format);
     }
 
     /**
      * @param list<int> $facilityIds
      * @return array{0: list<string>, 1: list<array<int|string, mixed>>}
      */
-    private function landlordExportRows(LandlordReportService $svc, string $section, array $facilityIds, int $landlordId, string $from, string $to): array
+    private function landlordExportRows(LandlordReportService $svc, string $section, array $facilityIds, int $landlordId, string $from, string $to, string $expCat = ''): array
     {
         return match ($section) {
             'units' => [['Property', 'Unit', 'Type', 'Floor', 'Area', 'Tenant', 'Rent', 'Start', 'End', 'Status'],
@@ -515,10 +527,11 @@ class PmReports extends BaseController
                     $r['tenant_name'] ?? '', $r['facility_name'] ?? '', $r['unit_number'] ?? '',
                     $r['due_date'] ?? '', $r['amount'] ?? '', $r['status'] ?? '', $r['days_overdue'] ?? 0,
                 ], $svc->pendingCollections($facilityIds))],
-            'cheques' => [['Tenant', 'Property', 'Cheque', 'Bank', 'Date', 'Amount', 'Status'],
+            'cheques' => [['Tenant', 'Property', 'Cheque', 'Bank', 'Cheque date', 'Deposited', 'Cleared', 'Amount', 'Status'],
                 array_map(static fn ($r) => [
                     $r['tenant_name'] ?? '', $r['facility_name'] ?? '', $r['cheque_no'] ?? '',
-                    $r['bank_name'] ?? '', $r['cheque_date'] ?? '', $r['amount'] ?? '', $r['status'] ?? '',
+                    $r['bank_name'] ?? '', $r['cheque_date'] ?? '', $r['deposit_date'] ?? '',
+                    $r['clearance_date'] ?? '', $r['amount'] ?? '', $r['status'] ?? '',
                 ], $svc->cheques($facilityIds, $from, $to))],
             'maintenance' => [['Ticket', 'Property', 'Unit', 'Issue', 'Priority', 'Status', 'Cost'],
                 array_map(static fn ($r) => [
@@ -529,18 +542,33 @@ class PmReports extends BaseController
                 array_map(static fn ($r) => [
                     $r['expense_date'] ?? '', $r['facility_name'] ?? '', $r['category'] ?? '',
                     $r['description'] ?? '', $r['amount'] ?? '', $r['status'] ?? '',
-                ], $svc->expenses($facilityIds, $from, $to))],
+                ], $svc->expenses($facilityIds, $from, $to, $expCat))],
             'contracts' => [['Contract', 'Tenant', 'Property', 'Unit', 'Start', 'End', 'Rent', 'Status'],
                 array_map(static fn ($r) => [
                     $r['contract_number'] ?? '', $r['tenant_name'] ?? '', $r['facility_name'] ?? '',
                     $r['unit_number'] ?? '', $r['start_date'] ?? '', $r['end_date'] ?? '',
                     $r['rent_amount'] ?? '', $r['status'] ?? '',
                 ], $svc->contracts($facilityIds))],
-            'occupancy' => [['Property', 'Units', 'Occupied', 'Vacant', 'Maintenance', 'Occupancy %'],
-                array_map(static fn ($r) => [
-                    $r['name'] ?? '', $r['total_units'] ?? 0, $r['occupied'] ?? 0, $r['vacant'] ?? 0,
-                    $r['maintenance'] ?? 0, $r['occupancy_pct'] ?? 0,
-                ], $svc->occupancy($facilityIds)['rows'])],
+            'occupancy' => [['Property / month', 'Units', 'Occupied', 'Vacant', 'Maintenance', 'Occupancy %'],
+                (static function () use ($svc, $facilityIds) {
+                    $occ  = $svc->occupancy($facilityIds);
+                    $rows = array_map(static fn ($r) => [
+                        $r['name'] ?? '', $r['total_units'] ?? 0, $r['occupied'] ?? 0, $r['vacant'] ?? 0,
+                        $r['maintenance'] ?? 0, $r['occupancy_pct'] ?? 0,
+                    ], $occ['rows']);
+                    foreach ($occ['trend'] as $tr) {
+                        $rows[] = [
+                            'Trend ' . ($tr['month'] ?? ''),
+                            $tr['total_units'] ?? 0,
+                            $tr['occupied_units'] ?? $tr['active_leases'] ?? 0,
+                            '',
+                            '',
+                            $tr['occupancy_pct'] ?? '',
+                        ];
+                    }
+
+                    return $rows;
+                })()],
             'statement' => [['Date', 'Property', 'Unit', 'Description', 'Income', 'Expense', 'Payment', 'Balance'],
                 array_map(static fn ($r) => [
                     $r['entry_date'] ?? '', $r['facility'] ?? '', $r['unit'] ?? '', $r['description'] ?? '',
@@ -548,12 +576,27 @@ class PmReports extends BaseController
                 ], $landlordId > 0 ? $svc->statement($facilityIds, $landlordId, $from, $to) : [])],
             'pnl' => [['Metric', 'Amount'], (static function () use ($svc, $facilityIds, $from, $to) {
                 $p = $svc->pnl($facilityIds, $from, $to);
-
-                return [
+                $rows = [
                     ['Rental income', $p['rental']], ['Parking', $p['parking']], ['Service charges', $p['service']],
                     ['Utility recovery', $p['utility']], ['Late fees', $p['late']], ['Other income', $p['other']],
                     ['Collected', $p['collected']], ['Pending', $p['pending']], ['Expenses', $p['expenses']],
                     ['Net income', $p['net']], ['Margin %', $p['margin']],
+                ];
+                foreach ($p['by_group'] ?? [] as $g => $amt) {
+                    $rows[] = ['Expense group: ' . $g, $amt];
+                }
+
+                return $rows;
+            })()],
+            'overview' => [['Metric', 'Value'], (static function () use ($svc, $facilityIds, $from, $to) {
+                $o = $svc->overview($facilityIds, $from, $to);
+
+                return [
+                    ['Properties', $o['properties']], ['Units', $o['units']], ['Occupied', $o['occupied']],
+                    ['Vacant', $o['vacant']], ['Rent due', $o['rent_due']], ['Collected', $o['rent_collected']],
+                    ['Pending', $o['rent_pending']], ['Overdue', $o['rent_overdue']],
+                    ['Collection %', $o['collection_pct']], ['Expenses', $o['expenses']],
+                    ['Net income', $o['net_income']],
                 ];
             })()],
             default => [['Payment #', 'Tenant', 'Property', 'Unit', 'Due', 'Paid', 'Amount', 'Method', 'Status', 'Reference'],
@@ -599,11 +642,60 @@ class PmReports extends BaseController
     }
 
     /**
+     * Same CSV / Dompdf PDF / HTML-as-xls stack as Reports::export.
+     *
      * @param list<string> $headers
      * @param list<array<int|string, mixed>> $rows
      */
-    private function csvResponse(string $filename, array $headers, array $rows): \CodeIgniter\HTTP\ResponseInterface
+    private function tabularExport(string $filename, string $title, array $headers, array $rows, string $format): \CodeIgniter\HTTP\ResponseInterface
     {
+        if ($format === 'pdf' && class_exists(\Dompdf\Dompdf::class)) {
+            $html = '<html><head><meta charset="utf-8"><style>table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px;font-size:11px}th{background:#f0f0f0}</style></head><body>';
+            $html .= '<h2>' . htmlspecialchars($title) . '</h2><table><thead><tr>';
+            foreach ($headers as $h) {
+                $html .= '<th>' . htmlspecialchars($h) . '</th>';
+            }
+            $html .= '</tr></thead><tbody>';
+            foreach ($rows as $row) {
+                $html .= '<tr>';
+                foreach (array_values($row) as $cell) {
+                    $html .= '<td>' . htmlspecialchars((string) $cell) . '</td>';
+                }
+                $html .= '</tr>';
+            }
+            $html .= '</tbody></table></body></html>';
+            $dompdf = new \Dompdf\Dompdf();
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/pdf')
+                ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '.pdf"')
+                ->setBody($dompdf->output());
+        }
+
+        if ($format === 'excel' || $format === 'pdf') {
+            $html = '<table border="1"><thead><tr>';
+            foreach ($headers as $h) {
+                $html .= '<th>' . htmlspecialchars($h) . '</th>';
+            }
+            $html .= '</tr></thead><tbody>';
+            foreach ($rows as $row) {
+                $html .= '<tr>';
+                foreach (array_values($row) as $cell) {
+                    $html .= '<td>' . htmlspecialchars((string) $cell) . '</td>';
+                }
+                $html .= '</tr>';
+            }
+            $html .= '</tbody></table>';
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/vnd.ms-excel')
+                ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '.xls"')
+                ->setBody($html);
+        }
+
         $output = implode(',', array_map(static fn ($h) => '"' . $h . '"', $headers)) . "\n";
         foreach ($rows as $row) {
             $output .= implode(',', array_map(static fn ($v) => '"' . str_replace('"', '""', (string) $v) . '"', array_values($row))) . "\n";
@@ -611,8 +703,17 @@ class PmReports extends BaseController
 
         return $this->response
             ->setHeader('Content-Type', 'text/csv')
-            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '.csv"')
             ->setBody($output);
+    }
+
+    /**
+     * @param list<string> $headers
+     * @param list<array<int|string, mixed>> $rows
+     */
+    private function csvResponse(string $filename, array $headers, array $rows): \CodeIgniter\HTTP\ResponseInterface
+    {
+        return $this->tabularExport(basename($filename, '.csv'), 'Export', $headers, $rows, 'csv');
     }
 
     /**

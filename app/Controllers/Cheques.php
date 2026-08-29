@@ -193,10 +193,15 @@ class Cheques extends BaseController
             return redirect()->to(base_url('cheques'))->with('error', 'Cheque not found.');
         }
 
-        $this->db->table(self::TABLE)->where('id', $id)->update([
+        $update = [
             'status'     => 'deposited',
             'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        ];
+        if ($this->db->fieldExists('deposit_date', self::TABLE)) {
+            $update['deposit_date'] = date('Y-m-d');
+        }
+
+        $this->db->table(self::TABLE)->where('id', $id)->update($update);
 
         $this->logActivity('deposit', 'cheques', $id, 'Cheque deposited: ' . $cheque['cheque_no']);
 
@@ -220,10 +225,18 @@ class Cheques extends BaseController
             return redirect()->to(base_url('cheques'))->with('error', 'Cheque not found.');
         }
 
-        $this->db->table(self::TABLE)->where('id', $id)->update([
+        $update = [
             'status'     => 'cleared',
             'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        ];
+        if ($this->db->fieldExists('clearance_date', self::TABLE)) {
+            $update['clearance_date'] = date('Y-m-d');
+        }
+        if ($this->db->fieldExists('deposit_date', self::TABLE) && empty($cheque['deposit_date'])) {
+            $update['deposit_date'] = date('Y-m-d');
+        }
+
+        $this->db->table(self::TABLE)->where('id', $id)->update($update);
 
         $this->logActivity('clear', 'cheques', $id, 'Cheque cleared: ' . $cheque['cheque_no']);
 
@@ -261,6 +274,12 @@ class Cheques extends BaseController
         ];
         if ($this->db->fieldExists('cash_conversion_date', self::TABLE)) {
             $updateData['cash_conversion_date'] = $conversionDate;
+        }
+        if ($this->db->fieldExists('clearance_date', self::TABLE)) {
+            $updateData['clearance_date'] = $conversionDate;
+        }
+        if ($this->db->fieldExists('deposit_date', self::TABLE) && empty($cheque['deposit_date'])) {
+            $updateData['deposit_date'] = $conversionDate;
         }
 
         $this->db->table(self::TABLE)->where('id', $id)->update($updateData);
