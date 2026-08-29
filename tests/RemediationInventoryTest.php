@@ -381,4 +381,32 @@ final class RemediationInventoryTest extends TestCase
             $this->assertStringContainsString("'" . $cat . "'", $cats);
         }
     }
+
+    public function testEntityQrScanRoutesAndDocumentsTabs(): void
+    {
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        foreach ([
+            "scan/property/",
+            "scan/unit/",
+            "get('scan'",
+            'Facilities::qrcode',
+            'Units::qrcode',
+        ] as $needle) {
+            $this->assertStringContainsString($needle, $routes);
+        }
+        $this->assertFileExists($this->root . '/app/Services/EntityQrService.php');
+        $this->assertFileExists($this->root . '/app/Controllers/EntityScan.php');
+        $this->assertFileExists($this->root . '/app/Controllers/Scan.php');
+        $this->assertFileExists($this->root . '/app/Views/entity_scan/landing.php');
+        $this->assertFileExists($this->root . '/app/Views/scan/index.php');
+        $facilityView = file_get_contents($this->root . '/app/Views/facilities/view.php');
+        $unitView = file_get_contents($this->root . '/app/Views/units/view.php');
+        $this->assertStringContainsString('tab-documents', $facilityView);
+        $this->assertStringContainsString('tab-qr', $facilityView);
+        $this->assertStringContainsString('tab-documents', $unitView);
+        $this->assertStringContainsString('tab-qr', $unitView);
+        $patch = file_get_contents($this->root . '/database/patches/fm-erp-complete.sql');
+        $this->assertStringContainsString('qr_scan_logs', $patch);
+        $this->assertStringContainsString('qr_token', $patch);
+    }
 }

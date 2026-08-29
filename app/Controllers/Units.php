@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Controllers\Traits\ParkingContractTrait;
+use App\Services\EntityQrService;
 use App\Services\ParkingContractService;
 
 class Units extends BaseController
@@ -139,6 +140,7 @@ class Units extends BaseController
         $insert = $this->withPlateNumber($insert, $this->request->getPost('unit_type'), $this->request->getPost('plate_number'));
         $this->db->table('units')->insert($insert);
         $unitId = $this->db->insertID();
+        (new EntityQrService($this->db))->ensureToken('unit', (int) $unitId);
 
         // Handle contract attachment upload
         $file = $this->request->getFile('contract_attachment');
@@ -187,6 +189,16 @@ class Units extends BaseController
 
         $this->assertFacilityAccess((int) $unit['facility_id']);
 
+        $qrSvc = new EntityQrService($this->db);
+        $qrSvc->ensureToken('unit', $id);
+        $unit = $this->db->table('units u')
+            ->select('u.*, f.name as facility_name, f.id as facility_id')
+            ->join('facilities f','f.id=u.facility_id','left')
+            ->where('u.id',$id)->get()->getRowArray() ?? $unit;
+
+        $scanUrl    = $qrSvc->scanUrl('unit', $unit);
+        $qrImageUrl = $qrSvc->qrImageUrl($scanUrl, 200);
+
         $workOrders = $this->db->table('work_orders w')
             ->select('w.id, w.wo_number, w.title, w.status, w.priority, w.created_at, u.name as assigned_name')
             ->join('users u','u.id=w.assigned_to','left')
@@ -234,6 +246,15 @@ class Units extends BaseController
 
         $workspace = $this->currentWorkspace();
 
+        $unitDocuments = [];
+        if ($this->db->tableExists('documents') && $this->db->fieldExists('module', 'documents')) {
+            $unitDocuments = $this->db->table('documents')
+                ->where('module', 'unit')
+                ->where('ref_id', $id)
+                ->orderBy('created_at', 'DESC')
+                ->get()->getResultArray();
+        }
+
         return view('units/view', $this->viewData([
             'title'         => 'Unit '.$unit['unit_number'],
             'unit'          => $unit,
@@ -246,6 +267,33 @@ class Units extends BaseController
             'assets'        => $assets,
             'workspace'     => $workspace,
             'isParkingUnit' => $this->isParkingUnitRow($unit),
+            'unitDocuments' => $unitDocuments,
+            'scanUrl'       => $scanUrl,
+            'qrImageUrl'    => $qrImageUrl,
+        ]));
+    }
+
+    public function qrcode(int $id)
+    {
+        $unit = $this->db->table('units u')
+            ->select('u.*, f.name as facility_name')
+            ->join('facilities f', 'f.id = u.facility_id', 'left')
+            ->where('u.id', $id)->get()->getRowArray();
+        if (! $unit) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        $this->assertFacilityAccess((int) $unit['facility_id']);
+
+        $qrSvc = new EntityQrService($this->db);
+        $qrSvc->ensureToken('unit', $id);
+        $unit = $this->db->table('units')->where('id', $id)->get()->getRowArray() ?? $unit;
+        $scanUrl = $qrSvc->scanUrl('unit', $unit);
+
+        return view('units/qrcode', $this->viewData([
+            'title'      => 'QR Code — Unit ' . $unit['unit_number'],
+            'unit'       => $unit,
+            'scanUrl'    => $scanUrl,
+            'qrImageUrl' => $qrSvc->qrImageUrl($scanUrl, 280),
         ]));
     }
 

@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\AssetCodeService;
 use App\Services\AssetScanLogService;
+use App\Services\QrScanLogService;
 
 /**
  * Public and authenticated asset scan deep links (QR / barcode).
@@ -74,7 +75,6 @@ class AssetScan extends BaseController
                 'approval_status' => 'pending',
             ];
             $this->db->table('maintenance_requests')->insert($data);
-            $complaintId = (int) $this->db->insertID();
 
             (new AssetScanLogService($this->db))->log(
                 (int) $asset['id'],
@@ -85,9 +85,20 @@ class AssetScan extends BaseController
                 $this->request->getUserAgent()?->getAgentString()
             );
 
+            if ($this->db->tableExists('qr_scan_logs')) {
+                (new QrScanLogService($this->db))->log(
+                    'asset',
+                    (int) $asset['id'],
+                    session()->get('user_id') ? (int) session()->get('user_id') : null,
+                    'qr',
+                    'complaint_submitted',
+                    $this->request->getIPAddress(),
+                    $this->request->getUserAgent()?->getAgentString()
+                );
+            }
+
             return redirect()->to(base_url('scan/asset/' . $token))
-                ->with('success', 'Complaint submitted. Ticket: ' . $ticket)
-                ->with('complaint_id', $complaintId);
+                ->with('success', 'Maintenance request submitted. Ticket: ' . $ticket);
         }
 
         return redirect()->back()->with('error', 'Complaint module not available.');
@@ -110,8 +121,23 @@ class AssetScan extends BaseController
             $this->request->getGet('lng') ? (float) $this->request->getGet('lng') : null
         );
 
+        if ($this->db->tableExists('qr_scan_logs')) {
+            (new QrScanLogService($this->db))->log(
+                'asset',
+                (int) $asset['id'],
+                $userId,
+                $source,
+                $userId ? 'authenticated_view' : 'public_view',
+                $this->request->getIPAddress(),
+                $this->request->getUserAgent()?->getAgentString()
+            );
+        }
+
         $codeSvc = new AssetCodeService($this->db);
         $scanUrl = $codeSvc->scanUrl($asset);
+
+        $openMaintenance = $this->loadMaintenance($asset['id'], true);
+        $maintenanceHistory = $this->loadMaintenance($asset['id'], false);
 
         $openWos = $this->db->table('work_orders')
             ->where('asset_id', (int) $asset['id'])
@@ -121,17 +147,50 @@ class AssetScan extends BaseController
             ->limit(5)
             ->get()->getResultArray();
 
-        $isLoggedIn = (bool) $userId;
+        if ($openMaintenance === [] && $openWos !== []) {
+            foreach ($openWos as $wo) {
+                $openMaintenance[] = [
+                    'ticket_number' => $wo['wo_number'],
+                    'status'        => $wo['status'],
+                ];
+            }
+        }
 
-        return view('asset_scan/public', [
-            'title'      => $asset['name'],
-            'asset'      => $asset,
-            'scanUrl'    => $scanUrl,
-            'qrImageUrl' => $codeSvc->qrImageUrl($scanUrl, 180),
-            'openWos'    => $openWos,
-            'isLoggedIn' => $isLoggedIn,
-            'currency'   => $this->settings['currency'] ?? 'QAR',
-            'settings'   => $this->settings,
+        return view('entity_scan/landing', [
+            'entityType'         => 'asset',
+            'entity'             => $asset,
+            'title'              => $asset['name'],
+            'subtitle'           => ($asset['asset_code'] ?? '') . ' · ' . ($asset['facility_name'] ?? ''),
+            'scanUrl'            => $scanUrl,
+            'qrImageUrl'         => $codeSvc->qrImageUrl($scanUrl, 180),
+            'isLoggedIn'         => (bool) $userId,
+            'units'              => [],
+            'openMaintenance'    => $openMaintenance,
+            'maintenanceHistory' => $maintenanceHistory,
+            'inspectionCount'    => 0,
+            'complaintAction'    => base_url('scan/asset/' . ($asset['qr_token'] ?? '') . '/complaint'),
+            'settings'           => $this->settings,
+            'currency'           => $this->settings['currency'] ?? 'QAR',
         ]);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function loadMaintenance(int $assetId, bool $openOnly): array
+    {
+        if (! $this->db->tableExists('maintenance_requests') || ! $this->db->fieldExists('asset_id', 'maintenance_requests')) {
+            return [];
+        }
+
+        $q = $this->db->table('maintenance_requests')
+            ->select('id, ticket_number, category, status, created_at')
+            ->where('asset_id', $assetId)
+            ->orderBy('created_at', 'DESC')
+            ->limit($openOnly ? 10 : 8);
+
+        if ($openOnly) {
+            $q->whereIn('status', ['pending', 'verified', 'in_progress', 'open', 'assigned']);
+        }
+
+        return $q->get()->getResultArray();
     }
 }

@@ -163,5 +163,37 @@ WHERE (`short_code` IS NULL OR `short_code` = '')
 
 DROP PROCEDURE IF EXISTS fm_add_index_if_missing;
 
+-- 10) Property / unit QR tokens + unified scan logs
+ALTER TABLE `facilities`
+  ADD COLUMN IF NOT EXISTS `qr_token` VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS `qr_generated_at` DATETIME NULL;
+
+ALTER TABLE `units`
+  ADD COLUMN IF NOT EXISTS `qr_token` VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS `qr_generated_at` DATETIME NULL;
+
+CREATE TABLE IF NOT EXISTS `qr_scan_logs` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `entity_type` VARCHAR(20) NOT NULL,
+  `entity_id` INT UNSIGNED NOT NULL,
+  `scanned_by` INT UNSIGNED NULL,
+  `scan_source` VARCHAR(30) NOT NULL DEFAULT 'qr',
+  `action_taken` VARCHAR(40) NOT NULL DEFAULT 'view',
+  `ip_address` VARCHAR(45) NULL,
+  `user_agent` VARCHAR(255) NULL,
+  `created_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_qr_scan_entity` (`entity_type`, `entity_id`),
+  KEY `idx_qr_scan_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+UPDATE `facilities`
+SET `qr_token` = LOWER(HEX(RANDOM_BYTES(16))), `qr_generated_at` = COALESCE(`qr_generated_at`, NOW())
+WHERE `qr_token` IS NULL OR `qr_token` = '';
+
+UPDATE `units`
+SET `qr_token` = LOWER(HEX(RANDOM_BYTES(16))), `qr_generated_at` = COALESCE(`qr_generated_at`, NOW())
+WHERE `qr_token` IS NULL OR `qr_token` = '';
+
 -- After applying: ROTATE THE DATABASE PASSWORD. Previous password was in source.
 -- Landlord reports do not add tables. Occupancy trend is lease-overlap, not a snapshot table.

@@ -127,6 +127,13 @@ class Documents extends BaseController
                 $emp = $this->db->table('employees')->select('facility_id')->where('id', $refId)->get()->getRowArray();
                 $facilityId = (int) ($emp['facility_id'] ?? 0) ?: $facilityId;
             }
+            if ($module === 'unit' && $refId > 0 && ! $facilityId) {
+                $u = $this->db->table('units')->select('facility_id')->where('id', $refId)->get()->getRowArray();
+                $facilityId = (int) ($u['facility_id'] ?? 0) ?: null;
+            }
+            if ($module === 'facility' && $refId > 0 && ! $facilityId) {
+                $facilityId = $refId;
+            }
             if ($facilityId) {
                 $this->assertFacilityAccess($facilityId);
             }
@@ -225,6 +232,12 @@ class Documents extends BaseController
     {
         if ($module === 'employee' && $refId > 0) {
             return base_url('employees/view/' . $refId . '?tab=documents');
+        }
+        if ($module === 'facility' && $refId > 0) {
+            return base_url('properties/view/' . $refId . '#tab-documents');
+        }
+        if ($module === 'unit' && $refId > 0) {
+            return base_url('units/view/' . $refId . '#tab-documents');
         }
         if ($module !== '' && $refId > 0) {
             return base_url('documents?module=' . urlencode($module) . '&ref_id=' . $refId);

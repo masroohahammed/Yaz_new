@@ -41,6 +41,14 @@ $routes->get('scan/asset/(:segment)',           'AssetScan::byToken/$1');
 $routes->get('scan/asset/id/(:num)',            'AssetScan::byId/$1');
 $routes->post('scan/asset/(:segment)/complaint','AssetScan::submitComplaint/$1');
 
+// Property & unit QR scan (public deep links)
+$routes->get('scan/property/(:segment)',              'EntityScan::propertyByToken/$1');
+$routes->get('scan/property/id/(:num)',               'EntityScan::propertyById/$1');
+$routes->post('scan/property/(:segment)/complaint',   'EntityScan::propertyComplaint/$1');
+$routes->get('scan/unit/(:segment)',                  'EntityScan::unitByToken/$1');
+$routes->get('scan/unit/id/(:num)',                   'EntityScan::unitById/$1');
+$routes->post('scan/unit/(:segment)/complaint',       'EntityScan::unitComplaint/$1');
+
 $routes->get('file/logo/(:segment)', 'FileServe::logo/$1');
 $routes->get('file/logos/(:segment)', 'FileServe::serve/logos/$1');
 
@@ -49,6 +57,7 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
 
     $routes->get('dashboard',      'Dashboard::index');
     $routes->get('dashboard/kpi',  'Dashboard::kpi');
+    $routes->get('scan',           'Scan::index');
 
     // Shared property URLs (facilities alias per ERP spec)
     $routes->get('properties',                    'Facilities::index');
@@ -67,6 +76,8 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('properties/units/(:num)/parking-contract', 'Units::parkingContract/$1');
     $routes->get('properties/units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
     $routes->post('properties/units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
+    $routes->get('properties/qrcode/(:num)',        'Facilities::qrcode/$1');
+    $routes->get('units/qrcode/(:num)',             'Units::qrcode/$1');
 
     // Maintenance alias (helpdesk / maintenance_requests)
     $routes->get('maintenance',                   'Helpdesk::index');

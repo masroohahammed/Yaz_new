@@ -16,6 +16,7 @@ class FmMenu extends BaseConfig
 
         ['type' => 'heading', 'label' => 'Operations'],
         ['key' => 'maintenance', 'label' => 'Maintenance', 'icon' => 'bi-tools', 'url' => 'maintenance'],
+        ['key' => 'scan', 'label' => 'QR Scanner', 'icon' => 'bi-qr-code-scan', 'url' => 'scan'],
         ['key' => 'helpdesk', 'label' => 'Complaints', 'icon' => 'bi-headset', 'url' => 'helpdesk'],
         ['key' => 'workorders', 'label' => 'Work Orders', 'icon' => 'bi-clipboard2-check', 'url' => 'workorders'],
         ['key' => 'jobcards', 'label' => 'Job Cards', 'icon' => 'bi-card-checklist', 'url' => 'job-cards'],

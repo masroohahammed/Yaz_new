@@ -62,6 +62,8 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
   <?php if ($isPm && ! $isFm): ?>
   <li class="nav-item"><a class="nav-link" href="#tab-maintenance" data-bs-toggle="tab" role="tab"><i class="bi bi-wrench me-1"></i>Maintenance <span class="badge bg-secondary">View</span></a></li>
   <?php endif; ?>
+  <li class="nav-item"><a class="nav-link" href="#tab-documents" data-bs-toggle="tab" role="tab"><i class="bi bi-folder2-open me-1"></i>Documents <span class="badge bg-secondary ms-1"><?= count($propertyDocuments ?? []) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-qr" data-bs-toggle="tab" role="tab"><i class="bi bi-qr-code me-1"></i>QR Code</a></li>
 </ul>
 
 <div class="tab-content fm-tab-pane">
@@ -358,9 +360,28 @@ $canViewUnit     = $rbac->can((string) $role, 'units.view');
 
   <?php endif; ?>
 
-</div><!-- /.tab-content -->
+  <!-- Documents Tab -->
+  <div class="tab-pane fade" id="tab-documents">
+    <?= view('documents/panel', [
+      'module' => 'facility',
+      'refId' => (int) $facility['id'],
+      'embed' => true,
+      'documents' => $propertyDocuments ?? [],
+      'facilityId' => (int) $facility['id'],
+    ]) ?>
+  </div>
 
-<?= view('documents/panel', ['module' => 'facility', 'refId' => (int)$facility['id'], 'embed' => true, 'documents' => $propertyDocuments ?? []]) ?>
+  <!-- QR Code Tab -->
+  <div class="tab-pane fade" id="tab-qr">
+    <?= view('partials/qr_display', [
+      'scanUrl' => $scanUrl ?? '',
+      'qrImageUrl' => $qrImageUrl ?? '',
+      'entityLabel' => 'Property',
+      'printUrl' => base_url('properties/qrcode/' . (int) $facility['id']),
+    ]) ?>
+  </div>
+
+</div><!-- /.tab-content -->
 
 <?= view('facilities/_unit_modal') ?>
 <?= view('partials/entity_tab_hash') ?>

@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\FacilityModel;
 use App\Models\CompanyModel;
 use App\Models\UserModel;
+use App\Services\EntityQrService;
 
 /**
  * Facilities — manages facility CRUD.
@@ -128,6 +129,7 @@ class Facilities extends BaseController
         ];
 
         $id = $this->model->insert($data);
+        (new EntityQrService($this->db))->ensureToken('property', (int) $id);
         $this->logActivity('create', 'facilities', $id, 'Facility created: ' . $data['name']);
 
         return redirect()->to('/facilities/' . $id)->with('success', 'Facility created successfully.');
@@ -156,6 +158,19 @@ class Facilities extends BaseController
         if (! $facility) {
             return redirect()->to(base_url('facilities'))->with('error', 'Facility not found.');
         }
+
+        $qrSvc = new EntityQrService($this->db);
+        $qrSvc->ensureToken('property', $id);
+        $facility = $this->db->table('facilities f')
+            ->select('f.*, c.name AS company_name, u.name AS manager_name')
+            ->join('companies c', 'c.id = f.company_id', 'left')
+            ->join('users u',     'u.id = f.manager_id', 'left')
+            ->where('f.id', $id)
+            ->where('f.deleted_at', null)
+            ->get()->getRowArray() ?? $facility;
+
+        $scanUrl    = $qrSvc->scanUrl('property', $facility);
+        $qrImageUrl = $qrSvc->qrImageUrl($scanUrl, 200);
 
         $facilityUnits = $this->db->table('units')
             ->where('facility_id', $id)
@@ -254,6 +269,28 @@ class Facilities extends BaseController
             'openWO'        => $openWO,
             'hasParkingUnits' => $hasParkingUnits,
             'inspectionReports' => $inspectionReports,
+            'scanUrl'           => $scanUrl,
+            'qrImageUrl'        => $qrImageUrl,
+        ]));
+    }
+
+    public function qrcode(int $id)
+    {
+        $facility = $this->db->table('facilities')->where('id', $id)->where('deleted_at', null)->get()->getRowArray();
+        if (! $facility) {
+            return redirect()->to(base_url('properties'))->with('error', 'Property not found.');
+        }
+
+        $qrSvc = new EntityQrService($this->db);
+        $qrSvc->ensureToken('property', $id);
+        $facility = $this->db->table('facilities')->where('id', $id)->get()->getRowArray() ?? $facility;
+        $scanUrl  = $qrSvc->scanUrl('property', $facility);
+
+        return view('facilities/qrcode', $this->viewData([
+            'title'      => 'QR Code — ' . $facility['name'],
+            'facility'   => $facility,
+            'scanUrl'    => $scanUrl,
+            'qrImageUrl' => $qrSvc->qrImageUrl($scanUrl, 280),
         ]));
     }
 

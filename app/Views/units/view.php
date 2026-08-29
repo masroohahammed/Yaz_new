@@ -150,6 +150,8 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
       <li class="nav-item"><a class="nav-link" href="#tab-rent" data-bs-toggle="tab" role="tab"><i class="bi bi-cash-stack me-1"></i>Rent Payments <span class="badge bg-secondary ms-1"><?= count($leasePayments ?? []) ?></span></a></li>
       <?php endif; ?>
       <li class="nav-item"><a class="nav-link <?= (!$isFm && !$isPm) ? 'active' : '' ?>" href="#tab-finance" data-bs-toggle="tab" role="tab"><i class="bi bi-receipt me-1"></i>Finance</a></li>
+      <li class="nav-item"><a class="nav-link" href="#tab-documents" data-bs-toggle="tab" role="tab"><i class="bi bi-folder2-open me-1"></i>Documents <span class="badge bg-secondary ms-1"><?= count($unitDocuments ?? []) ?></span></a></li>
+      <li class="nav-item"><a class="nav-link" href="#tab-qr" data-bs-toggle="tab" role="tab"><i class="bi bi-qr-code me-1"></i>QR Code</a></li>
     </ul>
 
     <div class="tab-content fm-tab-pane">
@@ -340,6 +342,27 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
             <?php endif; ?>
           </div>
         </div>
+      </div>
+
+      <!-- Documents Tab -->
+      <div class="tab-pane fade" id="tab-documents">
+        <?= view('documents/panel', [
+          'module' => 'unit',
+          'refId' => (int) $unit['id'],
+          'embed' => true,
+          'documents' => $unitDocuments ?? [],
+          'facilityId' => (int) $unit['facility_id'],
+        ]) ?>
+      </div>
+
+      <!-- QR Code Tab -->
+      <div class="tab-pane fade" id="tab-qr">
+        <?= view('partials/qr_display', [
+          'scanUrl' => $scanUrl ?? '',
+          'qrImageUrl' => $qrImageUrl ?? '',
+          'entityLabel' => 'Unit',
+          'printUrl' => base_url('units/qrcode/' . (int) $unit['id']),
+        ]) ?>
       </div>
 
     </div><!-- /.tab-content -->
