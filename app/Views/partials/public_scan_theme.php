@@ -39,23 +39,35 @@ $secondaryRgb = _scan_hex_rgb($secondaryColor);
 *{box-sizing:border-box}
 body.scan-public{
   font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;margin:0;
-  background:linear-gradient(135deg, <?= $primaryColor ?> 0%, <?= $primaryDark ?> 55%, #1a1a2e 100%);
+  background:#ffffff;
   padding:1.25rem 1rem 2rem;position:relative;
 }
-body.scan-public::before{content:'';position:fixed;top:-120px;right:-120px;width:400px;height:400px;border-radius:50%;background:rgba(<?= $secondaryRgb ?>,.15);pointer-events:none}
+body.scan-public::before{display:none}
 .scan-wrap{max-width:680px;margin:0 auto;position:relative;z-index:1}
-.scan-brand{text-align:center;color:#fff;margin-bottom:1.25rem}
+.scan-brand{text-align:center;color:<?= $primaryColor ?>;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #ece4e8}
+.scan-brand h1{color:#1a1a1a}
+.scan-brand .opacity-75{color:#6b7280;opacity:1!important}
 .scan-brand img{max-height:64px;max-width:200px;object-fit:contain;margin-bottom:.75rem}
-.scan-brand .auth-logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,<?= $primaryColor ?>,<?= $secondaryColor ?>);color:#fff;font-size:1.75rem;display:inline-flex;align-items:center;justify-content:center;margin-bottom:.75rem;box-shadow:0 8px 20px rgba(<?= $primaryRgb ?>,.35)}
-.public-card{background:#fff;border-radius:18px;padding:1.35rem 1.25rem;box-shadow:0 20px 50px rgba(0,0,0,.28);margin-bottom:1rem}
-.btn-fm-primary{background:<?= $primaryColor ?>;color:#fff;border:none;border-radius:10px;padding:.65rem 1rem;font-size:.85rem;font-weight:700}
-.btn-fm-primary:hover{background:<?= $primaryHover ?>;color:#fff}
-.btn-fm-outline{background:transparent;color:<?= $primaryColor ?>;border:1.5px solid <?= $primaryColor ?>;border-radius:10px;padding:.55rem .9rem;font-size:.82rem;font-weight:600}
-.btn-fm-outline:hover{background:<?= $primaryColor ?>;color:#fff}
+.scan-brand .auth-logo{width:64px;height:64px;border-radius:16px;background:<?= $primaryColor ?>;color:#fff;font-size:1.75rem;display:inline-flex;align-items:center;justify-content:center;margin-bottom:.75rem;box-shadow:0 8px 20px rgba(<?= $primaryRgb ?>,.25)}
+.public-card{background:#fff;border-radius:18px;padding:1.35rem 1.25rem;box-shadow:0 4px 24px rgba(0,0,0,.06);margin-bottom:1rem;border:1px solid #ece4e8}
+.scan-actions-card{background:#fff;border-radius:18px;padding:1.25rem;border:1px solid #ece4e8;box-shadow:0 4px 24px rgba(0,0,0,.06);margin-bottom:1rem}
+.btn-fm-primary{background:<?= $primaryColor ?>!important;color:#fff!important;border:none!important;border-radius:10px;padding:.75rem 1rem;font-size:.85rem;font-weight:700}
+.btn-fm-primary:hover,.btn-fm-primary:focus{background:<?= $primaryHover ?>!important;color:#fff!important}
+.btn-fm-outline{background:<?= $primaryColor ?>!important;color:#fff!important;border:none!important;border-radius:10px;padding:.75rem 1rem;font-size:.85rem;font-weight:700}
+.btn-fm-outline:hover,.btn-fm-outline:focus{background:<?= $primaryHover ?>!important;color:#fff!important}
+.scan-public .action-btn{
+  display:flex;align-items:center;justify-content:center;width:100%;
+  background:<?= $primaryColor ?>!important;color:#fff!important;border:none!important;
+  border-radius:10px;padding:.78rem 1rem;font-size:.88rem;font-weight:700;
+  text-decoration:none;transition:background .2s,transform .15s;
+}
+.scan-public .action-btn:hover,.scan-public .action-btn:focus{
+  background:<?= $primaryHover ?>!important;color:#fff!important;transform:translateY(-1px);
+}
 .form-label{font-size:.78rem;font-weight:600;color:#374151}
 .form-control,.form-select{font-size:.84rem;border-radius:10px;border:1.5px solid #e5e7eb}
 .form-control:focus,.form-select:focus{border-color:<?= $primaryColor ?>;box-shadow:0 0 0 3px rgba(<?= $primaryRgb ?>,.15)}
 .table-registry{font-size:.82rem}
 .table-registry thead th{background:color-mix(in srgb, <?= $primaryColor ?> 8%, white);color:#6b5a62;font-size:.72rem;text-transform:uppercase}
-.action-btn{border-radius:10px;padding:.7rem;font-weight:600}
+.scan-public .scan-footer{color:#9ca3af}
 </style>

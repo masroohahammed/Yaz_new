@@ -64,17 +64,19 @@ $detailsUrl         = $detailsUrl ?? '#';
   </div>
   <?php endif; ?>
 
-  <div class="d-grid gap-2 mb-3">
+  <div class="scan-actions-card">
+    <div class="d-grid gap-2">
     <?php if ($isLoggedIn): ?>
-    <a href="<?= esc($detailsUrl) ?>" class="btn btn-fm-primary action-btn"><i class="bi bi-eye me-2"></i>View Details</a>
-    <a href="<?= esc($inspectionsUrl) ?>" class="btn btn-fm-outline action-btn"><i class="bi bi-clipboard2-check me-2"></i>Inspection Forms<?php if (($inspectionCount ?? 0) > 0): ?> (<?= (int) $inspectionCount ?>)<?php endif; ?></a>
-    <a href="<?= esc($maintenanceUrl) ?>" class="btn btn-fm-outline action-btn"><i class="bi bi-wrench me-2"></i>Maintenance</a>
-    <a href="<?= esc($workOrdersUrl) ?>" class="btn btn-fm-outline action-btn"><i class="bi bi-list-task me-2"></i>Work Orders</a>
-    <a href="<?= esc($workOrderCreateUrl) ?>" class="btn btn-fm-outline action-btn"><i class="bi bi-tools me-2"></i>New Work Order</a>
+    <a href="<?= esc($detailsUrl) ?>" class="btn action-btn"><i class="bi bi-eye me-2"></i>View Details</a>
+    <a href="<?= esc($inspectionsUrl) ?>" class="btn action-btn"><i class="bi bi-clipboard2-check me-2"></i>Inspection Forms<?php if (($inspectionCount ?? 0) > 0): ?> (<?= (int) $inspectionCount ?>)<?php endif; ?></a>
+    <a href="<?= esc($maintenanceUrl) ?>" class="btn action-btn"><i class="bi bi-wrench me-2"></i>Maintenance</a>
+    <a href="<?= esc($workOrdersUrl) ?>" class="btn action-btn"><i class="bi bi-list-task me-2"></i>Work Orders</a>
+    <a href="<?= esc($workOrderCreateUrl) ?>" class="btn action-btn"><i class="bi bi-tools me-2"></i>New Work Order</a>
     <?php else: ?>
-    <a href="<?= esc($maintenanceUrl) ?>" class="btn btn-fm-primary action-btn"><i class="bi bi-wrench me-2"></i>Submit Maintenance Request</a>
-    <a href="<?= base_url('login') ?>" class="btn btn-fm-outline action-btn"><i class="bi bi-box-arrow-in-right me-2"></i>Staff Login</a>
+    <a href="<?= esc($maintenanceUrl) ?>" class="btn action-btn"><i class="bi bi-wrench me-2"></i>Submit Maintenance Request</a>
+    <a href="<?= base_url('login') ?>" class="btn action-btn"><i class="bi bi-box-arrow-in-right me-2"></i>Staff Login</a>
     <?php endif; ?>
+    </div>
   </div>
 
   <?php if ($isLoggedIn && ! empty($openMaintenance)): ?>
@@ -89,7 +91,7 @@ $detailsUrl         = $detailsUrl ?? '#';
   </div>
   <?php endif; ?>
 
-  <div class="text-center small text-muted py-2">
+  <div class="text-center small scan-footer py-2">
     <?php if (! empty($qrImageUrl)): ?><img src="<?= esc($qrImageUrl) ?>" alt="QR" width="90" class="mb-2 opacity-50"><?php endif; ?>
     <div><?= esc($settings['company_name'] ?? 'FM ERP') ?></div>
   </div>
