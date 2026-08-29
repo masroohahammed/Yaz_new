@@ -413,4 +413,17 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('public/inspections', $routes);
         $this->assertFileExists($this->root . '/app/Controllers/PublicEntity.php');
     }
+
+    public function testUnitChecklistsAutoIncrementFix(): void
+    {
+        $this->assertFileExists($this->root . '/app/Database/Migrations/2026-08-29-121000_UnitChecklistsAutoIncrement.php');
+        $this->assertFileExists($this->root . '/app/Database/AutoIncrementRepair.php');
+        $inspections = file_get_contents($this->root . '/app/Controllers/Inspections.php');
+        $units = file_get_contents($this->root . '/app/Controllers/Units.php');
+        $this->assertStringContainsString('AutoIncrementRepair::ensure', $inspections);
+        $this->assertStringContainsString('AutoIncrementRepair::ensure', $units);
+        $patch = file_get_contents($this->root . '/database/patches/fm-erp-complete.sql');
+        $this->assertStringContainsString('unit_checklists', $patch);
+        $this->assertStringContainsString('AUTO_INCREMENT', $patch);
+    }
 }

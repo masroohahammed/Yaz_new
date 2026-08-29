@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Controllers\Traits\ParkingContractTrait;
+use App\Database\AutoIncrementRepair;
 use App\Services\EntityQrService;
 use App\Services\ParkingContractService;
 
@@ -452,6 +453,8 @@ class Units extends BaseController
         $items   = $this->request->getPost('items') ?? [];
         $notes   = $this->request->getPost('item_notes') ?? [];
         $encoded = json_encode(['items'=>$items,'notes'=>$notes]);
+
+        AutoIncrementRepair::ensure($this->db, 'unit_checklists');
 
         $this->db->table('unit_checklists')->insert([
             'unit_id'    => $unitId,

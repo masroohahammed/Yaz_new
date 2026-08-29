@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
+use App\Database\AutoIncrementRepair;
 
 /**
  * PM Inspections — move-in/move-out/periodic unit checklists.
@@ -100,6 +101,8 @@ class Inspections extends BaseController
         if ($propertyId <= 0 || $unitId <= 0) {
             return redirect()->back()->withInput()->with('error', 'Property and unit are required.');
         }
+
+        AutoIncrementRepair::ensure($this->db, self::TABLE);
 
         $this->db->table(self::TABLE)->insert([
             'unit_id'           => $unitId,
