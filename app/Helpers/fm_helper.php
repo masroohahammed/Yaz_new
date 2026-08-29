@@ -58,7 +58,7 @@ if (! function_exists('fm_unread_count')) {
         }
 
         $cacheKey = 'fm_unread_' . $userId;
-        $cached   = session()->get($cacheKey);
+        $cached   = cache()->get($cacheKey);
         if ($cached !== null && is_numeric($cached)) {
             return (int) $cached;
         }
@@ -69,7 +69,7 @@ if (! function_exists('fm_unread_count')) {
                 ->where('user_id', $userId)
                 ->where('is_read', 0)
                 ->countAllResults();
-            session()->set($cacheKey, $count);
+            cache()->save($cacheKey, $count, 30);
 
             return $count;
         } catch (\Throwable $e) {

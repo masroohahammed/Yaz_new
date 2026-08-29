@@ -111,7 +111,7 @@ class Tenants extends BaseController
             return $this->migrationView('Tenants');
         }
 
-        $tenant = $this->pmFind(self::TABLE, $id);
+        $tenant = $this->pmCrud()->row('tenants', $id, $this->pmCompanyId()) ?: $this->pmFind(self::TABLE, $id);
         if (! $tenant) {
             return redirect()->to(base_url('tenants'))->with('error', 'Tenant not found.');
         }

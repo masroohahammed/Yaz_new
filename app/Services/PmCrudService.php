@@ -12,7 +12,7 @@ class PmCrudService
   {
   }
 
-  public function row(string $slug, int $id): ?array
+  public function row(string $slug, int $id, ?int $companyId = null): ?array
   {
     $module = PmModules::get($slug);
     if (! $module || ! $this->db->tableExists($module['table'])) {
@@ -23,8 +23,50 @@ class PmCrudService
     if ($this->db->fieldExists('deleted_at', $module['table'])) {
       $builder->where('deleted_at', null);
     }
+    if ($companyId && $this->db->fieldExists('company_id', $module['table'])) {
+      $builder->where('company_id', $companyId);
+    }
 
     return $builder->get()->getRowArray() ?: null;
+  }
+
+  /**
+   * @return array{rows: list<array<string, mixed>>, total: int}
+   */
+  public function list(string $slug, ?int $companyId, string $search = '', int $limit = 50, int $offset = 0): array
+  {
+    $module = PmModules::get($slug);
+    if (! $module || ! $this->db->tableExists($module['table'])) {
+      return ['rows' => [], 'total' => 0];
+    }
+
+    $table = $module['table'];
+    $q     = $this->db->table($table);
+    if ($this->db->fieldExists('deleted_at', $table)) {
+      $q->where('deleted_at', null);
+    }
+    if ($companyId && $this->db->fieldExists('company_id', $table)) {
+      $q->where('company_id', $companyId);
+    }
+    if ($search !== '' && ! empty($module['search'])) {
+      $q->groupStart();
+      foreach ($module['search'] as $i => $col) {
+        if (! $this->db->fieldExists($col, $table)) {
+          continue;
+        }
+        $i === 0 ? $q->like($col, $search) : $q->orLike($col, $search);
+      }
+      $q->groupEnd();
+    }
+
+    $total = $q->countAllResults(false);
+    $order = $module['columns'][0]['key'] ?? 'id';
+    if (! $this->db->fieldExists($order, $table)) {
+      $order = 'id';
+    }
+    $rows = $q->orderBy($order, 'ASC')->limit($limit, $offset)->get()->getResultArray();
+
+    return ['rows' => $rows, 'total' => $total];
   }
 
   /** @return array<string, string> */

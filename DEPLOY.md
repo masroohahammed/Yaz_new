@@ -29,8 +29,22 @@ Migrations in this release:
 - `2026-08-29-100200` `maintenance_request_history`
 - `2026-08-29-100300` drop duplicate `maintenance_requests.email` (data copied to `requester_email` first)
 - `2026-08-29-100400` reminder dismiss metadata
+- `2026-08-29-100500` dashboard / invoice / notification / HR indexes
+
+SQL alternative (if you cannot run spark on the host):
+
+```
+database/patches/2026-08-29-fm-erp-remediation.sql
+```
+
+The SQL patch is idempotent (safe to re-run). It creates missing columns/tables and
+adds missing indexes only.
 
 Do **not** re-run old SQL from leftover ZIP archives.
+
+This product is Facility + Property Management. There is no kitchen / POS register.
+Work-order status updates and invoice / lease-payment totals are the live equivalents
+of “order”, revenue, voided, and cancelled amounts.
 
 ## Production debugging
 

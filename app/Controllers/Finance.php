@@ -367,6 +367,7 @@ class Finance extends BaseController
         $update = ['status' => $newStatus];
         $this->db->table('invoices')->where('id', $id)->update($update);
         cache()->delete('fm_sync_overdue_invoices');
+        (new \App\Services\FinanceTotalsService($this->db))->bustDashboardCaches();
         if ($newStatus === 'sent' && in_array($inv['status'], ['draft'], true)) {
             try {
                 (new \App\Services\Finance\GlPostingService($this->db))->postInvoiceRevenue(
@@ -1301,18 +1302,7 @@ class Finance extends BaseController
 
     private function _syncOverdueInvoices(): void
     {
-        if (cache()->get('fm_sync_overdue_invoices')) {
-            return;
-        }
-        try {
-            $this->db->query("
-                UPDATE invoices
-                SET status='overdue'
-                WHERE status='sent'
-                  AND due_date < CURDATE()
-            ");
-            cache()->save('fm_sync_overdue_invoices', 1, 900);
-        } catch (\Throwable $e) {}
+        (new \App\Services\FinanceTotalsService($this->db))->syncOverdueInvoices();
     }
 
     /**

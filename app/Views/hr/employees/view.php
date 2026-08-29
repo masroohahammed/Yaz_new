@@ -9,7 +9,15 @@
     <h1 class="h4 mb-1"><?= esc($e['user_name'] ?? $e['employee_code']) ?></h1>
     <span class="fm-badge badge-status-<?= esc($e['status']) ?>"><?= ucfirst(str_replace('_', ' ', $e['status'])) ?></span>
   </div>
-  <a href="<?= base_url('hr/employees') ?>" class="btn btn-fm-outline btn-sm">Back</a>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="<?= base_url('hr/employees/' . (int) $e['id'] . '/edit') ?>" class="btn btn-fm-primary btn-sm">Edit</a>
+    <?= form_open(base_url('hr/employees/' . (int) $e['id'] . '/status'), ['class' => 'd-inline']) ?>
+      <?= csrf_field() ?>
+      <input type="hidden" name="status" value="<?= ($e['status'] ?? '') === 'active' ? 'inactive' : 'active' ?>">
+      <button type="submit" class="btn btn-fm-outline btn-sm"><?= ($e['status'] ?? '') === 'active' ? 'Deactivate' : 'Activate' ?></button>
+    <?= form_close() ?>
+    <a href="<?= base_url('hr/employees') ?>" class="btn btn-fm-outline btn-sm">Back</a>
+  </div>
 </div>
 
 <ul class="nav fm-entity-tabs mb-3">

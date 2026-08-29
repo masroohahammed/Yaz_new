@@ -348,6 +348,13 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('complaints',                              'Helpdesk::index');
     $routes->get('landlord-payouts',                        'Landlords::index');
 
+    $routes->get('pm/(:segment)',                         'PmModules::index/$1');
+    $routes->get('pm/(:segment)/create',                  'PmModules::create/$1');
+    $routes->post('pm/(:segment)',                        'PmModules::store/$1');
+    $routes->get('pm/(:segment)/(:num)',                  'PmModules::show/$1/$2');
+    $routes->get('pm/(:segment)/(:num)/edit',             'PmModules::edit/$1/$2');
+    $routes->post('pm/(:segment)/(:num)/update',          'PmModules::update/$1/$2');
+
     $routes->get('contracts',                                  'Leases::index');
     $routes->get('contracts/export-csv',                      'Leases::exportCsv');
     $routes->post('contracts/sync-units',                   'Leases::syncFromUnits');
@@ -572,6 +579,9 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('hr/employees/create',          'Hr\HrEmployees::create');
     $routes->post('hr/employees/store',          'Hr\HrEmployees::store');
     $routes->get('hr/employees/view/(:num)',     'Hr\HrEmployees::view/$1');
+    $routes->get('hr/employees/(:num)/edit',     'Hr\HrEmployees::edit/$1');
+    $routes->post('hr/employees/(:num)/update',  'Hr\HrEmployees::update/$1');
+    $routes->post('hr/employees/(:num)/status',  'Hr\HrEmployees::status/$1');
     $routes->get('hr/expenses',                  'Hr\HrExpenses::index');
     $routes->get('hr/expenses/create',           'Hr\HrExpenses::create');
     $routes->post('hr/expenses/store',           'Hr\HrExpenses::store');
@@ -982,6 +992,13 @@ $routes->group('api/v1', static function ($routes) {
         $routes->get('properties/kpis/(:num)', 'Api\V1\Properties::kpis/$1');
         $routes->get('finance/trial-balance', 'Api\V1\Finance::trialBalance');
         $routes->get('finance/reconciliation', 'Api\V1\Finance::reconciliation');
+        $routes->get('finance/invoices', 'Api\V1\Invoices::index');
+        $routes->post('finance/invoices', 'Api\V1\Invoices::create');
+        $routes->get('work-orders', 'Api\V1\WorkOrders::index');
+        $routes->get('work-orders/(:num)', 'Api\V1\WorkOrders::show/$1');
+        $routes->post('work-orders', 'Api\V1\WorkOrders::create');
+        $routes->post('work-orders/(:num)', 'Api\V1\WorkOrders::update/$1');
+        $routes->post('work-orders/(:num)/delete', 'Api\V1\WorkOrders::delete/$1');
 
         $routes->get('fm/dashboard', 'Api\V1\Fm::dashboard');
         $routes->get('fm/work-orders', 'Api\V1\Fm::workOrders');

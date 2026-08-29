@@ -60,24 +60,63 @@ class DashboardService
     }
 
     /** @return array{overdue_amount: float, overdue_count: int} */
-    public function invoiceOverdueStats(): array
+    public function invoiceOverdueStats(?array $facilityIds = null): array
     {
-        $row = $this->db->query("
-            SELECT COALESCE(SUM(total),0) AS overdue_amount,
-                   COUNT(*) AS overdue_count
-            FROM invoices
-            WHERE status IN ('overdue','sent') AND due_date < CURDATE()
-        ")->getRowArray();
+        $totals = (new FinanceTotalsService($this->db))->invoiceTotals($facilityIds);
 
         return [
-            'overdue_amount' => (float) ($row['overdue_amount'] ?? 0),
-            'overdue_count'  => (int) ($row['overdue_count'] ?? 0),
+            'overdue_amount' => $totals['overdue'],
+            'overdue_count'  => $totals['overdue_count'],
+        ];
+    }
+
+    /**
+     * Single GROUP BY for work-order status / priority / cancelled counts.
+     *
+     * @param list<int>|null $facilityIds
+     * @return array{total: int, open: int, cancelled: int, completed: int, critical: int, breached: int}
+     */
+    public function workOrderTotals(?array $facilityIds = null): array
+    {
+        $empty = ['total' => 0, 'open' => 0, 'cancelled' => 0, 'completed' => 0, 'critical' => 0, 'breached' => 0];
+        if ($facilityIds !== null && $facilityIds === []) {
+            return $empty;
+        }
+
+        $sql = "SELECT
+            COUNT(*) AS total,
+            COALESCE(SUM(CASE WHEN status IN ('new','assigned','in_progress') THEN 1 ELSE 0 END), 0) AS open_cnt,
+            COALESCE(SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END), 0) AS cancelled,
+            COALESCE(SUM(CASE WHEN status IN ('completed','closed') THEN 1 ELSE 0 END), 0) AS completed,
+            COALESCE(SUM(CASE WHEN priority = 'critical' AND status IN ('new','assigned','in_progress') THEN 1 ELSE 0 END), 0) AS critical,
+            COALESCE(SUM(CASE WHEN sla_breached = 1 THEN 1 ELSE 0 END), 0) AS breached
+            FROM work_orders WHERE 1=1";
+        $params = [];
+        if ($facilityIds !== null) {
+            $sql .= ' AND facility_id IN (' . implode(',', array_fill(0, count($facilityIds), '?')) . ')';
+            $params = $facilityIds;
+        }
+        $row = $this->db->query($sql, $params)->getRowArray() ?: [];
+
+        return [
+            'total'     => (int) ($row['total'] ?? 0),
+            'open'      => (int) ($row['open_cnt'] ?? 0),
+            'cancelled' => (int) ($row['cancelled'] ?? 0),
+            'completed' => (int) ($row['completed'] ?? 0),
+            'critical'  => (int) ($row['critical'] ?? 0),
+            'breached'  => (int) ($row['breached'] ?? 0),
         ];
     }
 
     /** @return list<array<string, mixed>> */
     public function facilityStatsWithOccupancy(?array $facilityIds = null): array
     {
+        $cacheKey = 'fm_facility_stats_' . md5(json_encode($facilityIds));
+        $cached   = cache()->get($cacheKey);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
         $facilityFilter = '';
         $params         = [];
         if ($facilityIds !== null) {
@@ -89,21 +128,57 @@ class DashboardService
             $params         = $facilityIds;
         }
 
-        return $this->db->query("
+        $rows = $this->db->query("
             SELECT f.id, f.name,
-                (SELECT COUNT(*) FROM assets a WHERE a.facility_id=f.id AND a.deleted_at IS NULL) AS asset_count,
-                (SELECT COUNT(*) FROM work_orders w WHERE w.facility_id=f.id
-                    AND w.status IN ('new','assigned','in_progress')) AS open_wo,
-                (SELECT COUNT(*) FROM work_orders w WHERE w.facility_id=f.id AND w.sla_breached=1) AS sla_breaches,
-                (SELECT COALESCE(AVG(a.health_score),100) FROM assets a WHERE a.facility_id=f.id AND a.status='active') AS avg_health,
-                (SELECT COALESCE(SUM(i.total),0) FROM invoices i WHERE i.facility_id=f.id AND i.status='paid') AS revenue,
-                (SELECT COALESCE(SUM(e.amount),0) FROM expenses e WHERE e.facility_id=f.id AND e.status='approved') AS expenses,
-                (SELECT COUNT(*) FROM units un WHERE un.facility_id=f.id AND un.deleted_at IS NULL) AS total_units,
-                (SELECT COUNT(*) FROM units un WHERE un.facility_id=f.id AND un.status='occupied' AND un.deleted_at IS NULL) AS occupied_units
+                COALESCE(a.asset_count, 0) AS asset_count,
+                COALESCE(w.open_wo, 0) AS open_wo,
+                COALESCE(w.sla_breaches, 0) AS sla_breaches,
+                COALESCE(a.avg_health, 100) AS avg_health,
+                COALESCE(i.revenue, 0) AS revenue,
+                COALESCE(e.expenses, 0) AS expenses,
+                COALESCE(u.total_units, 0) AS total_units,
+                COALESCE(u.occupied_units, 0) AS occupied_units
             FROM facilities f
+            LEFT JOIN (
+                SELECT facility_id,
+                       SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) AS asset_count,
+                       AVG(CASE WHEN status = 'active' THEN health_score END) AS avg_health
+                FROM assets
+                GROUP BY facility_id
+            ) a ON a.facility_id = f.id
+            LEFT JOIN (
+                SELECT facility_id,
+                       SUM(CASE WHEN status IN ('new','assigned','in_progress') THEN 1 ELSE 0 END) AS open_wo,
+                       SUM(CASE WHEN sla_breached = 1 THEN 1 ELSE 0 END) AS sla_breaches
+                FROM work_orders
+                GROUP BY facility_id
+            ) w ON w.facility_id = f.id
+            LEFT JOIN (
+                SELECT facility_id,
+                       SUM(CASE WHEN status = 'paid' AND deleted_at IS NULL THEN total ELSE 0 END) AS revenue
+                FROM invoices
+                GROUP BY facility_id
+            ) i ON i.facility_id = f.id
+            LEFT JOIN (
+                SELECT facility_id,
+                       SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END) AS expenses
+                FROM expenses
+                GROUP BY facility_id
+            ) e ON e.facility_id = f.id
+            LEFT JOIN (
+                SELECT facility_id,
+                       SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) AS total_units,
+                       SUM(CASE WHEN status = 'occupied' AND deleted_at IS NULL THEN 1 ELSE 0 END) AS occupied_units
+                FROM units
+                GROUP BY facility_id
+            ) u ON u.facility_id = f.id
             WHERE f.status='active' $facilityFilter
             ORDER BY f.name ASC
         ", $params)->getResultArray();
+
+        cache()->save($cacheKey, $rows, 45);
+
+        return $rows;
     }
 
     /** @return list<array{month: string, total: int}> */

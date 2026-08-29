@@ -204,6 +204,7 @@ final class RemediationInventoryTest extends TestCase
             'Tenants.php'    => ['blacklist', 'unblacklist', 'action'],
             'JobCards.php'   => ['edit', 'update', 'addMaterial'],
             'Units.php'      => ['all'],
+            'Hr/HrEmployees.php' => ['edit', 'update', 'status'],
         ];
         foreach ($map as $file => $methods) {
             $src = file_get_contents($this->root . '/app/Controllers/' . $file);
@@ -215,5 +216,67 @@ final class RemediationInventoryTest extends TestCase
                 );
             }
         }
+    }
+
+    public function testPmCrudServiceIsUsedByLiveControllers(): void
+    {
+        $this->assertFileExists($this->root . '/app/Controllers/PmModules.php');
+        $src = file_get_contents($this->root . '/app/Controllers/PmModules.php');
+        $this->assertStringContainsString('PmCrudService', $src);
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString("PmModules::index", $routes);
+        $this->assertStringContainsString("'commission-rules'", file_get_contents($this->root . '/app/Controllers/PmModules.php'));
+        $this->assertStringContainsString('sales/commission-rules', file_get_contents($this->root . '/app/Controllers/PmModules.php'));
+        $this->assertStringContainsString("HrEmployees::edit", $routes);
+        $this->assertStringContainsString("Api\\V1\\WorkOrders::index", $routes);
+        $this->assertStringContainsString("Api\\V1\\Invoices::index", $routes);
+    }
+
+    public function testLegacyApiIsDeprecatedProxy(): void
+    {
+        $wo = file_get_contents($this->root . '/app/Controllers/Api/WorkOrders.php');
+        $this->assertStringContainsString('Api\\V1\\WorkOrders', $wo);
+        $this->assertStringContainsString('Deprecation', $wo);
+        $fin = file_get_contents($this->root . '/app/Controllers/Api/Finance.php');
+        $this->assertStringContainsString('Api\\V1\\Invoices', $fin);
+        $this->assertStringContainsString('Deprecation', $fin);
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString("group('api/v1'", $routes);
+        $this->assertStringContainsString("group('api/legacy'", $routes);
+    }
+
+    public function testFinanceTotalsServiceIsSingleSourceOfTruth(): void
+    {
+        $this->assertFileExists($this->root . '/app/Services/FinanceTotalsService.php');
+        $src = file_get_contents($this->root . '/app/Services/FinanceTotalsService.php');
+        foreach (['invoiceTotals', 'paymentTotals', 'syncOverdueInvoices'] as $method) {
+            $this->assertStringContainsString("function {$method}", $src);
+        }
+        $this->assertStringContainsString("status IN ('cancelled','void','voided')", $src);
+        $dash = file_get_contents($this->root . '/app/Controllers/Dashboard.php');
+        $this->assertStringContainsString('FinanceTotalsService', $dash);
+        $this->assertStringContainsString('workOrderTotals', $dash);
+        $this->assertStringNotContainsString('(clone $lc)', $dash);
+    }
+
+    public function testMysqlPatchIsIdempotentAndDocumented(): void
+    {
+        $patch = $this->root . '/database/patches/2026-08-29-fm-erp-remediation.sql';
+        $this->assertFileExists($patch);
+        $sql = file_get_contents($patch);
+        $this->assertStringContainsString('fm_add_index_if_missing', $sql);
+        $this->assertStringContainsString('tenant_blacklist_history', $sql);
+        $this->assertStringContainsString('maintenance_request_history', $sql);
+        $this->assertStringContainsString('idx_inv_company', $sql);
+        $this->assertFileExists($this->root . '/app/Database/Migrations/2026-08-29-100500_PerformanceQueryIndexes.php');
+    }
+
+    public function testNoKitchenPosModuleWasInvented(): void
+    {
+        $this->assertFileDoesNotExist($this->root . '/app/Controllers/Kitchen.php');
+        $this->assertFileDoesNotExist($this->root . '/app/Controllers/Pos.php');
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringNotContainsString("Kitchen::", $routes);
+        $this->assertStringNotContainsString("Pos::", $routes);
     }
 }

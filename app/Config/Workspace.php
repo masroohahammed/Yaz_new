@@ -48,6 +48,7 @@ class Workspace extends BaseConfig
         'payments',
         'rent-payments',
         'landlord-payouts',
+        'pm',
         'cheques',
         'outgoing-cheques',
         'cost-management',

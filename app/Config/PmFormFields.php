@@ -284,6 +284,21 @@ class PmFormFields
           self::f('notes', 'Notes', 'text'),
         ]),
       ],
+      'commission-rules' => [
+        self::sec('Commission Rule', [
+          self::f('rule_name', 'Rule Name', 'text', true),
+          self::f('deal_type', 'Deal Type', 'select', false, [
+            'Sale' => 'Sale', 'Lease' => 'Lease', 'Both' => 'Both',
+          ]),
+          self::f('commission_type', 'Commission Type', 'select', false, [
+            'percent' => 'Percent', 'fixed' => 'Fixed',
+          ]),
+          self::f('agent_rate', 'Agent Rate', 'number'),
+          self::f('company_rate', 'Company Rate', 'number'),
+          self::f('status', 'Status', 'select', false, ['active' => 'Active', 'inactive' => 'Inactive']),
+          self::f('notes', 'Notes', 'textarea'),
+        ]),
+      ],
       'complimentary-offers' => [
         self::sec('Offer', [
           self::fk('contract_id', 'Contract', 'lease_contracts', 'contract_number', true),

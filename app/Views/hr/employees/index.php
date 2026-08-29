@@ -24,7 +24,10 @@
       <td class="small"><?= esc($e['department_name'] ?? '—') ?></td>
       <td class="small"><?= esc($e['designation_title'] ?? '—') ?></td>
       <td><span class="fm-badge badge-status-<?= esc($e['status']) ?>"><?= ucfirst(str_replace('_', ' ', $e['status'])) ?></span></td>
-      <td class="text-end"><a href="<?= base_url('hr/employees/view/' . $e['id']) ?>" class="btn btn-sm btn-fm-outline">View</a></td>
+      <td class="text-end text-nowrap">
+        <a href="<?= base_url('hr/employees/view/' . $e['id']) ?>" class="btn btn-sm btn-fm-outline">View</a>
+        <a href="<?= base_url('hr/employees/' . $e['id'] . '/edit') ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
+      </td>
     </tr>
     <?php endforeach; ?>
     <?php if (empty($employees)): ?><tr><td colspan="6" class="text-muted text-center py-4">No employee profiles yet.</td></tr><?php endif; ?>

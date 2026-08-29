@@ -443,6 +443,9 @@ class RbacService
                 || str_starts_with($uri, 'properties')
                 || str_starts_with($uri, 'units')           => 'facilities',
             str_starts_with($uri, 'tenants')                => 'tenants',
+            str_starts_with($uri, 'pm/landlord-payouts')     => 'landlords',
+            str_starts_with($uri, 'pm/commission-rules')     => 'sales',
+            str_starts_with($uri, 'pm/')                     => 'leases',
             str_starts_with($uri, 'landlords')
                 || str_starts_with($uri, 'landlord-payouts') => 'landlords',
             str_starts_with($uri, 'contracts')

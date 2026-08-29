@@ -69,6 +69,7 @@
         <div class="d-flex justify-content-between mb-2 small"><span class="text-muted">Collected revenue</span><strong><?= number_format((float) $revenue, 2) ?> <?= esc($currency) ?></strong></div>
         <div class="d-flex justify-content-between mb-2 small"><span class="text-muted">Outstanding</span><strong class="text-warning"><?= number_format((float) $pendingReceivable, 2) ?> <?= esc($currency) ?></strong></div>
         <div class="d-flex justify-content-between small"><span class="text-muted">Overdue</span><strong class="text-danger"><?= number_format((float) $overdueAmount, 2) ?> <?= esc($currency) ?></strong></div>
+        <div class="d-flex justify-content-between small mt-2"><span class="text-muted">Cancelled / voided</span><strong><?= number_format((float) ($cancelledAmount ?? 0), 2) ?> <?= esc($currency) ?></strong></div>
       </div>
     </div>
   </div>

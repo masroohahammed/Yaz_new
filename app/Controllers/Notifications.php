@@ -8,12 +8,15 @@ class Notifications extends BaseController
         $uid = session()->get('user_id');
         $notifications = $this->db->table('notifications')->where('user_id',$uid)->orderBy('created_at','DESC')->limit(50)->get()->getResultArray();
         $this->db->table('notifications')->where('user_id',$uid)->update(['is_read'=>1]);
+        cache()->delete('fm_unread_' . $uid);
         return view('notifications/index', $this->viewData(['title'=>'Notifications','notifications'=>$notifications]));
     }
 
     public function markRead(int $id)
     {
-        $this->db->table('notifications')->where('id',$id)->where('user_id',session()->get('user_id'))->update(['is_read'=>1]);
+        $uid = (int) session()->get('user_id');
+        $this->db->table('notifications')->where('id',$id)->where('user_id',$uid)->update(['is_read'=>1]);
+        cache()->delete('fm_unread_' . $uid);
         return $this->response->setJSON(['status'=>true]);
     }
 
@@ -58,7 +61,9 @@ class Notifications extends BaseController
 
     public function markAllRead()
     {
-        $this->db->table('notifications')->where('user_id',session()->get('user_id'))->update(['is_read'=>1]);
+        $uid = (int) session()->get('user_id');
+        $this->db->table('notifications')->where('user_id',$uid)->update(['is_read'=>1]);
+        cache()->delete('fm_unread_' . $uid);
         return $this->response->setJSON(['status'=>true]);
     }
 }

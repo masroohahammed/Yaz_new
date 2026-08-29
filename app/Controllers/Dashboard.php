@@ -46,16 +46,32 @@ class Dashboard extends BaseController
             $this->db->table('facilities')->where('status', 'active')
         )->countAllResults();
 
-        $totalUnits = $this->scopeFacilities($this->db->table('units'))->countAllResults();
-        $occupied   = $this->scopeFacilities($this->db->table('units'))->where('status', 'occupied')->countAllResults();
+        $unitCounts = $this->scopeFacilities($this->db->table('units')->select('status, COUNT(*) AS cnt', false)->groupBy('status'))->get()->getResultArray();
+        $totalUnits = 0;
+        $occupied   = 0;
+        foreach ($unitCounts as $uc) {
+            $cnt = (int) ($uc['cnt'] ?? 0);
+            $totalUnits += $cnt;
+            if (($uc['status'] ?? '') === 'occupied') {
+                $occupied = $cnt;
+            }
+        }
         $occupancy  = $totalUnits > 0 ? round(($occupied / $totalUnits) * 100, 1) : 0;
 
         $activeContracts = 0;
         $expiringSoon    = 0;
         if ($this->db->tableExists('lease_contracts')) {
-            $activeContracts = $this->db->table('lease_contracts')->where('status', 'active')->countAllResults();
-            $expiringSoon    = $this->db->table('lease_contracts')
-                ->where('status', 'active')
+            $leaseBase = function () {
+                $q = $this->db->table('lease_contracts')->where('status', 'active');
+                if ($this->db->fieldExists('deleted_at', 'lease_contracts')) {
+                    $q->where('deleted_at', null);
+                }
+                $this->scopeCompany($q, 'company_id');
+
+                return $q;
+            };
+            $activeContracts = $leaseBase()->countAllResults();
+            $expiringSoon    = $leaseBase()
                 ->where('end_date <=', date('Y-m-d', strtotime('+60 days')))
                 ->where('end_date >=', date('Y-m-d'))
                 ->countAllResults();
@@ -68,9 +84,13 @@ class Dashboard extends BaseController
                 ->countAllResults();
         }
 
-        $overdue  = $dash->invoiceOverdueStats();
-        $revenue  = (float) ($this->db->table('invoices')->where('status', 'paid')->selectSum('total', 't')->get()->getRowArray()['t'] ?? 0);
-        $pending  = (float) ($this->db->table('invoices')->whereIn('status', ['sent', 'overdue'])->selectSum('total', 't')->get()->getRowArray()['t'] ?? 0);
+        $totalsSvc = new \App\Services\FinanceTotalsService($this->db);
+        $totalsSvc->syncOverdueInvoices();
+        $totals   = $totalsSvc->invoiceTotals($this->companyScope()->facilityIds(), $this->pmCompanyIdFromSession());
+        $overdue  = ['overdue_amount' => $totals['overdue'], 'overdue_count' => $totals['overdue_count']];
+        $revenue  = $totals['revenue'];
+        $pending  = $totals['outstanding'];
+        $cancelled = $totals['cancelled'];
 
         $openMaintenance = $this->scopeFacilities($this->db->table('maintenance_requests'))
             ->whereIn('status', ['pending', 'reviewed', 'approved'])
@@ -99,8 +119,9 @@ class Dashboard extends BaseController
         $overdueInvoices = $this->db->table('invoices i')
             ->select('i.id, i.invoice_number, i.total, i.due_date, f.name AS facility_name')
             ->join('facilities f', 'f.id=i.facility_id', 'left')
-            ->where('i.status', 'overdue')
-            ->orderBy('i.due_date', 'ASC')->limit(8)->get()->getResultArray();
+            ->where('i.status', 'overdue');
+        $this->scopeFacilities($overdueInvoices, 'i.facility_id');
+        $overdueInvoices = $overdueInvoices->orderBy('i.due_date', 'ASC')->limit(8)->get()->getResultArray();
 
         $recentMaintenance = $this->db->table('maintenance_requests mr')
             ->select('mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at, f.name AS facility_name')
@@ -112,14 +133,7 @@ class Dashboard extends BaseController
         $facilityRows = $dash->facilityStatsWithOccupancy($this->companyScope()->facilityIds());
         $revTrend     = $dash->revenueExpenseTrend(6);
 
-        $aiFlags = [];
-        try {
-            $ai = new \App\Services\AiModel($this->db);
-            $ai->runAnalysis($this->pmCompanyIdFromSession());
-            $aiFlags = $ai->flagsForWorkspace('pm', 6);
-        } catch (\Throwable $e) {
-            log_message('error', 'PM dashboard AI: ' . $e->getMessage());
-        }
+        $aiFlags = $this->cachedAiFlags('pm', $this->pmCompanyIdFromSession());
 
         return view('dashboard/pm_dashboard', $this->viewData([
             'title'             => 'Property Management Dashboard',
@@ -131,6 +145,7 @@ class Dashboard extends BaseController
             'expiringSoon'      => $expiringSoon,
             'revenue'           => $revenue,
             'pendingReceivable' => $pending,
+            'cancelledAmount'   => $cancelled,
             'overdueAmount'     => $overdue['overdue_amount'],
             'overdueCount'      => $overdue['overdue_count'],
             'openMaintenance'   => $openMaintenance,
@@ -150,6 +165,25 @@ class Dashboard extends BaseController
         return $id ? (int) $id : null;
     }
 
+    /** @return list<array<string, mixed>> */
+    private function cachedAiFlags(string $workspace, ?int $companyId): array
+    {
+        try {
+            $ai       = new \App\Services\AiModel($this->db);
+            $cacheKey = 'fm_ai_scan_' . $workspace . '_' . (int) $companyId;
+            if (! cache()->get($cacheKey)) {
+                $ai->runAnalysis($companyId);
+                cache()->save($cacheKey, 1, 120);
+            }
+
+            return $ai->flagsForWorkspace($workspace, 6);
+        } catch (\Throwable $e) {
+            log_message('error', strtoupper($workspace) . ' dashboard AI: ' . $e->getMessage());
+
+            return [];
+        }
+    }
+
     private function facilityManagementDashboard(): string
     {
         return $this->facilityManagerDashboard();
@@ -162,16 +196,17 @@ class Dashboard extends BaseController
     {
         $currency = $this->settings['currency'] ?? 'QAR';
         $dash     = new DashboardService($this->db);
-        $overdue  = $dash->invoiceOverdueStats();
+        $overdue  = $dash->invoiceOverdueStats($this->companyScope()->facilityIds());
 
         // Core KPIs (company-scoped)
         $totalFacilities = $this->scopeCompany(
             $this->db->table('facilities')->where('status', 'active')
         )->countAllResults();
-        $totalWO         = $this->scopeFacilities($this->db->table('work_orders'))->countAllResults();
-        $openWO          = $this->scopeFacilities($this->db->table('work_orders'))->whereIn('status', ['new', 'assigned', 'in_progress'])->countAllResults();
-        $criticalWO      = $this->scopeFacilities($this->db->table('work_orders'))->where('priority', 'critical')->whereIn('status', ['new', 'assigned', 'in_progress'])->countAllResults();
-        $breachedWO      = $this->scopeFacilities($this->db->table('work_orders'))->where('sla_breached', 1)->countAllResults();
+        $woTotals        = $dash->workOrderTotals($this->companyScope()->facilityIds());
+        $totalWO         = $woTotals['total'];
+        $openWO          = $woTotals['open'];
+        $criticalWO      = $woTotals['critical'];
+        $breachedWO      = $woTotals['breached'];
         $slaCompliance   = $totalWO > 0 ? round((($totalWO - $breachedWO) / $totalWO) * 100, 1) : 100;
         $activeContracts = $this->db->table('contracts')->where('status','active')->countAllResults();
         $pendingInvoices = $this->db->table('invoices')->whereIn('status',['sent','overdue'])->countAllResults();
@@ -188,9 +223,9 @@ class Dashboard extends BaseController
             $assetHealth = (int)($ah['avg'] ?? 100);
         } catch (\Throwable $e) {}
 
-        // Revenue & Expenses (total)
-        $revenue  = (float)($this->db->table('invoices')->where('status','paid')->selectSum('total','t')->get()->getRowArray()['t'] ?? 0);
-        $expenses = (float)($this->db->table('expenses')->where('status','approved')->selectSum('amount','t')->get()->getRowArray()['t'] ?? 0);
+        $finTotals = (new \App\Services\FinanceTotalsService($this->db))->invoiceTotals($this->companyScope()->facilityIds());
+        $revenue   = $finTotals['revenue'];
+        $expenses  = (float)($this->db->table('expenses')->where('status','approved')->selectSum('amount','t')->get()->getRowArray()['t'] ?? 0);
 
         $revTrend     = $dash->revenueExpenseTrend(12);
         $trendData    = array_map(fn ($r) => [
@@ -305,9 +340,10 @@ class Dashboard extends BaseController
     // =========================================================
     private function facilityManagerDashboard(): string
     {
-        $openWO       = $this->db->table('work_orders')->whereIn('status',['new','assigned','in_progress'])->countAllResults();
+        $woTotals     = (new DashboardService($this->db))->workOrderTotals($this->companyScope()->facilityIds());
+        $openWO       = $woTotals['open'];
         $preventiveWO = $this->db->table('work_orders')->where('type','preventive')->whereIn('status',['new','assigned'])->countAllResults();
-        $slaBreaches  = $this->db->table('work_orders')->where('sla_breached',1)->whereIn('status',['new','assigned','in_progress'])->countAllResults();
+        $slaBreaches  = $woTotals['breached'];
         $totalStaff   = $this->db->table('employees')->where('status','active')->countAllResults();
         $checkedIn    = $this->db->table('attendance')->where('date',date('Y-m-d'))->where('status','present')->countAllResults();
         $openVendorWO = $this->db->table('work_orders')->where('vendor_id IS NOT NULL', null, false)->whereIn('status',['assigned','in_progress'])->countAllResults();
@@ -372,14 +408,7 @@ class Dashboard extends BaseController
             ->orderBy('mr.created_at', 'DESC')
             ->limit(10)->get()->getResultArray();
 
-        $aiFlags = [];
-        try {
-            $ai = new \App\Services\AiModel($this->db);
-            $ai->runAnalysis();
-            $aiFlags = $ai->flagsForWorkspace('fm', 6);
-        } catch (\Throwable $e) {
-            log_message('error', 'FM dashboard AI: ' . $e->getMessage());
-        }
+        $aiFlags = $this->cachedAiFlags('fm', $this->pmCompanyIdFromSession());
 
         // VIEW: dashboard/facility_manager
         return view('dashboard/facility_manager', $this->viewData([
@@ -469,15 +498,13 @@ class Dashboard extends BaseController
     {
         $currency = $this->settings['currency'] ?? 'QAR';
 
-        $finRow = $this->db->query("
-            SELECT
-              SUM(CASE WHEN status='paid'    THEN total ELSE 0 END) AS revenue,
-              SUM(CASE WHEN status='overdue' THEN total ELSE 0 END) AS overdue,
-              SUM(CASE WHEN status='sent'    THEN total ELSE 0 END) AS pending,
-              COUNT(CASE WHEN status='overdue' THEN 1 END)          AS overdue_count
-            FROM invoices
-            WHERE YEAR(issue_date) = YEAR(CURDATE())
-        ")->getRowArray();
+        $finTotals = (new \App\Services\FinanceTotalsService($this->db))->invoiceTotals($this->companyScope()->facilityIds());
+        $finRow    = [
+            'revenue'       => $finTotals['revenue'],
+            'overdue'       => $finTotals['overdue'],
+            'pending'       => $finTotals['outstanding'],
+            'overdue_count' => $finTotals['overdue_count'],
+        ];
 
         $expRow = $this->db->query("
             SELECT

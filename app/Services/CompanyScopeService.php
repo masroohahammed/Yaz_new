@@ -71,6 +71,14 @@ class CompanyScopeService
             // property_manager / real_estate_manager / facility_manager: company-wide when unassigned.
         }
 
+        $cacheKey = 'fm_facilities_' . $companyId;
+        $cached   = cache()->get($cacheKey);
+        if (is_array($cached)) {
+            $this->facilityIds = array_map('intval', $cached);
+
+            return $this->facilityIds;
+        }
+
         $rows = $this->db->table('facilities')
             ->select('id')
             ->where('company_id', $companyId)
@@ -79,6 +87,7 @@ class CompanyScopeService
             ->getResultArray();
 
         $this->facilityIds = array_map(fn ($r) => (int) $r['id'], $rows);
+        cache()->save($cacheKey, $this->facilityIds, 60);
 
         return $this->facilityIds;
     }

@@ -19,6 +19,11 @@ trait PmModuleTrait
         return $this->db->tableExists($table);
     }
 
+    protected function pmCrud(): \App\Services\PmCrudService
+    {
+        return new \App\Services\PmCrudService($this->db);
+    }
+
     /** @return array<string,mixed>|null */
     protected function pmFind(string $table, int $id, ?string $companyColumn = null, ?string $facilityColumn = null): ?array
     {

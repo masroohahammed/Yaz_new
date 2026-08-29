@@ -21,8 +21,7 @@ $_unread = fm_unread_count();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($pageTitle ?? 'FM ERP') ?> — <?= esc($_companyName) ?></title>
     <!-- Bootstrap 5 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- App CSS (static — no PHP) -->
@@ -127,7 +126,8 @@ $_unread = fm_unread_count();
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
     <!-- App JS -->
-    <script src="<?= base_url('assets/js/app.js') ?>?v=20260522" defer></script>
+    <script src="<?= base_url('assets/js/app.js') ?>?v=20260829" defer></script>
+    <script src="<?= base_url('assets/js/fm-form-submit.js') ?>?v=20260829" defer></script>
     <?= $this->renderSection('scripts') ?>
 
     <script>

@@ -41,7 +41,7 @@ class Filters extends BaseConfig
         'before' => [
             'csrf' => ['except' => ['api/v1/*', 'api/legacy/*']],
         ],
-        'after' => [
+        'after' => ENVIRONMENT === 'production' ? [] : [
             'toolbar',
         ],
     ];

@@ -82,6 +82,7 @@ class PaymentService
         }
 
         $this->db->table('invoices')->where('id', $invoiceId)->update($update);
+        cache()->delete('fm_sync_overdue_invoices');
 
         if ($this->db->fieldExists('billed_amount', 'work_orders') && ! empty($inv['work_order_id'])) {
             $this->syncWorkOrderBilling((int) $inv['work_order_id']);

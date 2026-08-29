@@ -41,5 +41,7 @@ class PmMenu extends BaseConfig
         ['key' => 'outgoing',        'label' => 'Outgoing Cheques', 'icon' => 'bi-cash',              'url' => 'outgoing-cheques'],
         ['key' => 'collector_assign','label' => 'Assign Collectors','icon' => 'bi-person-badge',       'url' => 'collector/assign'],
         ['key' => 'collector_handoff','label' => 'Cash Handoffs',   'icon' => 'bi-bag-check',          'url' => 'collector/handoff'],
+        ['key' => 'commission_rules', 'label' => 'Commission Rules', 'icon' => 'bi-percent',           'url' => 'sales/commission-rules'],
+        ['key' => 'landlord_payouts', 'label' => 'All Payouts',      'icon' => 'bi-cash-coin',         'url' => 'pm/landlord-payouts'],
     ];
 }
