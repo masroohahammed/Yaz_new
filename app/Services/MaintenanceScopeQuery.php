@@ -9,7 +9,7 @@ use CodeIgniter\Database\BaseConnection;
  */
 class MaintenanceScopeQuery
 {
-    public const BUILD = '2026-08-29-5';
+    public const BUILD = '2026-08-29-6';
 
     /**
      * @param array<string, mixed> $scope

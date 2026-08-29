@@ -66,21 +66,40 @@ php -r "if (function_exists('opcache_reset')) { opcache_reset(); echo 'ok'; }"
 sudo systemctl restart php-fpm   # or your host's PHP service name
 ```
 
-**Verify deployment** (must return build `2026-08-29-5`):
+**Verify deployment** (build must be `2026-08-29-6`):
+
+Preferred — uses the same route as the maintenance page (no extra path segment):
 
 ```
+GET https://your-domain/public/maintenance?ping=1
+```
+
+Expected JSON: `{"ok":true,"build":"2026-08-29-6","service":"2026-08-29-6","controller":"App\\Controllers\\PublicMaintenance"}`
+
+Alternate ping URLs (require `Routes.php` on server):
+
+```
+GET https://your-domain/maintenance-ping
 GET https://your-domain/public/maintenance/ping
 ```
 
-Expected JSON: `{"ok":true,"build":"2026-08-29-5","service":"2026-08-29-5","controller":"App\\Controllers\\PublicMaintenance"}`
+Or check the response header on the live page:
 
-Open `https://your-domain/public/maintenance?facility_id=9103` and view page source — look for:
-
-```html
-<!-- fm-maintenance-build: 2026-08-29-5 -->
+```
+curl -sI "https://your-domain/public/maintenance?facility_id=9103" | grep -i x-fm-maintenance-build
 ```
 
-If you still see the old error or an older build marker, production is running stale files (partial deploy or opcache).
+Should show: `X-FM-Maintenance-Build: 2026-08-29-6`
+
+View page source — look for:
+
+```html
+<!-- fm-maintenance-build: 2026-08-29-6 -->
+```
+
+If `/public/maintenance/ping` is **404** but `/public/maintenance?ping=1` works, production is missing the updated `Routes.php` — upload it and restart PHP.
+
+If you still see the old SQL error or an older build marker, production is running stale controller files (partial deploy or opcache).
 
 ## Production debugging
 

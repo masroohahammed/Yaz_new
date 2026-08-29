@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
 class PublicMaintenance extends Controller
 {
     /** Bump when deploying — visible in page source as fm-maintenance-build */
-    public const MAINTENANCE_BUILD = '2026-08-29-5';
+    public const MAINTENANCE_BUILD = '2026-08-29-6';
 
     /** @var \CodeIgniter\Database\BaseConnection */
     protected $db;
@@ -36,19 +36,23 @@ class PublicMaintenance extends Controller
         $this->settings = self::loadSettings($this->db);
     }
 
-    /** Deploy verification — GET public/maintenance/ping */
+    /**
+     * Deploy verification — any of:
+     *   GET public/maintenance?ping=1          (works without extra route)
+     *   GET public/maintenance/ping            (needs Routes.php)
+     *   GET maintenance-ping                   (flat alias)
+     */
     public function ping()
     {
-        return $this->response->setJSON([
-            'ok'         => true,
-            'build'      => self::MAINTENANCE_BUILD,
-            'service'    => MaintenanceScopeQuery::BUILD,
-            'controller' => self::class,
-        ]);
+        return $this->pingResponse();
     }
 
     public function index()
     {
+        if ($this->request->getGet('ping') !== null) {
+            return $this->pingResponse();
+        }
+
         $facilityId = (int) ($this->request->getGet('facility_id') ?? $this->request->getPost('facility_id') ?? 0);
         $unitId     = (int) ($this->request->getGet('unit_id') ?? $this->request->getPost('unit_id') ?? 0);
         $assetId    = (int) ($this->request->getGet('asset_id') ?? $this->request->getPost('asset_id') ?? 0);
@@ -197,6 +201,8 @@ class PublicMaintenance extends Controller
             }
         }
 
+        $this->response->setHeader('X-FM-Maintenance-Build', self::MAINTENANCE_BUILD);
+
         return view('public/maintenance', [
             'title'       => 'Maintenance — ' . ($scope['label'] ?? 'Entity'),
             'scope'       => $scope,
@@ -209,6 +215,19 @@ class PublicMaintenance extends Controller
             'backUrl'     => $scope['scan_url'] ?? base_url('request'),
             'buildId'     => self::MAINTENANCE_BUILD,
         ]);
+    }
+
+    /** @return \CodeIgniter\HTTP\ResponseInterface */
+    private function pingResponse()
+    {
+        return $this->response
+            ->setHeader('X-FM-Maintenance-Build', self::MAINTENANCE_BUILD)
+            ->setJSON([
+                'ok'         => true,
+                'build'      => self::MAINTENANCE_BUILD,
+                'service'    => MaintenanceScopeQuery::BUILD,
+                'controller' => self::class,
+            ]);
     }
 
     /** @return array<string, mixed> */

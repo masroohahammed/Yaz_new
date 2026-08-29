@@ -36,9 +36,11 @@ $routes->post('request',                 'PublicRequest::submit');
 $routes->get('request/units/(:num)',     'PublicRequest::unitsForFacility/$1');
 $routes->get('track/(:segment)',         'PublicRequest::track/$1');
 
-$routes->get('public/maintenance',       'PublicMaintenance::index');
-$routes->get('public/maintenance/ping',  'PublicMaintenance::ping');
-$routes->post('public/maintenance',      'PublicMaintenance::submit');
+$routes->get('public/maintenance',        'PublicMaintenance::index');
+$routes->get('public/maintenance/ping',   'PublicMaintenance::ping');
+$routes->get('public/maintenance-ping',   'PublicMaintenance::ping');
+$routes->get('maintenance-ping',          'PublicMaintenance::ping');
+$routes->post('public/maintenance',       'PublicMaintenance::submit');
 $routes->get('public/inspections',       'PublicEntity::inspections');
 
 // Asset QR scan (public deep links)

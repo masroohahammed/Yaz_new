@@ -474,12 +474,15 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('MaintenanceScopeQuery::listRecords', $controller);
         $this->assertStringContainsString('renderPropertyMaintenance', $controller);
         $this->assertStringContainsString('MAINTENANCE_BUILD', $controller);
-        $this->assertStringContainsString("'2026-08-29-5'", $controller);
+        $this->assertStringContainsString("'2026-08-29-6'", $controller);
         $this->assertStringContainsString('function ping', $controller);
+        $this->assertStringContainsString("getGet('ping')", $controller);
+        $this->assertStringContainsString('X-FM-Maintenance-Build', $controller);
         $routes = file_get_contents($this->root . '/app/Config/Routes.php');
         $this->assertStringContainsString('PublicMaintenance::index', $routes);
         $this->assertStringContainsString('PublicMaintenance::ping', $routes);
         $this->assertStringContainsString('PublicMaintenance::submit', $routes);
+        $this->assertStringContainsString('maintenance-ping', $routes);
         $this->assertStringContainsString('maintenance/ping', $routes);
         $this->assertStringNotContainsString('applyMaintenanceScope', $controller);
         $this->assertStringNotContainsString('loadMaintenanceRecords', $controller);
