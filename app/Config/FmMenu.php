@@ -15,7 +15,7 @@ class FmMenu extends BaseConfig
         ['key' => 'units', 'label' => 'Units', 'icon' => 'bi-door-closed', 'url' => 'units'],
 
         ['type' => 'heading', 'label' => 'Operations'],
-        ['key' => 'maintenance', 'label' => 'Maintenance', 'icon' => 'bi-tools', 'url' => 'helpdesk'],
+        ['key' => 'maintenance', 'label' => 'Maintenance', 'icon' => 'bi-tools', 'url' => 'maintenance/list'],
         ['key' => 'scan', 'label' => 'QR Scanner', 'icon' => 'bi-qr-code-scan', 'url' => 'scan'],
         ['key' => 'helpdesk', 'label' => 'Complaints', 'icon' => 'bi-headset', 'url' => 'helpdesk'],
         ['key' => 'workorders', 'label' => 'Work Orders', 'icon' => 'bi-clipboard2-check', 'url' => 'workorders'],

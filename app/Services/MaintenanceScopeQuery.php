@@ -9,7 +9,154 @@ use CodeIgniter\Database\BaseConnection;
  */
 class MaintenanceScopeQuery
 {
-    public const BUILD = '2026-08-29-7';
+    public const BUILD = '2026-08-29-8';
+
+    /**
+     * Staff maintenance list (PM read-only / FM) — parameterized raw SQL only.
+     *
+     * @param array<string, mixed> $user
+     * @param array<string, mixed> $filters
+     * @return list<array<string, mixed>>
+     */
+    public static function listForUser(
+        BaseConnection $db,
+        array $user,
+        array $filters = [],
+        int $limit = 20,
+        int $offset = 0
+    ): array {
+        [$scopeSql, $scopeParams] = self::userScopeSql($db, $user);
+        [$filterSql, $filterParams] = self::filterSql($filters);
+
+        $sql = 'SELECT mr.id, mr.ticket_number, mr.requester_name, mr.requester_phone, mr.category,
+                mr.priority, mr.status, mr.approval_status, mr.verified_at, mr.created_at
+            FROM maintenance_requests mr
+            WHERE 1=1' . $scopeSql . $filterSql . '
+            ORDER BY mr.created_at DESC
+            LIMIT ' . max(1, (int) $limit) . ' OFFSET ' . max(0, (int) $offset);
+
+        try {
+            return $db->query($sql, array_merge($scopeParams, $filterParams))->getResultArray();
+        } catch (\Throwable $e) {
+            log_message('error', 'MaintenanceScopeQuery::listForUser: ' . $e->getMessage());
+
+            return [];
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     * @param array<string, mixed> $filters
+     */
+    public static function countForUser(BaseConnection $db, array $user, array $filters = []): int
+    {
+        [$scopeSql, $scopeParams] = self::userScopeSql($db, $user);
+        [$filterSql, $filterParams] = self::filterSql($filters);
+
+        $sql = 'SELECT COUNT(*) AS cnt FROM maintenance_requests mr WHERE 1=1' . $scopeSql . $filterSql;
+
+        try {
+            $row = $db->query($sql, array_merge($scopeParams, $filterParams))->getRowArray();
+
+            return (int) ($row['cnt'] ?? 0);
+        } catch (\Throwable $e) {
+            log_message('error', 'MaintenanceScopeQuery::countForUser: ' . $e->getMessage());
+
+            return 0;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     * @return array{0: string, 1: list<mixed>}
+     */
+    private static function userScopeSql(BaseConnection $db, array $user): array
+    {
+        $role = (string) ($user['role_name'] ?? '');
+        $userId = (int) ($user['id'] ?? 0);
+        $companyId = (int) ($user['company_id'] ?? 0);
+
+        switch ($role) {
+            case 'super_admin':
+                return ['', []];
+
+            case 'facility_manager':
+                return [
+                    ' AND mr.facility_id IN (SELECT id FROM facilities WHERE manager_id = ? AND deleted_at IS NULL)',
+                    [$userId],
+                ];
+
+            case 'supervisor':
+                return [
+                    ' AND mr.facility_id IN (
+                        SELECT DISTINCT facility_id FROM work_orders
+                        WHERE supervisor_id = ? AND deleted_at IS NULL AND facility_id IS NOT NULL
+                    )',
+                    [$userId],
+                ];
+
+            case 'client':
+                return [
+                    ' AND mr.requester_email = ?',
+                    [(string) ($user['email'] ?? '')],
+                ];
+
+            case 'property_manager':
+            case 'real_estate_manager':
+            case 'landlord':
+            case 'finance_manager':
+            case 'finance_user':
+            case 'salesman':
+            case 'crm_agent':
+            case 'leasing_agent':
+            case 'accountant':
+                if ($companyId > 0) {
+                    return [
+                        ' AND mr.facility_id IN (SELECT id FROM facilities WHERE company_id = ? AND deleted_at IS NULL)',
+                        [$companyId],
+                    ];
+                }
+
+                return [' AND 1=0', []];
+
+            default:
+                if ($companyId > 0) {
+                    return [
+                        ' AND mr.facility_id IN (SELECT id FROM facilities WHERE company_id = ? AND deleted_at IS NULL)',
+                        [$companyId],
+                    ];
+                }
+
+                return [' AND 1=0', []];
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @return array{0: string, 1: list<mixed>}
+     */
+    private static function filterSql(array $filters): array
+    {
+        $sql = '';
+        $params = [];
+
+        if (! empty($filters['status'])) {
+            $sql .= ' AND mr.status = ?';
+            $params[] = (string) $filters['status'];
+        }
+        if (! empty($filters['priority'])) {
+            $sql .= ' AND mr.priority = ?';
+            $params[] = (string) $filters['priority'];
+        }
+        if (! empty($filters['search'])) {
+            $sql .= ' AND (mr.ticket_number LIKE ? OR mr.requester_name LIKE ?)';
+            $term = '%' . (string) $filters['search'] . '%';
+            $params[] = $term;
+            $params[] = $term;
+        }
+
+        return [$sql, $params];
+    }
 
     /**
      * @param array<string, mixed> $scope

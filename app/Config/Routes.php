@@ -71,6 +71,9 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('dashboard/kpi',  'Dashboard::kpi');
     $routes->get('scan',           'Scan::index');
 
+    // PM/FM maintenance history (read-only in PM) — not Helpdesk workflow
+    $routes->get('maintenance/list', 'MaintenanceList::index');
+
     // Shared property URLs (facilities alias per ERP spec)
     $routes->get('properties',                    'Facilities::index');
     $routes->get('properties/create',             'Facilities::create');

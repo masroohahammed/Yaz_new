@@ -474,7 +474,12 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('MaintenanceScopeQuery::listRecords', $controller);
         $this->assertStringContainsString('renderPropertyMaintenance', $controller);
         $this->assertStringContainsString('MAINTENANCE_BUILD', $controller);
-        $this->assertStringContainsString("'2026-08-29-7'", $controller);
+        $this->assertStringContainsString('listForUser', $service);
+        $this->assertFileExists($this->root . '/app/Controllers/MaintenanceList.php');
+        $this->assertStringContainsString('MaintenanceList::index', file_get_contents($this->root . '/app/Config/Routes.php'));
+        $this->assertStringContainsString("'url' => 'maintenance/list'", file_get_contents($this->root . '/app/Config/PmMenu.php'));
+        $this->assertStringContainsString('MaintenanceScopeQuery::listForUser', file_get_contents($this->root . '/app/Controllers/Helpdesk.php'));
+        $this->assertStringContainsString("'2026-08-29-8'", $controller);
         $this->assertStringContainsString("getGet('ping')", $controller);
         $this->assertStringContainsString('X-FM-Maintenance-Build', $controller);
         $routes = file_get_contents($this->root . '/app/Config/Routes.php');
@@ -483,7 +488,7 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('PublicMaintenance::submit', $routes);
         $this->assertStringContainsString('maintenance-ping', $routes);
         $this->assertStringNotContainsString("\$routes->get('maintenance',                   'Helpdesk::index');", $routes);
-        $this->assertStringContainsString("'url' => 'helpdesk'", file_get_contents($this->root . '/app/Config/FmMenu.php'));
+        $this->assertStringContainsString("'url' => 'maintenance/list'", file_get_contents($this->root . '/app/Config/FmMenu.php'));
         $this->assertStringNotContainsString('applyMaintenanceScope', $controller);
         $this->assertStringNotContainsString('loadMaintenanceRecords', $controller);
         $this->assertStringNotContainsString('loadUnitsForFacility', $controller);

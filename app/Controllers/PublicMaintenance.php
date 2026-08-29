@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
 class PublicMaintenance extends Controller
 {
     /** Bump when deploying — visible in page source as fm-maintenance-build */
-    public const MAINTENANCE_BUILD = '2026-08-29-7';
+    public const MAINTENANCE_BUILD = '2026-08-29-8';
 
     /** @var \CodeIgniter\Database\BaseConnection */
     protected $db;
@@ -56,6 +56,10 @@ class PublicMaintenance extends Controller
         $facilityId = (int) ($this->request->getGet('facility_id') ?? $this->request->getPost('facility_id') ?? 0);
         $unitId     = (int) ($this->request->getGet('unit_id') ?? $this->request->getPost('unit_id') ?? 0);
         $assetId    = (int) ($this->request->getGet('asset_id') ?? $this->request->getPost('asset_id') ?? 0);
+
+        if (session()->get('user_id') && $facilityId <= 0 && $unitId <= 0 && $assetId <= 0) {
+            return redirect()->to(base_url('maintenance/list'));
+        }
 
         try {
             if ($facilityId > 0 && $unitId <= 0 && $assetId <= 0) {

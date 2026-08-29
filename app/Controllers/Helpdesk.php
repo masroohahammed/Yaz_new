@@ -6,6 +6,7 @@ use App\Models\HelpdeskModel;
 use App\Models\WorkOrderModel;
 use App\Models\FacilityModel;
 use App\Models\UserModel;
+use App\Services\MaintenanceScopeQuery;
 
 /**
  * Helpdesk — manages the first two stages of the Work Order flow:
@@ -36,32 +37,25 @@ class Helpdesk extends BaseController
     {
         $user    = $this->currentUser();
         $filters = $this->request->getGet();
+        $perPage = 20;
+        $page    = max(1, (int) ($filters['page'] ?? 1));
+        $offset  = ($page - 1) * $perPage;
 
-        $builder = $this->model->scopeForUser($user);
-
-        if (! empty($filters['status']))   $builder->where('maintenance_requests.status', $filters['status']);
-        if (! empty($filters['priority'])) $builder->where('maintenance_requests.priority', $filters['priority']);
-        if (! empty($filters['search']))   $builder->groupStart()
-                                                    ->like('ticket_number', $filters['search'])
-                                                    ->orLike('requester_name', $filters['search'])
-                                                    ->groupEnd();
-
-        $perPage  = 20;
-        $page     = max(1, (int) ($filters['page'] ?? 1));
-        $total    = (clone $builder)->countAllResults(false);
-        $requests = $builder->orderBy('created_at', 'DESC')
-                            ->limit($perPage, ($page - 1) * $perPage)
-                            ->findAll();
+        $total    = MaintenanceScopeQuery::countForUser($this->db, $user, $filters);
+        $requests = MaintenanceScopeQuery::listForUser($this->db, $user, $filters, $perPage, $offset);
 
         return view('helpdesk/index', $this->viewData([
-            'title'       => 'Maintenance Requests',
-            'pageTitle'   => session()->get('workspace') === 'pm' ? 'Maintenance — History (Read-only)' : 'Helpdesk — Complaints',
+            'title'       => 'Helpdesk',
+            'pageTitle'   => 'Helpdesk — Complaints',
             'requests'    => $requests,
             'filters'     => $filters,
             'total'       => $total,
             'perPage'     => $perPage,
             'currentPage' => $page,
-            'readOnly'    => $this->currentWorkspace() === 'pm',
+            'readOnly'    => false,
+            'listUrl'     => base_url('helpdesk'),
+            'resetUrl'    => base_url('helpdesk'),
+            'detailPath'  => 'helpdesk/view/',
         ]));
     }
 
@@ -72,7 +66,7 @@ class Helpdesk extends BaseController
     public function create()
     {
         if ($this->currentWorkspace() === 'pm') {
-            return redirect()->to(base_url('helpdesk'))
+            return redirect()->to(base_url('maintenance/list'))
                 ->with('error', 'Maintenance creation is available in the Facility Management workspace only.');
         }
 

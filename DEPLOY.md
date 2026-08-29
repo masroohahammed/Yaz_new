@@ -67,8 +67,8 @@ After merging branch `cursor/fm-erp-remediation-a002`, upload or pull:
 3. `app/Views/public/maintenance.php`
 4. `app/Config/Routes.php` **(critical — wires maintenance → PublicMaintenance)**
 5. `app/Controllers/PublicEntity.php`
-6. `app/Config/FmMenu.php` and `app/Config/PmMenu.php` (sidebar → helpdesk)
-7. Updated views/controllers that link to `maintenance` (not `public/maintenance`)
+6. `app/Controllers/MaintenanceList.php` **(new — PM Maintenance sidebar)**
+7. `app/Config/FmMenu.php` and `app/Config/PmMenu.php`
 
 Ensure production `.env` has:
 
@@ -78,35 +78,18 @@ app.baseURL = 'https://pfms.alyazwa.com/public/'
 
 Then clear PHP opcache and restart PHP-FPM.
 
-**Verify deployment** (build must be `2026-08-29-7`):
+**Verify deployment** (build must be `2026-08-29-8`):
+
+PM sidebar **Maintenance** → `/public/maintenance/list` (read-only history, no SQL error)
+PM sidebar **Complaints** → `/public/helpdesk` (helpdesk workflow)
 
 ```
 GET https://pfms.alyazwa.com/public/maintenance?ping=1
-```
-
-Expected JSON: `{"ok":true,"build":"2026-08-29-7",...,"controller":"App\\Controllers\\PublicMaintenance"}`
-
-Live form (no login required):
-
-```
+GET https://pfms.alyazwa.com/public/maintenance/list
 GET https://pfms.alyazwa.com/public/maintenance?facility_id=9103
 ```
 
-Page source must contain:
-
-```html
-<!-- fm-maintenance-build: 2026-08-29-7 -->
-```
-
-Response header:
-
-```
-X-FM-Maintenance-Build: 2026-08-29-7
-```
-
-Staff maintenance **list** is now at `/public/helpdesk` (sidebar updated).
-
-If you still see the SQL error, `Routes.php` or `PublicMaintenance.php` was not deployed — the old Helpdesk route is still handling `/public/maintenance`.
+Expected ping JSON: `"build":"2026-08-29-8"`
 
 ## Production debugging
 
