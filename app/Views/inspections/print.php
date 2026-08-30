@@ -125,7 +125,7 @@ body{font-family:'DM Sans',Arial,sans-serif;color:#1a2332;font-size:13px;backgro
     <?php
       $rating = $ratings[$idx] ?? '';
       $note = $notes[$idx] ?? '';
-      $photo = $photos[$idx] ?? '';
+      $areaPhotos = \App\Services\InspectionPhotoService::normalizePhotoEntry($photos[$idx] ?? []);
       $priority = $priorities[$idx] ?? '';
       $itemStatus = $statuses[$idx] ?? '';
       $statusClass = $rating ? 'cl-status cl-status-' . preg_replace('/[^a-z]/', '', $rating) : '';
@@ -149,9 +149,11 @@ body{font-family:'DM Sans',Arial,sans-serif;color:#1a2332;font-size:13px;backgro
         <?php if ($note): ?>
         <div class="cl-notes"><?= esc($note) ?></div>
         <?php endif; ?>
-        <?php if ($photo): ?>
-        <div class="cl-photo">
-          <img src="<?= esc(base_url($photo)) ?>" alt="Photo for <?= esc($area) ?>">
+        <?php if ($areaPhotos !== []): ?>
+        <div class="cl-photo d-flex flex-wrap gap-2">
+          <?php foreach ($areaPhotos as $photoPath): ?>
+          <img src="<?= esc(base_url($photoPath)) ?>" alt="Photo for <?= esc($area) ?>">
+          <?php endforeach; ?>
         </div>
         <?php endif; ?>
       </div>

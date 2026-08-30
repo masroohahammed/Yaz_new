@@ -1,6 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 <?php
+use App\Services\InspectionPhotoService;
+
 $i = $inspection;
 $scopeType = (string) ($i['scope_type'] ?? 'unit');
 $scopeLabels = ['property' => 'Property', 'unit' => 'Unit', 'asset' => 'Asset'];
@@ -109,7 +111,7 @@ $criticalCount = count(array_filter($priorities, fn ($p) => $p === 'critical'));
         <?php
           $rating = $ratings[$idx] ?? '';
           $note = $notes[$idx] ?? '';
-          $photo = $photos[$idx] ?? '';
+          $areaPhotos = InspectionPhotoService::normalizePhotoEntry($photos[$idx] ?? []);
           $priority = $priorities[$idx] ?? '';
           $itemStatus = $statuses[$idx] ?? '';
           $badgeClass = $rating ? 'condition-badge-' . $rating : '';
@@ -138,11 +140,13 @@ $criticalCount = count(array_filter($priorities, fn ($p) => $p === 'critical'));
             <?php if ($note): ?>
             <div class="small text-muted mt-1"><i class="bi bi-chat-left-text me-1"></i><?= esc($note) ?></div>
             <?php endif; ?>
-            <?php if ($photo): ?>
-            <div class="mt-2">
-              <a href="<?= base_url($photo) ?>" target="_blank" rel="noopener">
-                <img src="<?= base_url($photo) ?>" alt="Photo for <?= esc($area) ?>" class="rounded border inspection-area-photo-thumb">
+            <?php if ($areaPhotos !== []): ?>
+            <div class="mt-2 d-flex flex-wrap gap-2">
+              <?php foreach ($areaPhotos as $photoPath): ?>
+              <a href="<?= base_url($photoPath) ?>" target="_blank" rel="noopener">
+                <img src="<?= base_url($photoPath) ?>" alt="Photo for <?= esc($area) ?>" class="rounded border inspection-area-photo-thumb">
               </a>
+              <?php endforeach; ?>
             </div>
             <?php endif; ?>
           </div>

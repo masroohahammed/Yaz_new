@@ -1,6 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 <?php
+use App\Services\InspectionPhotoService;
+
 $i = $inspection;
 $scopeType = (string) ($i['scope_type'] ?? 'unit');
 $scopeLabels = ['property' => 'Property', 'unit' => 'Unit', 'asset' => 'Asset'];
@@ -70,7 +72,7 @@ $areaHeading = match ($scopeType) {
     <?php
       $rating = $ratings[$idx] ?? 'good';
       $note = $notes[$idx] ?? '';
-      $photo = $photos[$idx] ?? '';
+      $areaPhotos = InspectionPhotoService::normalizePhotoEntry($photos[$idx] ?? []);
       $priority = $itemPriorities[$idx] ?? 'medium';
       $itemStatus = $itemStatuses[$idx] ?? 'open';
     ?>
@@ -108,16 +110,20 @@ $areaHeading = match ($scopeType) {
         </div>
       </div>
       <input type="text" name="item_notes[]" class="form-control form-control-sm area-notes mb-2" placeholder="Notes for <?= esc($area) ?> (optional)" value="<?= esc($note) ?>">
-      <input type="hidden" name="existing_photo[]" class="existing-photo-input" value="<?= esc((string) $photo) ?>">
+      <input type="hidden" name="existing_photos[]" class="existing-photos-input" value="<?= esc(InspectionPhotoService::encodePhotos($areaPhotos)) ?>">
       <div class="inspection-area-photo mb-0">
-        <?php if ($photo): ?>
-        <div class="inspection-area-photo-preview d-flex align-items-center gap-2 mb-2">
-          <img src="<?= base_url($photo) ?>" alt="" class="rounded border" style="max-height:72px;max-width:120px;object-fit:cover">
-          <button type="button" class="btn btn-sm btn-link text-danger p-0 remove-photo-btn"><i class="bi bi-trash me-1"></i>Remove photo</button>
+        <?php if ($areaPhotos !== []): ?>
+        <div class="inspection-area-photo-preview d-flex flex-wrap align-items-start gap-2 mb-2">
+          <?php foreach ($areaPhotos as $photoPath): ?>
+          <div class="inspection-photo-thumb-wrap position-relative" data-path="<?= esc($photoPath) ?>">
+            <img src="<?= base_url($photoPath) ?>" alt="" class="rounded border" style="max-height:72px;max-width:120px;object-fit:cover">
+            <button type="button" class="btn btn-sm btn-link text-danger p-0 remove-one-photo-btn" title="Remove photo"><i class="bi bi-x-circle"></i></button>
+          </div>
+          <?php endforeach; ?>
         </div>
         <?php endif; ?>
-        <label class="form-label fw-semibold x-small mb-1"><i class="bi bi-camera me-1"></i>Photo (optional)</label>
-        <input type="file" name="area_photo[]" class="form-control form-control-sm area-photo-input" accept="image/*">
+        <label class="form-label fw-semibold x-small mb-1"><i class="bi bi-camera me-1"></i>Photos (optional — select multiple)</label>
+        <input type="file" name="area_photos[<?= (int) $idx ?>][]" class="form-control form-control-sm area-photo-input" accept="image/*" multiple>
       </div>
     </div>
     <?php endforeach; ?>
@@ -170,6 +176,20 @@ $areaHeading = match ($scopeType) {
     card.classList.toggle('border-danger', sel && sel.value === 'critical');
   }
 
+  function syncExistingPhotosInput(card) {
+    const input = card.querySelector('.existing-photos-input');
+    const preview = card.querySelector('.inspection-area-photo-preview');
+    if (!input) return;
+    const paths = [];
+    if (preview) {
+      preview.querySelectorAll('.inspection-photo-thumb-wrap[data-path]').forEach(function(wrap) {
+        const path = wrap.getAttribute('data-path');
+        if (path) paths.push(path);
+      });
+    }
+    input.value = JSON.stringify(paths);
+  }
+
   function bindAreaCard(card) {
     const hidden = card.querySelector('.condition-input');
     card.querySelectorAll('.inspection-condition-btn').forEach(function(btn) {
@@ -193,17 +213,14 @@ $areaHeading = match ($scopeType) {
         updateProgress();
       });
     }
-    const removePhotoBtn = card.querySelector('.remove-photo-btn');
-    if (removePhotoBtn) {
-      removePhotoBtn.addEventListener('click', function() {
-        const existingInput = card.querySelector('.existing-photo-input');
-        if (existingInput) existingInput.value = '';
-        const preview = card.querySelector('.inspection-area-photo-preview');
-        if (preview) preview.remove();
-        const fileInput = card.querySelector('.area-photo-input');
-        if (fileInput) fileInput.value = '';
+    card.querySelectorAll('.remove-one-photo-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const wrap = btn.closest('.inspection-photo-thumb-wrap');
+        if (wrap) wrap.remove();
+        syncExistingPhotosInput(card);
       });
-    }
+    });
+    syncExistingPhotosInput(card);
   }
 
   function updateProgress() {
@@ -223,9 +240,6 @@ $areaHeading = match ($scopeType) {
     progressBar.style.width = pct + '%';
     progressLabel.textContent = rated + ' / ' + total + ' rated';
   }
-
-  container.querySelectorAll('.inspection-area-card').forEach(bindAreaCard);
-  updateProgress();
 
   document.getElementById('addAreaBtn').addEventListener('click', function() {
     const name = prompt('Area name (e.g. Balcony, Storage, Roof access):');
@@ -258,14 +272,24 @@ $areaHeading = match ($scopeType) {
         '<select name="item_status[]" class="form-select form-select-sm">' + statOpts + '</select></div>' +
       '</div>' +
       '<input type="text" name="item_notes[]" class="form-control form-control-sm area-notes mb-2" placeholder="Notes (optional)">' +
-      '<input type="hidden" name="existing_photo[]" class="existing-photo-input" value="">' +
+      '<input type="hidden" name="existing_photos[]" class="existing-photos-input" value="[]">' +
       '<div class="inspection-area-photo mb-0">' +
-        '<label class="form-label fw-semibold x-small mb-1"><i class="bi bi-camera me-1"></i>Photo (optional)</label>' +
-        '<input type="file" name="area_photo[]" class="form-control form-control-sm area-photo-input" accept="image/*">' +
+        '<label class="form-label fw-semibold x-small mb-1"><i class="bi bi-camera me-1"></i>Photos (optional — select multiple)</label>' +
+        '<input type="file" name="area_photos[' + idx + '][]" class="form-control form-control-sm area-photo-input" accept="image/*" multiple>' +
       '</div>';
     container.appendChild(div);
     bindAreaCard(div);
     updateProgress();
+  });
+
+  document.getElementById('checklistForm').addEventListener('submit', function() {
+    container.querySelectorAll('.inspection-area-card').forEach(function(card, i) {
+      const fileInput = card.querySelector('.area-photo-input');
+      if (fileInput) {
+        fileInput.name = 'area_photos[' + i + '][]';
+      }
+      syncExistingPhotosInput(card);
+    });
   });
 })();
 </script>

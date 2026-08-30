@@ -222,7 +222,7 @@ class Inspections extends BaseController
             'areas'      => $defaultAreas,
             'ratings'    => array_fill(0, count($defaultAreas), 'good'),
             'notes'      => array_fill(0, count($defaultAreas), ''),
-            'photos'     => array_fill(0, count($defaultAreas), null),
+            'photos'     => array_fill(0, count($defaultAreas), []),
             'priorities' => array_fill(0, count($defaultAreas), 'medium'),
             'statuses'   => array_fill(0, count($defaultAreas), 'open'),
         ];
@@ -266,8 +266,7 @@ class Inspections extends BaseController
         $notes = $this->request->getPost('item_notes') ?? [];
         $priorities = $this->request->getPost('item_priority') ?? [];
         $statuses = $this->request->getPost('item_status') ?? [];
-        $existingPhotos = $this->request->getPost('existing_photo') ?? [];
-        $uploadFiles = $this->request->getFileMultiple('area_photo') ?? [];
+        $existingPhotos = $this->request->getPost('existing_photos') ?? [];
 
         $validPriorities = InspectionAreaService::priorities();
         $validStatuses   = InspectionAreaService::issueStatuses();
@@ -277,16 +276,9 @@ class Inspections extends BaseController
         $normalizedStatuses   = [];
 
         foreach ($areas as $idx => $area) {
-            $photoPath = trim((string) ($existingPhotos[$idx] ?? ''));
-
-            if (isset($uploadFiles[$idx]) && $uploadFiles[$idx]->isValid() && ! $uploadFiles[$idx]->hasMoved()) {
-                $newPath = InspectionPhotoService::storeUpload($uploadFiles[$idx]);
-                if ($newPath !== null) {
-                    $photoPath = $newPath;
-                }
-            }
-
-            $photos[] = $photoPath !== '' ? $photoPath : null;
+            $kept = InspectionPhotoService::normalizePhotoEntry($existingPhotos[$idx] ?? []);
+            $newPaths = InspectionPhotoService::storeAreaUploads((int) $idx);
+            $photos[] = array_values(array_unique(array_merge($kept, $newPaths)));
 
             $prio = strtolower(trim((string) ($priorities[$idx] ?? 'medium')));
             $normalizedPriorities[] = in_array($prio, $validPriorities, true) ? $prio : 'medium';
@@ -465,8 +457,22 @@ class Inspections extends BaseController
         }
         foreach (['ratings', 'notes', 'photos', 'priorities', 'statuses'] as $key) {
             if (! isset($data[$key])) {
-                $data[$key] = array_fill(0, count($data['areas']), $key === 'priorities' ? 'medium' : ($key === 'statuses' ? 'open' : ($key === 'ratings' ? 'good' : ($key === 'photos' ? null : ''))));
+                $default = match ($key) {
+                    'priorities' => 'medium',
+                    'statuses'   => 'open',
+                    'ratings'    => 'good',
+                    'photos'     => [],
+                    default      => '',
+                };
+                $data[$key] = array_fill(0, count($data['areas']), $default);
             }
+        }
+
+        if (isset($data['photos']) && is_array($data['photos'])) {
+            $data['photos'] = array_map(
+                static fn ($entry) => InspectionPhotoService::normalizePhotoEntry($entry),
+                $data['photos']
+            );
         }
 
         return $data;
