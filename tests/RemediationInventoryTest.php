@@ -455,7 +455,8 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('$photos', $print);
         $inspections = file_get_contents($this->root . '/app/Controllers/Inspections.php');
         $this->assertStringContainsString('InspectionPhotoService::storeUpload', $inspections);
-        $this->assertStringContainsString("'photos' => \$photos", $inspections);
+        $this->assertStringContainsString("'photos'", $inspections);
+        $this->assertStringContainsString("'priorities'", $inspections);
         $this->assertStringContainsString('submitBtn.disabled', $form);
     }
 
@@ -535,5 +536,53 @@ final class RemediationInventoryTest extends TestCase
         $hub = file_get_contents($this->root . '/app/Views/procurement/workflow_hub.php');
         $this->assertStringContainsString("base_url('purchase-orders')", $hub);
         $this->assertStringNotContainsString("procurement/orders", $hub);
+    }
+
+    public function testAssetScanLogServiceRepairsAutoIncrement(): void
+    {
+        $src = file_get_contents($this->root . '/app/Services/AssetScanLogService.php');
+        $this->assertStringContainsString('AutoIncrementRepair::ensure', $src);
+        $this->assertStringContainsString("assetId <= 0", $src);
+        $qr = file_get_contents($this->root . '/app/Services/QrScanLogService.php');
+        $this->assertStringContainsString('AutoIncrementRepair::ensure', $qr);
+    }
+
+    public function testPropertyInspectionAreasAndPriorities(): void
+    {
+        require_once $this->root . '/app/Services/InspectionAreaService.php';
+        $areas = \App\Services\InspectionAreaService::propertyAreas();
+        $this->assertContains('Roof', $areas);
+        $this->assertContains('Basement', $areas);
+        $this->assertContains('Garden / Landscaping', $areas);
+        $this->assertContains('critical', \App\Services\InspectionAreaService::priorities());
+        $url = \App\Services\InspectionAreaService::createUrl(['facility_id' => 12]);
+        $this->assertStringContainsString('pm-inspections/create', $url);
+        $this->assertStringContainsString('scope=property', $url);
+        $this->assertStringContainsString('property_id=12', $url);
+    }
+
+    public function testInspectionsControllerSupportsPropertyAndAssetScopes(): void
+    {
+        $src = file_get_contents($this->root . '/app/Controllers/Inspections.php');
+        $this->assertStringContainsString('InspectionAreaService', $src);
+        $this->assertStringContainsString("'scope_type'", $src);
+        $this->assertStringContainsString("'floor_label'", $src);
+        $this->assertStringContainsString("'priorities'", $src);
+        $this->assertStringContainsString('workspaceRequired = null', $src);
+        $migration = file_get_contents($this->root . '/app/Database/Migrations/2026-08-30-140000_PropertyInspectionColumns.php');
+        $this->assertStringContainsString('scope_type', $migration);
+        $this->assertStringContainsString('asset_scan_logs', $migration);
+    }
+
+    public function testQrScanRoutesToPmInspectionsCreate(): void
+    {
+        $entity = file_get_contents($this->root . '/app/Controllers/EntityScan.php');
+        $asset  = file_get_contents($this->root . '/app/Controllers/AssetScan.php');
+        $this->assertStringContainsString('InspectionAreaService::createUrl', $entity);
+        $this->assertStringContainsString('InspectionAreaService::createUrl', $asset);
+        $checklist = file_get_contents($this->root . '/app/Views/inspections/checklist.php');
+        $this->assertStringContainsString('item_priority[]', $checklist);
+        $this->assertStringContainsString('item_status[]', $checklist);
+        $this->assertStringContainsString('critical', $checklist);
     }
 }

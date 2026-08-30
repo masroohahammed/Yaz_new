@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\AssetCodeService;
 use App\Services\AssetScanLogService;
+use App\Services\InspectionAreaService;
 use App\Services\QrScanLogService;
 
 /**
@@ -138,6 +139,7 @@ class AssetScan extends BaseController
 
         $openMaintenance = $this->loadMaintenance($asset['id'], true);
         $maintenanceHistory = $this->loadMaintenance($asset['id'], false);
+        $inspectionCount = $this->countAssetInspections((int) $asset['id']);
 
         $openWos = $this->db->table('work_orders')
             ->where('asset_id', (int) $asset['id'])
@@ -167,8 +169,8 @@ class AssetScan extends BaseController
             'units'              => [],
             'openMaintenance'    => $openMaintenance,
             'maintenanceHistory' => $maintenanceHistory,
-            'inspectionCount'    => 0,
-            'inspectionsUrl'     => base_url('public/inspections?asset_id=' . (int) $asset['id']),
+            'inspectionCount'    => $inspectionCount,
+            'inspectionsUrl'     => InspectionAreaService::createUrl(['asset_id' => (int) $asset['id']]),
             'maintenanceUrl'     => base_url('maintenance?asset_id=' . (int) $asset['id']),
             'workOrdersUrl'      => base_url('workorders?facility_id=' . (int) ($asset['facility_id'] ?? 0) . '&asset_id=' . (int) $asset['id']),
             'workOrderCreateUrl' => base_url('workorders/create?facility_id=' . (int) ($asset['facility_id'] ?? 0) . '&asset_id=' . (int) $asset['id']),
@@ -196,5 +198,14 @@ class AssetScan extends BaseController
         }
 
         return $q->get()->getResultArray();
+    }
+
+    private function countAssetInspections(int $assetId): int
+    {
+        if (! $this->db->tableExists('unit_checklists') || ! $this->db->fieldExists('asset_id', 'unit_checklists')) {
+            return 0;
+        }
+
+        return (int) $this->db->table('unit_checklists')->where('asset_id', $assetId)->countAllResults();
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\EntityQrService;
+use App\Services\InspectionAreaService;
 use App\Services\MaintenanceScopeQuery;
 use App\Services\QrScanLogService;
 
@@ -134,7 +135,7 @@ class EntityScan extends BaseController
             'openMaintenance'    => $openMaintenance,
             'maintenanceHistory' => $maintenanceHistory,
             'inspectionCount'    => $inspectionCount,
-            'inspectionsUrl'     => base_url('public/inspections?' . $scopeQs),
+            'inspectionsUrl'     => InspectionAreaService::createUrl(['facility_id' => $facilityId]),
             'maintenanceUrl'     => base_url('maintenance?' . $scopeQs),
             'workOrdersUrl'      => base_url('workorders?facility_id=' . $facilityId),
             'workOrderCreateUrl' => base_url('workorders/create?facility_id=' . $facilityId),
@@ -184,7 +185,7 @@ class EntityScan extends BaseController
             'openMaintenance'    => $openMaintenance,
             'maintenanceHistory' => $maintenanceHistory,
             'inspectionCount'    => $inspectionCount,
-            'inspectionsUrl'     => base_url('public/inspections?' . $scopeQs),
+            'inspectionsUrl'     => InspectionAreaService::createUrl(['facility_id' => (int) ($unit['facility_id'] ?? 0), 'unit_id' => $unitId]),
             'maintenanceUrl'     => base_url('maintenance?' . $scopeQs),
             'workOrdersUrl'      => base_url('workorders?facility_id=' . (int) ($unit['facility_id'] ?? 0) . '&unit_id=' . $unitId),
             'workOrderCreateUrl' => base_url('workorders/create?facility_id=' . (int) ($unit['facility_id'] ?? 0) . '&unit_id=' . $unitId),
@@ -292,8 +293,8 @@ class EntityScan extends BaseController
         }
 
         return (int) $this->db->table('unit_checklists uc')
-            ->join('units u', 'u.id = uc.unit_id')
-            ->where('u.facility_id', $facilityId)
+            ->join('units u', 'u.id = uc.unit_id', 'left')
+            ->where('COALESCE(uc.facility_id, u.facility_id)', $facilityId, false)
             ->countAllResults();
     }
 

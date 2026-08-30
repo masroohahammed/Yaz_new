@@ -2,14 +2,24 @@
 <?= $this->section('content') ?>
 <?php
 $i = $inspection;
+$scopeType = (string) ($i['scope_type'] ?? 'unit');
+$scopeLabels = ['property' => 'Property', 'unit' => 'Unit', 'asset' => 'Asset'];
 $data = $items ?? [];
 $areas = $data['areas'] ?? [];
 $ratings = $data['ratings'] ?? [];
 $notes = $data['notes'] ?? [];
 $photos = $data['photos'] ?? [];
+$priorities = $data['priorities'] ?? [];
+$statuses = $data['statuses'] ?? [];
 $typeLabel = ucfirst(str_replace('_', ' ', (string) ($i['type'] ?? 'routine')));
 $dateVal = $i['inspection_date'] ?? $i['created_at'] ?? '';
 $dateFmt = $dateVal ? date('d M Y', strtotime((string) $dateVal)) : '—';
+
+$scopeTitle = match ($scopeType) {
+    'property' => (string) ($i['property_name'] ?? 'Property'),
+    'asset'    => (string) ($i['asset_name'] ?? 'Asset'),
+    default    => 'Unit ' . ($i['unit_number'] ?? ''),
+};
 
 $conditionScore = function (string $c): int {
     return match ($c) {
@@ -24,12 +34,17 @@ $conditionScore = function (string $c): int {
 $scores = array_map(fn ($r) => $conditionScore((string) $r), $ratings);
 $avgScore = count($scores) ? round(array_sum($scores) / count($scores) * 20) : 0;
 $issueCount = count(array_filter($ratings, fn ($r) => in_array($r, ['poor', 'damaged'], true)));
+$criticalCount = count(array_filter($priorities, fn ($p) => $p === 'critical'));
 ?>
 
 <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
   <div>
-    <h1><i class="bi bi-clipboard2-check me-2 text-success"></i>Unit <?= esc($i['unit_number']) ?> — <?= esc($typeLabel) ?></h1>
-    <div class="small text-muted"><?= esc($i['property_name']) ?> · <?= esc($dateFmt) ?> · <?= esc($i['inspector_name'] ?: 'Inspector not recorded') ?></div>
+    <h1><i class="bi bi-clipboard2-check me-2 text-success"></i><?= esc($scopeTitle) ?> — <?= esc($typeLabel) ?></h1>
+    <div class="small text-muted">
+      <?= esc($scopeLabels[$scopeType] ?? 'Unit') ?> inspection
+      <?php if ($scopeType === 'property' && ! empty($i['floor_label'])): ?> · <?= esc($i['floor_label']) ?><?php endif; ?>
+      · <?= esc($i['property_name'] ?? '') ?> · <?= esc($dateFmt) ?> · <?= esc($i['inspector_name'] ?: 'Inspector not recorded') ?>
+    </div>
     <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0 mt-1">
       <li class="breadcrumb-item"><a href="<?= base_url('pm-inspections') ?>">Inspections</a></li>
       <li class="breadcrumb-item active">Report #<?= (int) $i['id'] ?></li>
@@ -39,7 +54,11 @@ $issueCount = count(array_filter($ratings, fn ($r) => in_array($r, ['poor', 'dam
     <a href="<?= base_url('pm-inspections/checklist/' . $i['id']) ?>" class="btn btn-sm btn-fm-primary"><i class="bi bi-pencil me-1"></i><?= ($i['status'] ?? '') === 'completed' ? 'Edit Checklist' : 'Continue Checklist' ?></a>
     <a href="<?= base_url('pm-inspections/link/' . $i['id']) ?>" class="btn btn-sm btn-fm-outline"><i class="bi bi-link-45deg me-1"></i>Link</a>
     <a href="<?= base_url('pm-inspections/print/' . $i['id']) ?>" class="btn btn-sm btn-fm-outline" target="_blank"><i class="bi bi-printer me-1"></i>Print</a>
-    <a href="<?= base_url('units/view/' . (int) ($i['unit_id'] ?? 0)) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-door-open me-1"></i>Unit</a>
+    <?php if ($scopeType === 'unit' && ! empty($i['unit_id'])): ?>
+    <a href="<?= base_url('units/view/' . (int) $i['unit_id']) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-door-open me-1"></i>Unit</a>
+    <?php elseif ($scopeType === 'asset' && ! empty($i['asset_id'])): ?>
+    <a href="<?= base_url('asset-register/view/' . (int) $i['asset_id']) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-seam me-1"></i>Asset</a>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -57,8 +76,8 @@ $issueCount = count(array_filter($ratings, fn ($r) => in_array($r, ['poor', 'dam
     </div>
   </div>
   <div class="col-md-3">
-    <div class="kpi-card kpi-<?= $issueCount ? 'red' : 'green' ?>">
-      <div class="kpi-label">Issues Found</div>
+    <div class="kpi-card kpi-<?= $issueCount || $criticalCount ? 'red' : 'green' ?>">
+      <div class="kpi-label">Issues<?= $criticalCount ? ' (' . $criticalCount . ' critical)' : '' ?></div>
       <div class="kpi-value"><?= $issueCount ?></div>
     </div>
   </div>
@@ -91,17 +110,31 @@ $issueCount = count(array_filter($ratings, fn ($r) => in_array($r, ['poor', 'dam
           $rating = $ratings[$idx] ?? '';
           $note = $notes[$idx] ?? '';
           $photo = $photos[$idx] ?? '';
+          $priority = $priorities[$idx] ?? '';
+          $itemStatus = $statuses[$idx] ?? '';
           $badgeClass = $rating ? 'condition-badge-' . $rating : '';
+          $isCritical = $priority === 'critical';
         ?>
-        <div class="d-flex align-items-start gap-3 px-4 py-3 border-bottom <?= in_array($rating, ['poor', 'damaged'], true) ? 'sla-warn' : '' ?>">
+        <div class="d-flex align-items-start gap-3 px-4 py-3 border-bottom <?= in_array($rating, ['poor', 'damaged'], true) || $isCritical ? 'sla-warn' : '' ?>">
           <div class="text-muted small pt-1" style="min-width:24px"><?= $idx + 1 ?>.</div>
           <div class="flex-grow-1">
-            <div class="fw-semibold mb-1"><?= esc($area) ?></div>
-            <?php if ($rating): ?>
-            <span class="fm-badge <?= esc($badgeClass) ?>"><?= ucfirst(esc($rating)) ?></span>
-            <?php else: ?>
-            <span class="text-muted small">Not rated</span>
-            <?php endif; ?>
+            <div class="fw-semibold mb-1">
+              <?php if ($isCritical): ?><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i><?php endif; ?>
+              <?= esc($area) ?>
+            </div>
+            <div class="d-flex flex-wrap gap-1 mb-1">
+              <?php if ($rating): ?>
+              <span class="fm-badge <?= esc($badgeClass) ?>"><?= ucfirst(esc($rating)) ?></span>
+              <?php else: ?>
+              <span class="text-muted small">Not rated</span>
+              <?php endif; ?>
+              <?php if ($priority): ?>
+              <span class="fm-badge <?= $isCritical ? 'bg-danger text-white' : '' ?>">Priority: <?= ucfirst(esc($priority)) ?></span>
+              <?php endif; ?>
+              <?php if ($itemStatus): ?>
+              <span class="fm-badge badge-status-<?= esc($itemStatus) ?>"><?= ucfirst(str_replace('_', ' ', esc($itemStatus))) ?></span>
+              <?php endif; ?>
+            </div>
             <?php if ($note): ?>
             <div class="small text-muted mt-1"><i class="bi bi-chat-left-text me-1"></i><?= esc($note) ?></div>
             <?php endif; ?>
@@ -125,8 +158,17 @@ $issueCount = count(array_filter($ratings, fn ($r) => in_array($r, ['poor', 'dam
       <div class="card-header-fm"><h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Details</h5></div>
       <div class="fm-card-body small">
         <dl class="mb-0">
+          <dt class="text-muted">Scope</dt><dd><?= esc($scopeLabels[$scopeType] ?? 'Unit') ?></dd>
           <dt class="text-muted">Property</dt><dd><?= esc($i['property_name']) ?></dd>
+          <?php if ($scopeType === 'unit' && ! empty($i['unit_number'])): ?>
           <dt class="text-muted">Unit</dt><dd><a href="<?= base_url('units/view/' . (int) ($i['unit_id'] ?? 0)) ?>"><?= esc($i['unit_number']) ?></a></dd>
+          <?php endif; ?>
+          <?php if ($scopeType === 'asset' && ! empty($i['asset_name'])): ?>
+          <dt class="text-muted">Asset</dt><dd><?= esc($i['asset_name']) ?><?= ! empty($i['asset_code']) ? ' · ' . esc($i['asset_code']) : '' ?></dd>
+          <?php endif; ?>
+          <?php if ($scopeType === 'property' && ! empty($i['floor_label'])): ?>
+          <dt class="text-muted">Floor</dt><dd><?= esc($i['floor_label']) ?></dd>
+          <?php endif; ?>
           <dt class="text-muted">Type</dt><dd><?= esc($typeLabel) ?></dd>
           <dt class="text-muted">Inspection date</dt><dd><?= esc($dateFmt) ?></dd>
           <dt class="text-muted">Inspector</dt><dd><?= esc($i['inspector_name'] ?: '—') ?></dd>

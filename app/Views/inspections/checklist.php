@@ -2,22 +2,38 @@
 <?= $this->section('content') ?>
 <?php
 $i = $inspection;
-$defaultAreas = ['Kitchen', 'Bathroom', 'Living Room', 'Bedroom'];
+$scopeType = (string) ($i['scope_type'] ?? 'unit');
+$scopeLabels = ['property' => 'Property', 'unit' => 'Unit', 'asset' => 'Asset'];
 $saved = $savedData ?? [];
-$areas = ! empty($saved['areas']) ? $saved['areas'] : $defaultAreas;
+$areas = ! empty($saved['areas']) ? $saved['areas'] : ($areas ?? []);
 $ratings = $saved['ratings'] ?? [];
 $notes = $saved['notes'] ?? [];
 $photos = $saved['photos'] ?? [];
-$conditions = ['excellent', 'good', 'fair', 'poor', 'damaged'];
+$itemPriorities = $saved['priorities'] ?? [];
+$itemStatuses = $saved['statuses'] ?? [];
+$conditions = $conditions ?? ['excellent', 'good', 'fair', 'poor', 'damaged'];
+$priorities = $priorities ?? ['critical', 'urgent', 'medium', 'low'];
+$statuses = $statuses ?? ['open', 'in_progress', 'resolved', 'deferred', 'na'];
 $typeLabel = ucfirst(str_replace('_', ' ', (string) ($i['type'] ?? 'routine')));
 $isDraft = ($i['status'] ?? 'draft') === 'draft';
+
+$scopeTitle = match ($scopeType) {
+    'property' => esc($i['property_name'] ?? 'Property'),
+    'asset'    => esc($i['asset_name'] ?? 'Asset'),
+    default    => 'Unit ' . esc($i['unit_number'] ?? ''),
+};
+$areaHeading = match ($scopeType) {
+    'property' => 'Property Areas',
+    'asset'    => 'Asset Checklist',
+    default    => 'Room Areas',
+};
 ?>
 <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
   <div>
     <h1><i class="bi bi-list-check me-2 text-primary"></i>Inspection Checklist</h1>
     <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
       <li class="breadcrumb-item"><a href="<?= base_url('pm-inspections') ?>">Inspections</a></li>
-      <li class="breadcrumb-item"><a href="<?= base_url('pm-inspections/view/' . $i['id']) ?>">Unit <?= esc($i['unit_number']) ?></a></li>
+      <li class="breadcrumb-item"><a href="<?= base_url('pm-inspections/view/' . $i['id']) ?>"><?= $scopeTitle ?></a></li>
       <li class="breadcrumb-item active">Checklist</li>
     </ol></nav>
   </div>
@@ -26,8 +42,11 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
 
 <div class="fm-form-section mb-3">
   <div class="row g-3 text-center">
-    <div class="col-6 col-md-3"><div class="x-small text-muted">UNIT</div><div class="fw-bold"><?= esc($i['unit_number']) ?></div></div>
-    <div class="col-6 col-md-3"><div class="x-small text-muted">PROPERTY</div><div class="fw-bold"><?= esc($i['property_name']) ?></div></div>
+    <div class="col-6 col-md-3"><div class="x-small text-muted">SCOPE</div><div class="fw-bold"><?= esc($scopeLabels[$scopeType] ?? 'Unit') ?></div></div>
+    <div class="col-6 col-md-3"><div class="x-small text-muted">SUBJECT</div><div class="fw-bold"><?= $scopeTitle ?></div></div>
+    <?php if ($scopeType === 'property' && ! empty($i['floor_label'])): ?>
+    <div class="col-6 col-md-3"><div class="x-small text-muted">FLOOR</div><div class="fw-bold"><?= esc($i['floor_label']) ?></div></div>
+    <?php endif; ?>
     <div class="col-6 col-md-3"><div class="x-small text-muted">TYPE</div><div class="fw-bold"><?= esc($typeLabel) ?></div></div>
     <div class="col-6 col-md-3"><div class="x-small text-muted">DATE</div><div class="fw-bold"><?= esc($i['inspection_date'] ? date('d M Y', strtotime((string) $i['inspection_date'])) : date('d M Y')) ?></div></div>
   </div>
@@ -38,7 +57,7 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
 
 <div class="fm-card mb-3">
   <div class="card-header-fm d-flex justify-content-between align-items-center flex-wrap gap-2">
-    <h5 class="mb-0"><i class="bi bi-house-door me-2"></i>Room Areas</h5>
+    <h5 class="mb-0"><i class="bi bi-house-door me-2"></i><?= esc($areaHeading) ?></h5>
     <div class="d-flex align-items-center gap-2" style="min-width:180px">
       <span class="small text-muted" id="progressLabel">0 / <?= count($areas) ?> rated</span>
       <div class="inspection-progress-wrap flex-grow-1" style="max-width:120px">
@@ -48,10 +67,19 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
   </div>
   <div class="fm-card-body" id="areasContainer">
     <?php foreach ($areas as $idx => $area): ?>
-    <?php $rating = $ratings[$idx] ?? 'good'; $note = $notes[$idx] ?? ''; $photo = $photos[$idx] ?? ''; ?>
-    <div class="inspection-area-card" data-area-index="<?= $idx ?>">
+    <?php
+      $rating = $ratings[$idx] ?? 'good';
+      $note = $notes[$idx] ?? '';
+      $photo = $photos[$idx] ?? '';
+      $priority = $itemPriorities[$idx] ?? 'medium';
+      $itemStatus = $itemStatuses[$idx] ?? 'open';
+    ?>
+    <div class="inspection-area-card<?= $priority === 'critical' ? ' border border-danger' : '' ?>" data-area-index="<?= $idx ?>">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-        <h6 class="mb-0 fw-bold"><i class="bi bi-geo-alt me-1 text-muted"></i><?= esc($area) ?></h6>
+        <h6 class="mb-0 fw-bold">
+          <?php if ($priority === 'critical'): ?><i class="bi bi-exclamation-triangle-fill text-danger me-1" title="Critical"></i><?php endif; ?>
+          <i class="bi bi-geo-alt me-1 text-muted"></i><?= esc($area) ?>
+        </h6>
         <button type="button" class="btn btn-sm btn-link text-danger p-0 remove-area-btn" title="Remove area"><i class="bi bi-x-lg"></i></button>
       </div>
       <input type="hidden" name="areas[]" value="<?= esc($area) ?>">
@@ -60,6 +88,24 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
         <?php foreach ($conditions as $c): ?>
         <button type="button" class="inspection-condition-btn<?= $rating === $c ? ' active' : '' ?>" data-value="<?= $c ?>"><?= ucfirst($c) ?></button>
         <?php endforeach; ?>
+      </div>
+      <div class="row g-2 mb-2">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold x-small mb-1">Priority</label>
+          <select name="item_priority[]" class="form-select form-select-sm item-priority-select">
+            <?php foreach ($priorities as $p): ?>
+            <option value="<?= $p ?>" <?= $priority === $p ? 'selected' : '' ?>><?= ucfirst($p) ?><?= $p === 'critical' ? ' — immediate attention' : '' ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold x-small mb-1">Issue status</label>
+          <select name="item_status[]" class="form-select form-select-sm">
+            <?php foreach ($statuses as $s): ?>
+            <option value="<?= $s ?>" <?= $itemStatus === $s ? 'selected' : '' ?>><?= ucfirst(str_replace('_', ' ', $s)) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
       </div>
       <input type="text" name="item_notes[]" class="form-control form-control-sm area-notes mb-2" placeholder="Notes for <?= esc($area) ?> (optional)" value="<?= esc($note) ?>">
       <input type="hidden" name="existing_photo[]" class="existing-photo-input" value="<?= esc((string) $photo) ?>">
@@ -112,9 +158,17 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
 <script>
 (function() {
   const conditions = <?= json_encode($conditions) ?>;
+  const priorities = <?= json_encode($priorities) ?>;
+  const statuses = <?= json_encode($statuses) ?>;
   const container = document.getElementById('areasContainer');
   const progressBar = document.getElementById('progressBar');
   const progressLabel = document.getElementById('progressLabel');
+
+  function syncCriticalBorder(card) {
+    const sel = card.querySelector('.item-priority-select');
+    card.classList.toggle('border', sel && sel.value === 'critical');
+    card.classList.toggle('border-danger', sel && sel.value === 'critical');
+  }
 
   function bindAreaCard(card) {
     const hidden = card.querySelector('.condition-input');
@@ -126,6 +180,11 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
         updateProgress();
       });
     });
+    const prioSel = card.querySelector('.item-priority-select');
+    if (prioSel) {
+      prioSel.addEventListener('change', function() { syncCriticalBorder(card); });
+      syncCriticalBorder(card);
+    }
     const removeBtn = card.querySelector('.remove-area-btn');
     if (removeBtn) {
       removeBtn.addEventListener('click', function() {
@@ -169,7 +228,7 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
   updateProgress();
 
   document.getElementById('addAreaBtn').addEventListener('click', function() {
-    const name = prompt('Area name (e.g. Balcony, Storage):');
+    const name = prompt('Area name (e.g. Balcony, Storage, Roof access):');
     if (!name || !name.trim()) return;
     const idx = container.querySelectorAll('.inspection-area-card').length;
     const div = document.createElement('div');
@@ -177,6 +236,12 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
     div.dataset.areaIndex = idx;
     let btns = conditions.map(function(c) {
       return '<button type="button" class="inspection-condition-btn' + (c === 'good' ? ' active' : '') + '" data-value="' + c + '">' + c.charAt(0).toUpperCase() + c.slice(1) + '</button>';
+    }).join('');
+    let prioOpts = priorities.map(function(p) {
+      return '<option value="' + p + '">' + p.charAt(0).toUpperCase() + p.slice(1) + (p === 'critical' ? ' — immediate attention' : '') + '</option>';
+    }).join('');
+    let statOpts = statuses.map(function(s) {
+      return '<option value="' + s + '">' + s.replace('_', ' ').replace(/^\w/, function(c) { return c.toUpperCase(); }) + '</option>';
     }).join('');
     div.innerHTML =
       '<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">' +
@@ -186,6 +251,12 @@ $isDraft = ($i['status'] ?? 'draft') === 'draft';
       '<input type="hidden" name="areas[]" value="' + name.trim().replace(/"/g, '&quot;') + '">' +
       '<input type="hidden" name="condition_rating[]" class="condition-input" value="good">' +
       '<div class="inspection-condition-group mb-2">' + btns + '</div>' +
+      '<div class="row g-2 mb-2">' +
+        '<div class="col-md-6"><label class="form-label fw-semibold x-small mb-1">Priority</label>' +
+        '<select name="item_priority[]" class="form-select form-select-sm item-priority-select">' + prioOpts + '</select></div>' +
+        '<div class="col-md-6"><label class="form-label fw-semibold x-small mb-1">Issue status</label>' +
+        '<select name="item_status[]" class="form-select form-select-sm">' + statOpts + '</select></div>' +
+      '</div>' +
       '<input type="text" name="item_notes[]" class="form-control form-control-sm area-notes mb-2" placeholder="Notes (optional)">' +
       '<input type="hidden" name="existing_photo[]" class="existing-photo-input" value="">' +
       '<div class="inspection-area-photo mb-0">' +

@@ -6,7 +6,7 @@ $typeLabels = ['move_in' => 'Move-In', 'move_out' => 'Move-Out', 'routine' => 'R
 <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
   <div>
     <h1><i class="bi bi-clipboard2-pulse me-2 text-primary"></i>Inspections</h1>
-    <div class="small text-muted">Unit move-in, move-out, and routine inspection records</div>
+    <div class="small text-muted">Property, unit, and asset inspection records</div>
   </div>
   <div class="d-flex gap-2 flex-wrap">
     <a href="<?= base_url('compliance/unit-inspections') ?>" class="btn btn-sm btn-fm-outline"><i class="bi bi-door-open me-1"></i>Unit Forms</a>
@@ -88,8 +88,9 @@ $typeLabels = ['move_in' => 'Move-In', 'move_out' => 'Move-Out', 'routine' => 'R
         <thead>
           <tr>
             <th>Date</th>
+            <th>Scope</th>
             <th>Type</th>
-            <th>Unit</th>
+            <th>Subject</th>
             <th>Property</th>
             <th>Inspector</th>
             <th>Status</th>
@@ -99,7 +100,7 @@ $typeLabels = ['move_in' => 'Move-In', 'move_out' => 'Move-Out', 'routine' => 'R
         <tbody>
         <?php if (empty($inspections)): ?>
           <tr>
-            <td colspan="7" class="text-center py-5 text-muted">
+            <td colspan="8" class="text-center py-5 text-muted">
               <i class="bi bi-clipboard2-check d-block mb-2" style="font-size:2rem"></i>
               No inspections found. <a href="<?= base_url('pm-inspections/create') ?>">Create one</a>.
             </td>
@@ -110,17 +111,19 @@ $typeLabels = ['move_in' => 'Move-In', 'move_out' => 'Move-Out', 'routine' => 'R
             $viewUrl = base_url('pm-inspections/view/' . $i['id']);
             $dateVal = $i['inspection_date'] ?? $i['created_at'] ?? '';
             $dateFmt = $dateVal ? date('d M Y', strtotime((string) $dateVal)) : '—';
+            $scope = (string) ($i['scope_type'] ?? 'unit');
+            $scopeLabel = ucfirst($scope);
+            $subject = match ($scope) {
+                'property' => ($i['floor_label'] ?? '') !== '' ? 'Property · ' . $i['floor_label'] : 'Whole property',
+                'asset'    => $i['asset_name'] ?? 'Asset',
+                default    => 'Unit ' . ($i['unit_number'] ?? '—'),
+            };
           ?>
           <tr class="inspection-row-clickable" data-href="<?= esc($viewUrl) ?>">
             <td class="small"><?= esc($dateFmt) ?></td>
+            <td><span class="fm-badge"><?= esc($scopeLabel) ?></span></td>
             <td><span class="fm-badge" style="background:#eff6ff;color:#1d4ed8"><?= esc($typeLabels[$i['type']] ?? ucfirst(str_replace('_', ' ', (string) $i['type']))) ?></span></td>
-            <td class="small fw-semibold">
-              <?php if (! empty($i['unit_id'])): ?>
-              <a href="<?= base_url('units/view/' . (int) $i['unit_id']) ?>" class="text-primary" onclick="event.stopPropagation()">Unit <?= esc($i['unit_number']) ?></a>
-              <?php else: ?>
-              <?= esc($i['unit_number'] ?? '—') ?>
-              <?php endif; ?>
-            </td>
+            <td class="small fw-semibold"><?= esc($subject) ?></td>
             <td class="small"><?= esc($i['property_name'] ?? '—') ?></td>
             <td class="small"><?= esc($i['inspector_name'] ?: '—') ?></td>
             <td><span class="fm-badge badge-status-<?= esc($i['status'] ?? 'draft') ?>"><?= esc(ucfirst((string) ($i['status'] ?? 'draft'))) ?></span></td>

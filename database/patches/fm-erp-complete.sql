@@ -230,5 +230,50 @@ SET @sql := IF(
 );
 PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
+-- 12) asset_scan_logs / qr_scan_logs AUTO_INCREMENT (fixes asset QR scan duplicate PK '0')
+-- asset_scan_logs
+SET @asl_has_ai := (
+  SELECT COUNT(*) FROM information_schema.columns
+   WHERE table_schema = DATABASE() AND table_name = 'asset_scan_logs'
+     AND column_name = 'id' AND extra LIKE '%auto_increment%'
+);
+SET @asl_max := (SELECT COALESCE(MAX(`id`), 0) FROM `asset_scan_logs`);
+SET @asl_zero := (SELECT COUNT(*) FROM `asset_scan_logs` WHERE `id` = 0);
+SET @asl_new := @asl_max + 1;
+SET @sql := IF(@asl_zero > 0, CONCAT('UPDATE `asset_scan_logs` SET `id` = ', @asl_new, ' WHERE `id` = 0'), 'SELECT 1');
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @asl_next := IF(@asl_zero > 0, @asl_new + 1, @asl_max + 1);
+SET @sql := IF(
+  @asl_has_ai = 0 AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'asset_scan_logs'),
+  CONCAT('ALTER TABLE `asset_scan_logs` MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=', @asl_next),
+  'SELECT 1'
+);
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- qr_scan_logs
+SET @qsl_has_ai := (
+  SELECT COUNT(*) FROM information_schema.columns
+   WHERE table_schema = DATABASE() AND table_name = 'qr_scan_logs'
+     AND column_name = 'id' AND extra LIKE '%auto_increment%'
+);
+SET @qsl_max := (SELECT COALESCE(MAX(`id`), 0) FROM `qr_scan_logs`);
+SET @qsl_zero := (SELECT COUNT(*) FROM `qr_scan_logs` WHERE `id` = 0);
+SET @qsl_new := @qsl_max + 1;
+SET @sql := IF(@qsl_zero > 0, CONCAT('UPDATE `qr_scan_logs` SET `id` = ', @qsl_new, ' WHERE `id` = 0'), 'SELECT 1');
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @qsl_next := IF(@qsl_zero > 0, @qsl_new + 1, @qsl_max + 1);
+SET @sql := IF(
+  @qsl_has_ai = 0 AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'qr_scan_logs'),
+  CONCAT('ALTER TABLE `qr_scan_logs` MODIFY `id` int(10) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=', @qsl_next),
+  'SELECT 1'
+);
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- 13) Property / asset inspection columns on unit_checklists
+CALL fm_add_column_if_missing('unit_checklists', 'facility_id', '`facility_id` INT UNSIGNED NULL AFTER `id`');
+CALL fm_add_column_if_missing('unit_checklists', 'asset_id', '`asset_id` INT UNSIGNED NULL AFTER `facility_id`');
+CALL fm_add_column_if_missing('unit_checklists', 'scope_type', '`scope_type` VARCHAR(20) NOT NULL DEFAULT ''unit'' AFTER `asset_id`');
+CALL fm_add_column_if_missing('unit_checklists', 'floor_label', '`floor_label` VARCHAR(80) NULL AFTER `scope_type`');
+
 -- After applying: ROTATE THE DATABASE PASSWORD. Previous password was in source.
 -- Landlord reports do not add tables. Occupancy trend is lease-overlap, not a snapshot table.

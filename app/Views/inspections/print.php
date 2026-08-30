@@ -23,14 +23,23 @@ function _inspHexRgb($hex) {
 $primaryRgb = _inspHexRgb($primaryColor);
 
 $i = $inspection;
+$scopeType = (string) ($i['scope_type'] ?? 'unit');
+$scopeLabels = ['property' => 'Property', 'unit' => 'Unit', 'asset' => 'Asset'];
 $data = $items ?? [];
 $areas = $data['areas'] ?? [];
 $ratings = $data['ratings'] ?? [];
 $notes = $data['notes'] ?? [];
 $photos = $data['photos'] ?? [];
+$priorities = $data['priorities'] ?? [];
+$statuses = $data['statuses'] ?? [];
 $typeLabel = ucfirst(str_replace('_', ' ', (string) ($i['type'] ?? 'routine')));
 $dateVal = $i['inspection_date'] ?? $i['created_at'] ?? '';
 $dateFmt = $dateVal ? date('d M Y', strtotime((string) $dateVal)) : date('d M Y');
+$subjectLabel = match ($scopeType) {
+    'property' => (string) ($i['property_name'] ?? 'Property'),
+    'asset'    => (string) ($i['asset_name'] ?? 'Asset'),
+    default    => 'Unit ' . ($i['unit_number'] ?? '—'),
+};
 ?>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',Arial,sans-serif;color:#1a2332;font-size:13px;background:#fff}
@@ -64,6 +73,8 @@ body{font-family:'DM Sans',Arial,sans-serif;color:#1a2332;font-size:13px;backgro
 .cl-status-damaged{background:#fee2e2;color:#991b1b}
 .cl-photo{margin-top:8px}
 .cl-photo img{max-height:110px;max-width:180px;border-radius:8px;border:1px solid #e5e7eb;object-fit:cover}
+.cl-priority-critical{background:#fee2e2;color:#991b1b;font-weight:700}
+.cl-meta{font-size:.68rem;color:#6b7280;margin-top:4px}
 .summary-box{margin:0 28px 16px;padding:12px 16px;background:rgba(<?= $primaryRgb ?>,.05);border:1px solid rgba(<?= $primaryRgb ?>,.12);border-radius:8px;font-size:.82rem}
 .summary-box strong{display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin-bottom:4px}
 .doc-footer{margin-top:auto;padding:10px 28px;border-top:2px solid <?= $primaryColor ?>;background:rgba(<?= $primaryRgb ?>,.06);display:flex;justify-content:space-between}
@@ -85,7 +96,7 @@ body{font-family:'DM Sans',Arial,sans-serif;color:#1a2332;font-size:13px;backgro
       <div class="doc-tagline"><?= esc($companyTagline) ?></div>
     </div>
     <div class="doc-title-area">
-      <div class="doc-type-label">Unit Inspection</div>
+      <div class="doc-type-label"><?= esc($scopeLabels[$scopeType] ?? 'Unit') ?> Inspection</div>
       <div class="doc-title"><?= esc($typeLabel) ?> Report</div>
       <div class="doc-ref">Report #<?= (int) ($i['id'] ?? 0) ?> · Generated <?= date('d M Y H:i') ?></div>
     </div>
@@ -93,7 +104,7 @@ body{font-family:'DM Sans',Arial,sans-serif;color:#1a2332;font-size:13px;backgro
 
   <div class="info-bar">
     <div class="info-item"><div class="info-label">Property</div><div class="info-value"><?= esc($i['property_name'] ?? '—') ?></div></div>
-    <div class="info-item"><div class="info-label">Unit</div><div class="info-value"><?= esc($i['unit_number'] ?? '—') ?></div></div>
+    <div class="info-item"><div class="info-label"><?= $scopeType === 'asset' ? 'Asset' : ($scopeType === 'property' ? 'Scope' : 'Unit') ?></div><div class="info-value"><?= esc($subjectLabel) ?><?php if ($scopeType === 'property' && ! empty($i['floor_label'])): ?> · <?= esc($i['floor_label']) ?><?php endif; ?></div></div>
     <div class="info-item"><div class="info-label">Inspection Date</div><div class="info-value"><?= esc($dateFmt) ?></div></div>
     <div class="info-item"><div class="info-label">Inspector</div><div class="info-value"><?= esc($i['inspector_name'] ?: '—') ?></div></div>
   </div>
@@ -115,16 +126,25 @@ body{font-family:'DM Sans',Arial,sans-serif;color:#1a2332;font-size:13px;backgro
       $rating = $ratings[$idx] ?? '';
       $note = $notes[$idx] ?? '';
       $photo = $photos[$idx] ?? '';
+      $priority = $priorities[$idx] ?? '';
+      $itemStatus = $statuses[$idx] ?? '';
       $statusClass = $rating ? 'cl-status cl-status-' . preg_replace('/[^a-z]/', '', $rating) : '';
     ?>
     <div class="cl-item">
       <div class="cl-num"><?= $idx + 1 ?>.</div>
       <div class="cl-content">
-        <div class="cl-label"><?= esc($area) ?></div>
+        <div class="cl-label"><?= esc($area) ?><?php if ($priority === 'critical'): ?> ⚠<?php endif; ?></div>
         <?php if ($rating): ?>
         <span class="<?= esc($statusClass) ?>"><?= esc(ucfirst($rating)) ?></span>
         <?php else: ?>
         <span style="font-size:.75rem;color:#9ca3af">Not rated</span>
+        <?php endif; ?>
+        <?php if ($priority || $itemStatus): ?>
+        <div class="cl-meta">
+          <?php if ($priority): ?><span class="<?= $priority === 'critical' ? 'cl-priority-critical' : '' ?>">Priority: <?= esc(ucfirst($priority)) ?></span><?php endif; ?>
+          <?php if ($priority && $itemStatus): ?> · <?php endif; ?>
+          <?php if ($itemStatus): ?>Status: <?= esc(ucfirst(str_replace('_', ' ', $itemStatus))) ?><?php endif; ?>
+        </div>
         <?php endif; ?>
         <?php if ($note): ?>
         <div class="cl-notes"><?= esc($note) ?></div>

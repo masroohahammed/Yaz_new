@@ -20,7 +20,7 @@ class PublicEntity extends BaseController
 
         $scope = $this->resolveScope();
         if ($scope === null) {
-            return redirect()->to(base_url('dashboard'))->with('error', 'Property, unit, or asset not specified.');
+            return redirect()->to(base_url('dashboard'))->with('error', 'Property, unit, or asset not found or QR code does not match a registered entity.');
         }
 
         $entityLabel = $this->entityLabel($scope);
@@ -114,23 +114,24 @@ class PublicEntity extends BaseController
     {
         $unitId = (int) ($scope['unit_id'] ?? 0);
         $facilityId = (int) ($scope['facility_id'] ?? 0);
+        $assetId = (int) ($scope['asset_id'] ?? 0);
 
-        if (($scope['type'] ?? '') === 'asset') {
-            return [];
-        }
-
-        $sql = 'SELECT uc.*, u.unit_number, u.id AS unit_id, usr.name AS created_by_name
+        $sql = 'SELECT uc.*, u.unit_number, u.id AS unit_id, fa.name AS asset_name, usr.name AS created_by_name
             FROM unit_checklists uc
             LEFT JOIN units u ON u.id = uc.unit_id
+            LEFT JOIN assets fa ON fa.id = uc.asset_id
             LEFT JOIN users usr ON usr.id = uc.created_by
             WHERE 1=1';
         $params = [];
 
-        if (($scope['type'] ?? '') === 'unit' && $unitId > 0) {
+        if (($scope['type'] ?? '') === 'asset' && $assetId > 0) {
+            $sql .= ' AND uc.asset_id = ?';
+            $params[] = $assetId;
+        } elseif (($scope['type'] ?? '') === 'unit' && $unitId > 0) {
             $sql .= ' AND uc.unit_id = ?';
             $params[] = $unitId;
         } elseif ($facilityId > 0) {
-            $sql .= ' AND u.facility_id = ?';
+            $sql .= ' AND COALESCE(uc.facility_id, u.facility_id) = ?';
             $params[] = $facilityId;
         }
 

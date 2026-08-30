@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Database\AutoIncrementRepair;
 use CodeIgniter\Database\BaseConnection;
 
 class AssetScanLogService
@@ -20,21 +21,26 @@ class AssetScanLogService
         ?float $lat = null,
         ?float $lng = null
     ): void {
-        if (! $this->db->tableExists('asset_scan_logs')) {
+        if (! $this->db->tableExists('asset_scan_logs') || $assetId <= 0) {
             return;
         }
 
-        $this->db->table('asset_scan_logs')->insert([
-            'asset_id'     => $assetId,
-            'scanned_by'   => $userId,
-            'scan_source'  => $source,
-            'action_taken' => $action,
-            'ip_address'   => $ip,
-            'user_agent'   => $userAgent ? substr($userAgent, 0, 255) : null,
-            'gps_lat'      => $lat,
-            'gps_lng'      => $lng,
-            'created_at'   => date('Y-m-d H:i:s'),
-        ]);
+        try {
+            AutoIncrementRepair::ensure($this->db, 'asset_scan_logs');
+            $this->db->table('asset_scan_logs')->insert([
+                'asset_id'     => $assetId,
+                'scanned_by'   => $userId,
+                'scan_source'  => $source,
+                'action_taken' => $action,
+                'ip_address'   => $ip,
+                'user_agent'   => $userAgent ? substr($userAgent, 0, 255) : null,
+                'gps_lat'      => $lat,
+                'gps_lng'      => $lng,
+                'created_at'   => date('Y-m-d H:i:s'),
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'AssetScanLogService::log: ' . $e->getMessage());
+        }
     }
 
     /**
