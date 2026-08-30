@@ -116,22 +116,35 @@ class PublicEntity extends BaseController
         $facilityId = (int) ($scope['facility_id'] ?? 0);
         $assetId = (int) ($scope['asset_id'] ?? 0);
 
-        $sql = 'SELECT uc.*, u.unit_number, u.id AS unit_id, fa.name AS asset_name, usr.name AS created_by_name
+        $hasFacilityCol = $this->db->fieldExists('facility_id', 'unit_checklists');
+        $hasAssetCol = $this->db->fieldExists('asset_id', 'unit_checklists');
+
+        $sql = 'SELECT uc.*, u.unit_number, u.id AS unit_id, usr.name AS created_by_name
+            FROM unit_checklists uc
+            LEFT JOIN units u ON u.id = uc.unit_id
+            LEFT JOIN users usr ON usr.id = uc.created_by';
+        if ($hasAssetCol) {
+            $sql = 'SELECT uc.*, u.unit_number, u.id AS unit_id, fa.name AS asset_name, usr.name AS created_by_name
             FROM unit_checklists uc
             LEFT JOIN units u ON u.id = uc.unit_id
             LEFT JOIN assets fa ON fa.id = uc.asset_id
-            LEFT JOIN users usr ON usr.id = uc.created_by
-            WHERE 1=1';
+            LEFT JOIN users usr ON usr.id = uc.created_by';
+        }
+        $sql .= ' WHERE 1=1';
         $params = [];
 
-        if (($scope['type'] ?? '') === 'asset' && $assetId > 0) {
+        if ($hasAssetCol && ($scope['type'] ?? '') === 'asset' && $assetId > 0) {
             $sql .= ' AND uc.asset_id = ?';
             $params[] = $assetId;
         } elseif (($scope['type'] ?? '') === 'unit' && $unitId > 0) {
             $sql .= ' AND uc.unit_id = ?';
             $params[] = $unitId;
         } elseif ($facilityId > 0) {
-            $sql .= ' AND COALESCE(uc.facility_id, u.facility_id) = ?';
+            if ($hasFacilityCol) {
+                $sql .= ' AND COALESCE(uc.facility_id, u.facility_id) = ?';
+            } else {
+                $sql .= ' AND u.facility_id = ?';
+            }
             $params[] = $facilityId;
         }
 

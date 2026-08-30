@@ -292,10 +292,16 @@ class EntityScan extends BaseController
             return 0;
         }
 
-        return (int) $this->db->table('unit_checklists uc')
-            ->join('units u', 'u.id = uc.unit_id', 'left')
-            ->where('COALESCE(uc.facility_id, u.facility_id)', $facilityId, false)
-            ->countAllResults();
+        $q = $this->db->table('unit_checklists uc')
+            ->join('units u', 'u.id = uc.unit_id', 'left');
+
+        if ($this->db->fieldExists('facility_id', 'unit_checklists')) {
+            $q->where('COALESCE(uc.facility_id, u.facility_id)', $facilityId, false);
+        } else {
+            $q->where('u.facility_id', $facilityId);
+        }
+
+        return (int) $q->countAllResults();
     }
 
     private function countInspectionsForUnit(int $unitId): int

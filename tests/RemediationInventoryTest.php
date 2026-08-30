@@ -573,7 +573,8 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString("'scope_type'", $src);
         $this->assertStringContainsString("'floor_label'", $src);
         $this->assertStringContainsString("'priorities'", $src);
-        $this->assertStringContainsString('workspaceRequired = null', $src);
+        $this->assertStringContainsString('inspectionFacilityExpr', $src);
+        $this->assertStringContainsString("fieldExists('facility_id', self::TABLE)", $src);
         $migration = file_get_contents($this->root . '/app/Database/Migrations/2026-08-30-140000_PropertyInspectionColumns.php');
         $this->assertStringContainsString('scope_type', $migration);
         $this->assertStringContainsString('asset_scan_logs', $migration);

@@ -37,7 +37,7 @@ class Inspections extends BaseController
 
         $pg = $this->paginate(25);
         $rows = $this->inspectionListQuery($filters)
-            ->select('ic.*, u.unit_number, u.facility_id AS unit_facility_id, f.name AS property_name, fa.name AS asset_name')
+            ->select($this->inspectionListSelect())
             ->orderBy('ic.created_at', 'DESC')
             ->limit($pg['perPage'], $pg['offset'])
             ->get()->getResultArray();
@@ -145,6 +145,9 @@ class Inspections extends BaseController
         $floorLabel = trim((string) $this->request->getPost('floor_label'));
 
         if ($scopeType === 'asset') {
+            if (! $this->db->fieldExists('asset_id', self::TABLE)) {
+                return redirect()->back()->withInput()->with('error', 'Asset inspections require a database update. Please run the latest migration or SQL patch (section 13).');
+            }
             if ($assetId <= 0) {
                 return redirect()->back()->withInput()->with('error', 'Asset is required for asset inspections.');
             }
@@ -155,6 +158,9 @@ class Inspections extends BaseController
             $propertyId = (int) ($assetRow['facility_id'] ?? $propertyId);
             $unitId     = 0;
         } elseif ($scopeType === 'property') {
+            if (! $this->db->fieldExists('facility_id', self::TABLE)) {
+                return redirect()->back()->withInput()->with('error', 'Property inspections require a database update. Please run the latest migration or SQL patch (section 13).');
+            }
             if ($propertyId <= 0) {
                 return redirect()->back()->withInput()->with('error', 'Property is required for property inspections.');
             }
@@ -389,14 +395,13 @@ class Inspections extends BaseController
 
     private function inspectionListQuery(array $filters, ?string $status = null, bool $ignoreStatusFilter = false)
     {
-        $q = $this->db->table(self::TABLE . ' ic')
-            ->join('units u', 'u.id = ic.unit_id', 'left')
-            ->join('facilities f', 'f.id = COALESCE(ic.facility_id, u.facility_id)', 'left', false)
-            ->join('assets fa', 'fa.id = ic.asset_id', 'left');
-        $this->scopeFacilities($q, 'COALESCE(ic.facility_id, u.facility_id)');
+        $facilityExpr = $this->inspectionFacilityExpr();
+        $q = $this->db->table(self::TABLE . ' ic');
+        $this->applyInspectionJoins($q);
+        $this->scopeFacilities($q, $facilityExpr);
 
         if ($filters['property_id'] > 0) {
-            $q->where('COALESCE(ic.facility_id, u.facility_id)', $filters['property_id'], false);
+            $q->where($facilityExpr, $filters['property_id'], false);
         }
         if (($filters['scope'] ?? '') !== '') {
             if ($this->db->fieldExists('scope_type', self::TABLE)) {
@@ -427,14 +432,42 @@ class Inspections extends BaseController
         }
 
         $q = $this->db->table(self::TABLE . ' ic')
-            ->select('ic.*, u.unit_number, u.facility_id AS unit_facility_id, f.name AS property_name, fa.name AS asset_name, fa.asset_code')
-            ->join('units u', 'u.id = ic.unit_id', 'left')
-            ->join('facilities f', 'f.id = COALESCE(ic.facility_id, u.facility_id)', 'left', false)
-            ->join('assets fa', 'fa.id = ic.asset_id', 'left')
+            ->select($this->inspectionListSelect())
             ->where('ic.id', $id);
-        $this->scopeFacilities($q, 'COALESCE(ic.facility_id, u.facility_id)');
+        $this->applyInspectionJoins($q);
+        $this->scopeFacilities($q, $this->inspectionFacilityExpr());
 
         return $q->get()->getRowArray() ?: null;
+    }
+
+    private function inspectionFacilityExpr(): string
+    {
+        return $this->db->fieldExists('facility_id', self::TABLE)
+            ? 'COALESCE(ic.facility_id, u.facility_id)'
+            : 'u.facility_id';
+    }
+
+    private function inspectionListSelect(): string
+    {
+        $select = 'ic.*, u.unit_number, u.facility_id AS unit_facility_id, f.name AS property_name';
+        if ($this->db->fieldExists('asset_id', self::TABLE)) {
+            $select .= ', fa.name AS asset_name, fa.asset_code';
+        }
+
+        return $select;
+    }
+
+    private function applyInspectionJoins(object $q): object
+    {
+        $facilityExpr = $this->inspectionFacilityExpr();
+        $q->join('units u', 'u.id = ic.unit_id', 'left')
+            ->join('facilities f', 'f.id = ' . $facilityExpr, 'left', false);
+
+        if ($this->db->fieldExists('asset_id', self::TABLE)) {
+            $q->join('assets fa', 'fa.id = ic.asset_id', 'left');
+        }
+
+        return $q;
     }
 
     private function decodeAreas(array $row): array
