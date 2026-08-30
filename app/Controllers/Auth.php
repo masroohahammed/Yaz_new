@@ -9,10 +9,7 @@ class Auth extends BaseController
     public function login()
     {
         if (session()->get('logged_in')) {
-            $ws = session()->get('workspace');
-            if ($ws === 'portal') return redirect()->to(base_url('portal'));
-            if ($ws === 'collector') return redirect()->to(base_url('collector'));
-            return redirect()->to(base_url('dashboard'));
+            return $this->postLoginRedirect();
         }
         return view('auth/login', [
             'settings'       => $this->settings,
@@ -64,10 +61,8 @@ class Auth extends BaseController
         }
 
         $this->completeLogin($user);
-        $ws = session()->get('workspace');
-        if ($ws === 'portal') return redirect()->to(base_url('portal'));
-        if ($ws === 'collector') return redirect()->to(base_url('collector'));
-        return redirect()->to(base_url('dashboard'));
+
+        return $this->postLoginRedirect();
     }
 
     public function mfaVerify()
@@ -96,10 +91,8 @@ class Auth extends BaseController
 
         session()->remove('pending_user_id');
         $this->completeLogin($user);
-        $ws = session()->get('workspace');
-        if ($ws === 'portal') return redirect()->to(base_url('portal'));
-        if ($ws === 'collector') return redirect()->to(base_url('collector'));
-        return redirect()->to(base_url('dashboard'));
+
+        return $this->postLoginRedirect();
     }
 
     public function mfaSetup()
@@ -325,5 +318,25 @@ class Auth extends BaseController
         } catch (\Throwable $e) {
             log_message('error', 'login_attempt log failed: ' . $e->getMessage());
         }
+    }
+
+    private function postLoginRedirect(): \CodeIgniter\HTTP\RedirectResponse
+    {
+        $target = session()->get('redirect_after_login');
+        if (is_string($target) && $target !== '') {
+            session()->remove('redirect_after_login');
+
+            return redirect()->to($target);
+        }
+
+        $ws = session()->get('workspace');
+        if ($ws === 'portal') {
+            return redirect()->to(base_url('portal'));
+        }
+        if ($ws === 'collector') {
+            return redirect()->to(base_url('collector'));
+        }
+
+        return redirect()->to(base_url('dashboard'));
     }
 }

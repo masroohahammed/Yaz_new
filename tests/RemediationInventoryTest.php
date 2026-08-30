@@ -580,12 +580,20 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('asset_scan_logs', $migration);
     }
 
-    public function testQrScanRoutesToPmInspectionsCreate(): void
+    public function testQrScanRoutesDirectlyToPmInspectionsCreate(): void
     {
         $entity = file_get_contents($this->root . '/app/Controllers/EntityScan.php');
         $asset  = file_get_contents($this->root . '/app/Controllers/AssetScan.php');
-        $this->assertStringContainsString('InspectionAreaService::createUrl', $entity);
-        $this->assertStringContainsString('InspectionAreaService::createUrl', $asset);
+        $public = file_get_contents($this->root . '/app/Controllers/PublicEntity.php');
+        $trait  = file_get_contents($this->root . '/app/Controllers/Traits/QrInspectionRedirectTrait.php');
+        $auth   = file_get_contents($this->root . '/app/Controllers/Auth.php');
+        $this->assertStringContainsString('QrInspectionRedirectTrait', $entity);
+        $this->assertStringContainsString('QrInspectionRedirectTrait', $asset);
+        $this->assertStringContainsString('resolveQrScanRedirect', $entity);
+        $this->assertStringContainsString('redirectToInspectionUrl', $trait);
+        $this->assertStringContainsString('redirectToInspectionUrl', $public);
+        $this->assertStringContainsString('postLoginRedirect', $auth);
+        $this->assertStringContainsString('redirect_after_login', $auth);
         $checklist = file_get_contents($this->root . '/app/Views/inspections/checklist.php');
         $this->assertStringContainsString('item_priority[]', $checklist);
         $this->assertStringContainsString('item_status[]', $checklist);

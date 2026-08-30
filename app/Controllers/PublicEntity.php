@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Controllers\Traits\QrInspectionRedirectTrait;
+use App\Services\InspectionAreaService;
 use App\Services\MaintenanceScopeQuery;
 
 /**
@@ -10,36 +12,44 @@ use App\Services\MaintenanceScopeQuery;
  */
 class PublicEntity extends BaseController
 {
+    use QrInspectionRedirectTrait;
+
     public function inspections()
     {
-        if (! session()->get('user_id')) {
-            $return = current_url() . '?' . ($_SERVER['QUERY_STRING'] ?? '');
-
-            return redirect()->to(base_url('login'))->with('info', 'Please log in to access inspections.')->with('redirect_after_login', $return);
-        }
-
         $scope = $this->resolveScope();
         if ($scope === null) {
             return redirect()->to(base_url('dashboard'))->with('error', 'Property, unit, or asset not found or QR code does not match a registered entity.');
         }
 
-        $entityLabel = $this->entityLabel($scope);
-        $reports     = $this->loadInspectionReports($scope);
-        $units       = [];
-
-        if (($scope['type'] ?? '') === 'property' && ! empty($scope['facility_id'])) {
-            $units = MaintenanceScopeQuery::unitsForFacility($this->db, (int) $scope['facility_id']);
+        $createUrl = $this->inspectionCreateUrlForScope($scope);
+        $extra = [];
+        $inspectionType = $this->inspectionTypeFromScan();
+        if ($inspectionType !== null) {
+            $extra['inspection_type'] = $inspectionType;
         }
 
-        return view('public/inspections', [
-            'title'       => 'Inspections — ' . $entityLabel,
-            'scope'       => $scope,
-            'entityLabel' => $entityLabel,
-            'reports'     => $reports,
-            'units'       => $units,
-            'settings'    => $this->settings,
-            'backUrl'     => $scope['scan_url'] ?? base_url('dashboard'),
-        ]);
+        return $this->redirectToInspectionUrl($this->appendQuery($createUrl, $extra));
+    }
+
+    /** @param array<string, mixed> $scope */
+    private function inspectionCreateUrlForScope(array $scope): string
+    {
+        $facilityId = (int) ($scope['facility_id'] ?? 0);
+        $unitId     = (int) ($scope['unit_id'] ?? 0);
+        $assetId    = (int) ($scope['asset_id'] ?? 0);
+
+        if (($scope['type'] ?? '') === 'asset' && $assetId > 0) {
+            return InspectionAreaService::createUrl(['asset_id' => $assetId]);
+        }
+
+        if (($scope['type'] ?? '') === 'unit' && $unitId > 0) {
+            return InspectionAreaService::createUrl([
+                'facility_id' => $facilityId,
+                'unit_id'     => $unitId,
+            ]);
+        }
+
+        return InspectionAreaService::createUrl(['facility_id' => $facilityId]);
     }
 
     /** @return array<string, mixed>|null */
@@ -99,63 +109,5 @@ class PublicEntity extends BaseController
         }
 
         return null;
-    }
-
-    /** @param array<string, mixed> $scope */
-    private function entityLabel(array $scope): string
-    {
-        return (string) ($scope['label'] ?? 'Entity');
-    }
-
-    /** @param array<string, mixed> $scope
-     * @return list<array<string, mixed>>
-     */
-    private function loadInspectionReports(array $scope): array
-    {
-        $unitId = (int) ($scope['unit_id'] ?? 0);
-        $facilityId = (int) ($scope['facility_id'] ?? 0);
-        $assetId = (int) ($scope['asset_id'] ?? 0);
-
-        $hasFacilityCol = $this->db->fieldExists('facility_id', 'unit_checklists');
-        $hasAssetCol = $this->db->fieldExists('asset_id', 'unit_checklists');
-
-        $sql = 'SELECT uc.*, u.unit_number, u.id AS unit_id, usr.name AS created_by_name
-            FROM unit_checklists uc
-            LEFT JOIN units u ON u.id = uc.unit_id
-            LEFT JOIN users usr ON usr.id = uc.created_by';
-        if ($hasAssetCol) {
-            $sql = 'SELECT uc.*, u.unit_number, u.id AS unit_id, fa.name AS asset_name, usr.name AS created_by_name
-            FROM unit_checklists uc
-            LEFT JOIN units u ON u.id = uc.unit_id
-            LEFT JOIN assets fa ON fa.id = uc.asset_id
-            LEFT JOIN users usr ON usr.id = uc.created_by';
-        }
-        $sql .= ' WHERE 1=1';
-        $params = [];
-
-        if ($hasAssetCol && ($scope['type'] ?? '') === 'asset' && $assetId > 0) {
-            $sql .= ' AND uc.asset_id = ?';
-            $params[] = $assetId;
-        } elseif (($scope['type'] ?? '') === 'unit' && $unitId > 0) {
-            $sql .= ' AND uc.unit_id = ?';
-            $params[] = $unitId;
-        } elseif ($facilityId > 0) {
-            if ($hasFacilityCol) {
-                $sql .= ' AND COALESCE(uc.facility_id, u.facility_id) = ?';
-            } else {
-                $sql .= ' AND u.facility_id = ?';
-            }
-            $params[] = $facilityId;
-        }
-
-        $sql .= ' ORDER BY uc.created_at DESC LIMIT 50';
-
-        try {
-            return $this->db->query($sql, $params)->getResultArray();
-        } catch (\Throwable $e) {
-            log_message('error', 'PublicEntity loadInspectionReports: ' . $e->getMessage());
-
-            return [];
-        }
     }
 }

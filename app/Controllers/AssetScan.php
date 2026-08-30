@@ -12,6 +12,8 @@ use App\Services\QrScanLogService;
  */
 class AssetScan extends BaseController
 {
+    use \App\Controllers\Traits\QrInspectionRedirectTrait;
+
     public function byToken(string $token)
     {
         $codeSvc = new AssetCodeService($this->db);
@@ -107,8 +109,9 @@ class AssetScan extends BaseController
 
     /**
      * @param array<string, mixed> $asset
+     * @return string|\CodeIgniter\HTTP\RedirectResponse
      */
-    private function renderScanPage(array $asset, string $source): string
+    private function renderScanPage(array $asset, string $source)
     {
         $userId = session()->get('user_id') ? (int) session()->get('user_id') : null;
         (new AssetScanLogService($this->db))->log(
@@ -132,6 +135,13 @@ class AssetScan extends BaseController
                 $this->request->getIPAddress(),
                 $this->request->getUserAgent()?->getAgentString()
             );
+        }
+
+        $inspectUrl = InspectionAreaService::createUrl(['asset_id' => (int) $asset['id']]);
+        $maintenanceUrl = base_url('maintenance?asset_id=' . (int) $asset['id']);
+        $redirect = $this->resolveQrScanRedirect($inspectUrl, $maintenanceUrl);
+        if ($redirect !== null) {
+            return $redirect;
         }
 
         $codeSvc = new AssetCodeService($this->db);

@@ -12,6 +12,8 @@ use App\Services\QrScanLogService;
  */
 class EntityScan extends BaseController
 {
+    use \App\Controllers\Traits\QrInspectionRedirectTrait;
+
     public function propertyByToken(string $token)
     {
         $qr = new EntityQrService($this->db);
@@ -90,8 +92,9 @@ class EntityScan extends BaseController
 
     /**
      * @param array<string, mixed> $facility
+     * @return string|\CodeIgniter\HTTP\RedirectResponse
      */
-    private function renderPropertyScan(array $facility, string $source): string
+    private function renderPropertyScan(array $facility, string $source)
     {
         $facilityId = (int) $facility['id'];
         $userId     = session()->get('user_id') ? (int) session()->get('user_id') : null;
@@ -106,6 +109,13 @@ class EntityScan extends BaseController
             $this->request->getIPAddress(),
             $this->request->getUserAgent()?->getAgentString()
         );
+
+        $inspectUrl = InspectionAreaService::createUrl(['facility_id' => $facilityId]);
+        $maintenanceUrl = base_url('maintenance?facility_id=' . $facilityId);
+        $redirect = $this->resolveQrScanRedirect($inspectUrl, $maintenanceUrl);
+        if ($redirect !== null) {
+            return $redirect;
+        }
 
         $qr      = new EntityQrService($this->db);
         $scanUrl = $qr->scanUrl('property', $facility);
@@ -147,8 +157,9 @@ class EntityScan extends BaseController
 
     /**
      * @param array<string, mixed> $unit
+     * @return string|\CodeIgniter\HTTP\RedirectResponse
      */
-    private function renderUnitScan(array $unit, string $source): string
+    private function renderUnitScan(array $unit, string $source)
     {
         $unitId     = (int) $unit['id'];
         $userId     = session()->get('user_id') ? (int) session()->get('user_id') : null;
@@ -163,6 +174,16 @@ class EntityScan extends BaseController
             $this->request->getIPAddress(),
             $this->request->getUserAgent()?->getAgentString()
         );
+
+        $inspectUrl = InspectionAreaService::createUrl([
+            'facility_id' => (int) ($unit['facility_id'] ?? 0),
+            'unit_id'     => $unitId,
+        ]);
+        $maintenanceUrl = base_url('maintenance?unit_id=' . $unitId);
+        $redirect = $this->resolveQrScanRedirect($inspectUrl, $maintenanceUrl);
+        if ($redirect !== null) {
+            return $redirect;
+        }
 
         $qr      = new EntityQrService($this->db);
         $scanUrl = $qr->scanUrl('unit', $unit);
