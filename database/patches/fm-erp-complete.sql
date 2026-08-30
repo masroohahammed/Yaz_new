@@ -269,11 +269,27 @@ SET @sql := IF(
 );
 PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
--- 13) Property / asset inspection columns on unit_checklists
-CALL fm_add_column_if_missing('unit_checklists', 'facility_id', '`facility_id` INT UNSIGNED NULL AFTER `id`');
-CALL fm_add_column_if_missing('unit_checklists', 'asset_id', '`asset_id` INT UNSIGNED NULL AFTER `facility_id`');
-CALL fm_add_column_if_missing('unit_checklists', 'scope_type', '`scope_type` VARCHAR(20) NOT NULL DEFAULT ''unit'' AFTER `asset_id`');
-CALL fm_add_column_if_missing('unit_checklists', 'floor_label', '`floor_label` VARCHAR(80) NULL AFTER `scope_type`');
+-- 13) Property / asset inspection columns on unit_checklists (no stored procedures)
+ALTER TABLE `unit_checklists`
+  ADD COLUMN IF NOT EXISTS `facility_id` INT UNSIGNED NULL AFTER `id`,
+  ADD COLUMN IF NOT EXISTS `asset_id` INT UNSIGNED NULL AFTER `facility_id`,
+  ADD COLUMN IF NOT EXISTS `scope_type` VARCHAR(20) NOT NULL DEFAULT 'unit' AFTER `asset_id`,
+  ADD COLUMN IF NOT EXISTS `floor_label` VARCHAR(80) NULL AFTER `scope_type`;
+
+-- Allow property-level inspections without a unit
+SET @uc_unit_not_null := (
+  SELECT COUNT(*) FROM information_schema.columns
+   WHERE table_schema = DATABASE()
+     AND table_name = 'unit_checklists'
+     AND column_name = 'unit_id'
+     AND is_nullable = 'NO'
+);
+SET @sql := IF(
+  @uc_unit_not_null > 0,
+  'ALTER TABLE `unit_checklists` MODIFY `unit_id` INT(10) UNSIGNED NULL DEFAULT NULL',
+  'SELECT 1'
+);
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- After applying: ROTATE THE DATABASE PASSWORD. Previous password was in source.
 -- Landlord reports do not add tables. Occupancy trend is lease-overlap, not a snapshot table.

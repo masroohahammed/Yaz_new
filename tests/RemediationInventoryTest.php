@@ -591,4 +591,14 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('item_status[]', $checklist);
         $this->assertStringContainsString('critical', $checklist);
     }
+
+    public function testPropertyInspectionSqlPatchHasNoStoredProcedure(): void
+    {
+        $patch = file_get_contents($this->root . '/database/patches/2026-08-30-property-inspections.sql');
+        $complete = file_get_contents($this->root . '/database/patches/fm-erp-complete.sql');
+        $this->assertStringNotContainsString('fm_add_column_if_missing', $patch);
+        $this->assertStringNotContainsString('fm_add_column_if_missing', $complete);
+        $this->assertStringContainsString('ADD COLUMN IF NOT EXISTS `facility_id`', $patch);
+        $this->assertStringContainsString('ADD COLUMN IF NOT EXISTS `scope_type`', $patch);
+    }
 }

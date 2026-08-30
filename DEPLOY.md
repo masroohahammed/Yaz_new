@@ -45,6 +45,34 @@ expands `expenses.category` while keeping existing values, and adds missing inde
 
 Do **not** re-run old SQL from leftover ZIP archives.
 
+### Property inspections + asset QR scan (2026-08-30)
+
+If phpMyAdmin shows **`PROCEDURE fm_add_column_if_missing does not exist`**, do **not** use old section 13 from an archived patch. Use the standalone file instead:
+
+```
+database/patches/2026-08-30-property-inspections.sql
+```
+
+In phpMyAdmin:
+
+1. Select database **`pfmsalyazwa_pfms`**
+2. Open **SQL** tab
+3. Paste the full contents of `2026-08-30-property-inspections.sql`
+4. Click **Go**
+
+This adds `facility_id`, `asset_id`, `scope_type`, `floor_label` on `unit_checklists`, makes `unit_id` nullable for property inspections, and repairs `AUTO_INCREMENT` on `unit_checklists`, `asset_scan_logs`, and `qr_scan_logs`.
+
+Verify:
+
+```sql
+SHOW COLUMNS FROM unit_checklists LIKE 'facility_id';
+SHOW COLUMNS FROM unit_checklists LIKE 'scope_type';
+```
+
+Then upload latest app files (`Inspections.php`, etc.) and retry **pm-inspections → New Property Inspection**.
+
+Or run: `php spark migrate` (migration `2026-08-30-140000_PropertyInspectionColumns`).
+
 This product is Facility + Property Management. There is no kitchen / POS register.
 Work-order status updates and invoice / lease-payment totals are the live equivalents
 of “order”, revenue, voided, and cancelled amounts.
