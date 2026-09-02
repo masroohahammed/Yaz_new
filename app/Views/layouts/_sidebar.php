@@ -33,8 +33,10 @@ foreach ($menu as &$item) {
 unset($item);
 
 $currentPath = service('uri')->getPath();
-$cname       = fm_setting('company_name', 'FM ERP');
-$clogoUrl    = fm_logo_url(fm_setting('company_logo', ''));
+$brandingId  = ($workspace === 'pm') ? 1 : null;
+$branding    = fm_company_branding([], $brandingId);
+$cname       = $branding['settings']['company_name'] ?? fm_setting('company_name', 'FM ERP');
+$clogoUrl    = $branding['logoUrl'] ?: fm_logo_url(fm_setting('company_logo', ''));
 $wsLabel     = match ($workspace) {
     'pm'   => 'Property Management',
     'fm'   => 'Facility Management',

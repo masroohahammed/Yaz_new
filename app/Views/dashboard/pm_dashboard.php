@@ -8,6 +8,7 @@
   <div class="d-flex gap-2 flex-wrap">
     <a href="<?= base_url('properties') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-building me-1"></i>Properties</a>
     <a href="<?= base_url('tenants') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-people me-1"></i>Tenants</a>
+    <a href="<?= base_url('contracts') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-file-earmark-text me-1"></i>Contracts</a>
     <a href="<?= base_url('finance/invoices') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-receipt me-1"></i>Invoices</a>
   </div>
 </div>
@@ -16,48 +17,56 @@
 
 <div class="row g-3 mb-3">
   <div class="col-6 col-sm-6 col-md-3 col-lg-3">
-    <div class="kpi-card kpi-blue">
-      <div class="d-flex align-items-center gap-3">
-        <div class="kpi-icon"><i class="bi bi-building"></i></div>
-        <div><div class="kpi-label">Properties</div><div class="kpi-value"><?= (int) $totalFacilities ?></div></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-sm-6 col-md-3 col-lg-3">
-    <div class="kpi-card kpi-teal">
-      <div class="d-flex align-items-center gap-3">
-        <div class="kpi-icon"><i class="bi bi-door-closed"></i></div>
-        <div>
-          <div class="kpi-label">Occupancy</div>
-          <div class="kpi-value"><?= esc($occupancy) ?>%</div>
-          <div class="kpi-sub"><?= (int) $totalUnits ?> units</div>
+    <a href="<?= base_url('properties') ?>" class="text-decoration-none d-block h-100">
+      <div class="kpi-card kpi-blue h-100">
+        <div class="d-flex align-items-center gap-3">
+          <div class="kpi-icon"><i class="bi bi-building"></i></div>
+          <div><div class="kpi-label">Properties</div><div class="kpi-value"><?= (int) $totalFacilities ?></div></div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
   <div class="col-6 col-sm-6 col-md-3 col-lg-3">
-    <div class="kpi-card kpi-green">
-      <div class="d-flex align-items-center gap-3">
-        <div class="kpi-icon"><i class="bi bi-file-earmark-text"></i></div>
-        <div>
-          <div class="kpi-label">Active Contracts</div>
-          <div class="kpi-value"><?= (int) $activeContracts ?></div>
-          <?php if ($expiringSoon > 0): ?><div class="kpi-sub text-warning"><?= (int) $expiringSoon ?> expiring</div><?php endif; ?>
+    <a href="<?= base_url('reports/pm/occupancy') ?>" class="text-decoration-none d-block h-100">
+      <div class="kpi-card kpi-teal h-100">
+        <div class="d-flex align-items-center gap-3">
+          <div class="kpi-icon"><i class="bi bi-door-closed"></i></div>
+          <div>
+            <div class="kpi-label">Occupancy</div>
+            <div class="kpi-value"><?= esc($occupancy) ?>%</div>
+            <div class="kpi-sub"><?= (int) $totalUnits ?> units</div>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
   <div class="col-6 col-sm-6 col-md-3 col-lg-3">
-    <div class="kpi-card kpi-red">
-      <div class="d-flex align-items-center gap-3">
-        <div class="kpi-icon"><i class="bi bi-exclamation-circle"></i></div>
-        <div>
-          <div class="kpi-label">Overdue Invoices</div>
-          <div class="kpi-value"><?= (int) $overdueCount ?></div>
-          <div class="kpi-sub"><?= number_format((float) $overdueAmount, 0) ?> <?= esc($currency) ?></div>
+    <a href="<?= base_url('contracts') ?>" class="text-decoration-none d-block h-100">
+      <div class="kpi-card kpi-green h-100">
+        <div class="d-flex align-items-center gap-3">
+          <div class="kpi-icon"><i class="bi bi-file-earmark-text"></i></div>
+          <div>
+            <div class="kpi-label">Active Contracts</div>
+            <div class="kpi-value"><?= (int) $activeContracts ?></div>
+            <?php if ($expiringSoon > 0): ?><div class="kpi-sub text-warning"><?= (int) $expiringSoon ?> expiring</div><?php endif; ?>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
+  </div>
+  <div class="col-6 col-sm-6 col-md-3 col-lg-3">
+    <a href="<?= base_url('finance/invoices') ?>" class="text-decoration-none d-block h-100">
+      <div class="kpi-card kpi-red h-100">
+        <div class="d-flex align-items-center gap-3">
+          <div class="kpi-icon"><i class="bi bi-exclamation-circle"></i></div>
+          <div>
+            <div class="kpi-label">Overdue Invoices</div>
+            <div class="kpi-value"><?= (int) $overdueCount ?></div>
+            <div class="kpi-sub"><?= number_format((float) $overdueAmount, 0) ?> <?= esc($currency) ?></div>
+          </div>
+        </div>
+      </div>
+    </a>
   </div>
 </div>
 
@@ -70,6 +79,9 @@
         <div class="d-flex justify-content-between mb-2 small"><span class="text-muted">Outstanding</span><strong class="text-warning"><?= number_format((float) $pendingReceivable, 2) ?> <?= esc($currency) ?></strong></div>
         <div class="d-flex justify-content-between small"><span class="text-muted">Overdue</span><strong class="text-danger"><?= number_format((float) $overdueAmount, 2) ?> <?= esc($currency) ?></strong></div>
         <div class="d-flex justify-content-between small mt-2"><span class="text-muted">Cancelled / voided</span><strong><?= number_format((float) ($cancelledAmount ?? 0), 2) ?> <?= esc($currency) ?></strong></div>
+        <div class="mt-3">
+          <a href="<?= base_url('finance/invoices') ?>" class="btn btn-fm-outline btn-sm">View invoices</a>
+        </div>
       </div>
     </div>
   </div>
@@ -79,12 +91,17 @@
       <div class="fm-card-body">
         <div class="d-flex justify-content-between align-items-center mb-2 small">
           <span class="text-muted">Contracts expiring (60d)</span>
-          <span class="badge bg-warning text-dark"><?= (int) $expiringSoon ?></span>
+          <a href="<?= base_url('reports/pm/leases?expiring=1') ?>" class="badge bg-warning text-dark text-decoration-none"><?= (int) $expiringSoon ?></a>
         </div>
         <div class="d-flex justify-content-between align-items-center small">
           <span class="text-muted">Open maintenance (view)</span>
           <a href="<?= base_url('maintenance/list') ?>" class="badge bg-secondary text-decoration-none"><?= (int) $openMaintenance ?></a>
         </div>
+        <?php if ($expiringSoon > 0): ?>
+        <div class="mt-3">
+          <a href="<?= base_url('reports/pm/leases?expiring=1') ?>" class="btn btn-fm-outline btn-sm">Review expiring leases</a>
+        </div>
+        <?php endif; ?>
       </div>
     </div>
   </div>
@@ -94,6 +111,9 @@
       <div class="fm-card-body">
         <div class="d-flex justify-content-between mb-2 small"><span class="text-muted">Total units</span><strong><?= (int) $totalUnits ?></strong></div>
         <div class="d-flex justify-content-between small"><span class="text-muted">Occupied</span><strong><?= (int) round($totalUnits * $occupancy / 100) ?></strong></div>
+        <div class="mt-3">
+          <a href="<?= base_url('reports/pm/occupancy') ?>" class="btn btn-fm-outline btn-sm">Occupancy report</a>
+        </div>
       </div>
     </div>
   </div>
@@ -131,23 +151,32 @@
   <div class="col-lg-6">
     <div class="fm-card">
       <div class="card-header-fm">
-        <h5><i class="bi bi-calendar-event me-2"></i>Expiring contracts</h5>
-        <a href="<?= base_url('finance/contracts') ?>" class="btn btn-fm-outline btn-sm">View all</a>
+        <h5><i class="bi bi-calendar-event me-2"></i>Upcoming expiries</h5>
+        <a href="<?= base_url('reports/pm/leases?expiring=1') ?>" class="btn btn-fm-outline btn-sm">View all</a>
       </div>
       <div class="fm-card-body p-0">
         <table class="fm-table">
-          <thead><tr><th>Contract</th><th>Client</th><th>Property</th><th>Ends</th></tr></thead>
+          <thead><tr><th>Contract</th><th>Client</th><th>Property</th><th>Ends</th><th></th></tr></thead>
           <tbody>
-          <?php foreach ($expiringContracts as $c): ?>
-            <tr>
-              <td class="small fw-semibold"><?= esc($c['contract_number']) ?></td>
+          <?php foreach ($expiringContracts as $c):
+            $daysLeft = ! empty($c['end_date']) ? (int) ceil((strtotime($c['end_date']) - time()) / 86400) : null;
+            $contractUrl = base_url('contracts/' . (int) ($c['id'] ?? 0));
+          ?>
+            <tr class="fm-clickable-row" role="link" tabindex="0" data-href="<?= esc($contractUrl) ?>" style="cursor:pointer">
+              <td class="small fw-semibold"><a href="<?= esc($contractUrl) ?>" class="text-primary text-decoration-none"><?= esc($c['contract_number']) ?></a></td>
               <td class="small"><?= esc($c['client_name']) ?></td>
               <td class="small text-muted"><?= esc($c['facility_name'] ?? '—') ?></td>
-              <td class="small"><?= !empty($c['end_date']) ? date('d M Y', strtotime($c['end_date'])) : '—' ?></td>
+              <td class="small">
+                <?= !empty($c['end_date']) ? date('d M Y', strtotime($c['end_date'])) : '—' ?>
+                <?php if ($daysLeft !== null && $daysLeft <= 60): ?>
+                  <br><span class="x-small text-danger"><?= (int) $daysLeft ?>d left</span>
+                <?php endif; ?>
+              </td>
+              <td class="text-end"><a href="<?= esc($contractUrl) ?>" class="btn btn-sm btn-fm-outline">Open</a></td>
             </tr>
           <?php endforeach; ?>
           <?php if (empty($expiringContracts)): ?>
-            <tr><td colspan="4" class="text-muted text-center py-4 small">No contracts expiring soon.</td></tr>
+            <tr><td colspan="5" class="text-muted text-center py-4 small">No contracts expiring soon.</td></tr>
           <?php endif; ?>
           </tbody>
         </table>
@@ -164,9 +193,11 @@
         <table class="fm-table">
           <thead><tr><th>Invoice</th><th>Property</th><th>Due</th><th class="text-end">Amount</th></tr></thead>
           <tbody>
-          <?php foreach ($overdueInvoices as $inv): ?>
-            <tr>
-              <td class="small fw-semibold"><?= esc($inv['invoice_number']) ?></td>
+          <?php foreach ($overdueInvoices as $inv):
+            $invUrl = base_url('finance/invoices/view/' . (int) ($inv['id'] ?? 0));
+          ?>
+            <tr class="fm-clickable-row" role="link" tabindex="0" data-href="<?= esc($invUrl) ?>" style="cursor:pointer">
+              <td class="small fw-semibold"><a href="<?= esc($invUrl) ?>" class="text-primary text-decoration-none"><?= esc($inv['invoice_number']) ?></a></td>
               <td class="small text-muted"><?= esc($inv['facility_name'] ?? '—') ?></td>
               <td class="small"><?= !empty($inv['due_date']) ? date('d M Y', strtotime($inv['due_date'])) : '—' ?></td>
               <td class="text-end small"><?= number_format((float) $inv['total'], 2) ?> <?= esc($currency) ?></td>
@@ -208,4 +239,22 @@
     </table>
   </div>
 </div>
+<?= $this->endSection() ?>
+<?= $this->section('scripts') ?>
+<script>
+(function () {
+  document.querySelectorAll('.fm-clickable-row[data-href]').forEach(function (row) {
+    row.addEventListener('click', function (e) {
+      if (e.target.closest('a, button')) return;
+      window.location = row.getAttribute('data-href');
+    });
+    row.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        window.location = row.getAttribute('data-href');
+      }
+    });
+  });
+})();
+</script>
 <?= $this->endSection() ?>

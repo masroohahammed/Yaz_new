@@ -21,6 +21,7 @@
   .signature-block { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 36px; }
   .signature-party { text-align: center; font-size: 11px; }
   .signature-line { border-top: 1px solid #333; margin: 36px 0 6px; }
+  .signature-img { max-height: 64px; max-width: 100%; margin: 0 auto 6px; display: block; }
   .signature-label { font-size: 10px; color: #666; }
   .print-btn { position: fixed; top: 15px; right: 15px; background: <?= esc($settings['primary_color'] ?? '#76002b') ?>; color: #fff; border: none; padding: 8px 16px; cursor: pointer; border-radius: 8px; font-size: 12px; }
   @media print { .print-btn { display: none; } .page { padding: 10mm; } }
@@ -43,6 +44,10 @@
   <div class="info-grid">
     <div>
       <div class="info-row"><label>Tenant / المستأجر:</label> <span><?= esc($contract['tenant_name'] ?? '—') ?></span></div>
+      <?php $displayQid = trim((string)($tenantQid ?? $contract['tenant_qid'] ?? $contract['qid_no'] ?? $contract['passport_no'] ?? '')); ?>
+      <?php if ($displayQid !== ''): ?>
+      <div class="info-row"><label>QID / Passport / الهوية:</label> <span><?= esc($displayQid) ?></span></div>
+      <?php endif; ?>
       <div class="info-row"><label>Property / العقار:</label> <span><?= esc($contract['facility_name'] ?? '—') ?></span></div>
       <div class="info-row"><label>Unit / الوحدة:</label> <span><?= esc($contract['unit_number'] ?? '—') ?></span></div>
     </div>
@@ -77,9 +82,14 @@
       <div class="signature-label">Name / Date</div>
     </div>
     <div class="signature-party">
-      <div class="signature-line"></div>
+      <?php $tenantSig = $tenantSignatureB64 ?? ''; ?>
+      <?php if ($tenantSig !== ''): ?>
+        <img src="<?= esc($tenantSig) ?>" alt="Tenant signature" class="signature-img">
+      <?php else: ?>
+        <div class="signature-line"></div>
+      <?php endif; ?>
       <strong>Tenant / المستأجر</strong>
-      <div class="signature-label"><?= esc($contract['tenant_name'] ?? '') ?></div>
+      <div class="signature-label"><?= esc($contract['tenant_name'] ?? '') ?><?php if ($displayQid !== ''): ?> · QID <?= esc($displayQid) ?><?php endif; ?></div>
     </div>
   </div>
 

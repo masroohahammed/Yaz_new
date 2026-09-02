@@ -609,4 +609,46 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('ADD COLUMN IF NOT EXISTS `facility_id`', $patch);
         $this->assertStringContainsString('ADD COLUMN IF NOT EXISTS `scope_type`', $patch);
     }
+
+    public function testPmSidebarUsesCompanyOneBranding(): void
+    {
+        $sidebar = file_get_contents($this->root . '/app/Views/layouts/_sidebar.php');
+        $this->assertStringContainsString("(\$workspace === 'pm') ? 1", $sidebar);
+        $this->assertStringContainsString('fm_company_branding', $sidebar);
+    }
+
+    public function testPmDashboardExpiryLinksAndSignatureRoutes(): void
+    {
+        $dash = file_get_contents($this->root . '/app/Views/dashboard/pm_dashboard.php');
+        $this->assertStringContainsString('reports/pm/leases?expiring=1', $dash);
+        $this->assertStringNotContainsString('finance/contracts', $dash);
+        $this->assertStringContainsString('fm-clickable-row', $dash);
+        $this->assertStringContainsString("base_url('contracts/'", $dash);
+
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString('PublicContractSign::show', $routes);
+        $this->assertStringContainsString('Leases::generateSignLink', $routes);
+        $this->assertStringContainsString('Leases::downloadSignedPdf', $routes);
+        $this->assertStringContainsString('Leases::whatsappShareSigned', $routes);
+    }
+
+    public function testLeasePrintAndParkingRenewIncludeTenantQidAndSignature(): void
+    {
+        $print = file_get_contents($this->root . '/app/Views/leases/print.php');
+        $this->assertStringContainsString('QID / Passport', $print);
+        $this->assertStringContainsString('tenantSignatureB64', $print);
+
+        $show = file_get_contents($this->root . '/app/Views/leases/show.php');
+        $this->assertStringContainsString('parking-print', $show);
+        $this->assertStringContainsString('generate-sign-link', $show);
+        $this->assertStringContainsString('whatsapp-share', $show);
+
+        $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
+        $this->assertStringContainsString('{{tenant_qid}}', $leases);
+        $this->assertStringContainsString('parking-print', $leases);
+
+        $sigPatch = file_get_contents($this->root . '/database/patches/2026-09-02-lease-contract-signature.sql');
+        $this->assertStringContainsString('tenant_signature_path', $sigPatch);
+        $this->assertStringContainsString('signature_token', $sigPatch);
+    }
 }

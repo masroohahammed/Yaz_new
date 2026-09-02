@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
 use App\Controllers\Traits\ParkingContractTrait;
+use App\Services\ContractSignatureService;
 use App\Services\ParkingContractService;
 use App\Services\UtilityAccountService;
 
@@ -356,6 +357,11 @@ class Leases extends BaseController
 
         $this->logActivity('renew', 'lease_contracts', $id, 'Contract renewed → #' . $newId);
 
+        if ($this->isParkingContractRow($old)) {
+            return redirect()->to(base_url('contracts/' . $newId . '/parking-print'))
+                ->with('success', 'Contract renewed. Open the parking agreement to review or print.');
+        }
+
         return redirect()->to(base_url('contracts/' . $newId))->with('success', 'Contract renewed. New contract created.');
     }
 
@@ -636,6 +642,96 @@ class Leases extends BaseController
         return redirect()->to(base_url('contracts/' . $id . '/print'))->with('success', 'Print content saved.');
     }
 
+    // ── Digital signature ─────────────────────────────────────────────────────
+
+    public function generateSignLink(int $id)
+    {
+        if (! $this->request->is('post')) {
+            return redirect()->back();
+        }
+
+        if (! $this->pmTableExists(self::TABLE)) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Leases module not available.');
+        }
+
+        $contract = $this->contractDetail($id);
+        if (! $contract) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
+        }
+
+        $svc = new ContractSignatureService($this->db);
+        if (! $svc->tableReady()) {
+            return redirect()->to(base_url('contracts/' . $id))
+                ->with('error', 'Run database migration for lease contract signatures first.');
+        }
+
+        $token = $svc->ensureToken($id);
+        if ($token === null) {
+            return redirect()->to(base_url('contracts/' . $id))->with('error', 'Could not generate signing link.');
+        }
+
+        $link = $svc->signUrl($token);
+        $this->logActivity('sign_link', 'lease_contracts', $id, 'Tenant signing link generated');
+
+        return redirect()->to(base_url('contracts/' . $id))
+            ->with('success', 'Signing link ready — copy and send to the tenant.')
+            ->with('sign_link', $link);
+    }
+
+    public function downloadSignedPdf(int $id)
+    {
+        if (! $this->pmTableExists(self::TABLE)) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Leases module not available.');
+        }
+
+        $contract = $this->contractDetail($id);
+        if (! $contract) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
+        }
+
+        if (trim((string) ($contract['tenant_signature_path'] ?? '')) === '') {
+            return redirect()->to(base_url('contracts/' . $id))
+                ->with('error', 'Tenant has not signed this contract yet.');
+        }
+
+        return $this->renderSignedContractPdf($contract);
+    }
+
+    public function whatsappShareSigned(int $id)
+    {
+        if (! $this->pmTableExists(self::TABLE)) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Leases module not available.');
+        }
+
+        $contract = $this->contractDetail($id);
+        if (! $contract) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
+        }
+
+        if (trim((string) ($contract['tenant_signature_path'] ?? '')) === '') {
+            return redirect()->to(base_url('contracts/' . $id))
+                ->with('error', 'Generate and collect the tenant signature before sharing.');
+        }
+
+        $phoneRaw = trim((string) ($contract['tenant_whatsapp'] ?? $contract['tenant_phone'] ?? ''));
+        $digits   = preg_replace('/\D+/', '', $phoneRaw) ?? '';
+        if ($digits === '') {
+            return redirect()->to(base_url('contracts/' . $id))
+                ->with('error', 'Tenant phone or WhatsApp number is required to share via WhatsApp.');
+        }
+
+        if (str_starts_with($digits, '0')) {
+            $digits = '974' . ltrim($digits, '0');
+        } elseif (strlen($digits) === 8) {
+            $digits = '974' . $digits;
+        }
+
+        $pdfUrl  = base_url('contracts/' . $id . '/signed-pdf');
+        $message = 'Your signed lease contract (' . ($contract['contract_number'] ?? '') . ') is ready: ' . $pdfUrl;
+
+        return redirect()->to('https://wa.me/' . $digits . '?text=' . rawurlencode($message));
+    }
+
     // ── Print ─────────────────────────────────────────────────────────────────
 
     public function printView(int $id)
@@ -652,6 +748,11 @@ class Leases extends BaseController
         if ($this->isParkingContractRow($contract)) {
             return redirect()->to(base_url('contracts/' . $id . '/parking-print'));
         }
+
+        helper('fm');
+        $svc      = new ContractSignatureService($this->db);
+        $tenantQid = $svc->tenantQid($contract);
+        $signatureB64 = $svc->signatureDataUri($contract['tenant_signature_path'] ?? '');
 
         $templateEn = $contract['custom_content_en'] ?? '';
         $templateAr = $contract['custom_content_ar'] ?? '';
@@ -670,25 +771,32 @@ class Leases extends BaseController
         }
 
         $vars = [
-            '{{unit_number}}'       => esc($contract['unit_number'] ?? ''),
-            '{{property_name}}'     => esc($contract['facility_name'] ?? ''),
-            '{{tenant_name}}'       => esc($contract['tenant_name'] ?? ''),
-            '{{rent_amount}}'       => number_format((float) ($contract['rent_amount'] ?? 0), 2),
-            '{{currency}}'          => $this->settings['currency'] ?? 'QAR',
-            '{{payment_frequency}}' => esc($contract['payment_frequency'] ?? ''),
-            '{{start_date}}'        => esc($contract['start_date'] ?? ''),
-            '{{end_date}}'          => esc($contract['end_date'] ?? ''),
-            '{{contract_number}}'   => esc($contract['contract_number'] ?? ''),
+            '{{unit_number}}'         => esc($contract['unit_number'] ?? ''),
+            '{{property_name}}'       => esc($contract['facility_name'] ?? ''),
+            '{{tenant_name}}'         => esc($contract['tenant_name'] ?? ''),
+            '{{tenant_qid}}'          => esc($tenantQid),
+            '{{rent_amount}}'         => number_format((float) ($contract['rent_amount'] ?? 0), 2),
+            '{{currency}}'            => $this->settings['currency'] ?? 'QAR',
+            '{{payment_frequency}}'   => esc($contract['payment_frequency'] ?? ''),
+            '{{start_date}}'          => esc($contract['start_date'] ?? ''),
+            '{{end_date}}'            => esc($contract['end_date'] ?? ''),
+            '{{contract_number}}'     => esc($contract['contract_number'] ?? ''),
         ];
         $templateEn = strtr($templateEn, $vars);
         $templateAr = strtr($templateAr, $vars);
 
+        if ($this->request->getGet('pdf')) {
+            return $this->renderStandardLeasePdf($contract, $templateEn, $templateAr, $tenantQid, $signatureB64);
+        }
+
         return view('leases/print', $this->viewData([
-            'title'       => 'Contract ' . $contract['contract_number'],
-            'contract'    => $contract,
-            'templateEn'  => $templateEn,
-            'templateAr'  => $templateAr,
-            'usePdf'      => true,
+            'title'                => 'Contract ' . $contract['contract_number'],
+            'contract'             => $contract,
+            'tenantQid'            => $tenantQid,
+            'tenantSignatureB64'   => $signatureB64,
+            'templateEn'           => $templateEn,
+            'templateAr'           => $templateAr,
+            'usePdf'               => true,
         ]));
     }
 
@@ -736,8 +844,9 @@ class Leases extends BaseController
         $this->persistParkingContractFields($unitId, $id, $d);
 
         $wantPdf = $this->request->getPost('pdf') || $this->request->getGet('pdf');
+        $sigB64  = (new ContractSignatureService($this->db))->signatureDataUri($contract['tenant_signature_path'] ?? '');
 
-        return $this->renderParkingContractDocument($d, (bool) $wantPdf);
+        return $this->renderParkingContractDocument($d, (bool) $wantPdf, $sigB64);
     }
 
     public function ajaxUnits(int $facilityId)
@@ -978,7 +1087,7 @@ class Leases extends BaseController
     private function contractDetail(int $id): ?array
     {
         $q = $this->db->table(self::TABLE . ' lc')
-            ->select('lc.*, t.full_name AS tenant_name, t.phone AS tenant_phone, t.qid_no, t.passport_no, t.nationality, f.name AS facility_name, f.city AS facility_city, f.address AS facility_address, u.unit_number, u.unit_type, u.plate_number AS unit_plate_number')
+            ->select('lc.*, t.full_name AS tenant_name, t.phone AS tenant_phone, t.whatsapp AS tenant_whatsapp, t.qid_no, t.passport_no, t.nationality, f.name AS facility_name, f.city AS facility_city, f.address AS facility_address, u.unit_number, u.unit_type, u.plate_number AS unit_plate_number')
             ->join('tenants t', 't.id = lc.tenant_id', 'left')
             ->join('units u', 'u.id = lc.unit_id', 'left')
             ->join('facilities f', $this->leaseFacilityJoinSql(), 'left')
@@ -1196,6 +1305,90 @@ class Leases extends BaseController
             ->setHeader('Content-Type', 'text/csv')
             ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
             ->setBody($output);
+    }
+
+    /** @param array<string,mixed> $contract */
+    private function renderSignedContractPdf(array $contract): \CodeIgniter\HTTP\Response|string
+    {
+        helper('fm');
+        $svc          = new ContractSignatureService($this->db);
+        $tenantQid    = $svc->tenantQid($contract);
+        $signatureB64 = $svc->signatureDataUri($contract['tenant_signature_path'] ?? '');
+
+        if ($this->isParkingContractRow($contract)) {
+            $unitId = (int) ($contract['unit_id'] ?? 0);
+            $svcPark = new ParkingContractService($this->db);
+            $d         = $svcPark->buildDefaults($unitId, (int) $contract['id']);
+
+            return $this->renderParkingContractDocument($d, true, $signatureB64);
+        }
+
+        $templateEn = $contract['custom_content_en'] ?? '';
+        $templateAr = $contract['custom_content_ar'] ?? '';
+        if ($templateEn === '' && $this->pmTableExists('contract_templates')) {
+            $tpl = $this->db->table('contract_templates')->where('is_active', 1)
+                ->orderBy('id', 'DESC')->limit(1)->get()->getRowArray();
+            if ($tpl) {
+                $templateEn = $tpl['content_en'] ?? '';
+                $templateAr = $tpl['content_ar'] ?? '';
+            }
+        }
+
+        $vars = [
+            '{{unit_number}}'       => esc($contract['unit_number'] ?? ''),
+            '{{property_name}}'     => esc($contract['facility_name'] ?? ''),
+            '{{tenant_name}}'       => esc($contract['tenant_name'] ?? ''),
+            '{{tenant_qid}}'        => esc($tenantQid),
+            '{{rent_amount}}'       => number_format((float) ($contract['rent_amount'] ?? 0), 2),
+            '{{currency}}'          => $this->settings['currency'] ?? 'QAR',
+            '{{payment_frequency}}' => esc($contract['payment_frequency'] ?? ''),
+            '{{start_date}}'        => esc($contract['start_date'] ?? ''),
+            '{{end_date}}'          => esc($contract['end_date'] ?? ''),
+            '{{contract_number}}'   => esc($contract['contract_number'] ?? ''),
+        ];
+
+        return $this->renderStandardLeasePdf(
+            $contract,
+            strtr($templateEn, $vars),
+            strtr($templateAr, $vars),
+            $tenantQid,
+            $signatureB64
+        );
+    }
+
+    private function renderStandardLeasePdf(
+        array $contract,
+        string $templateEn,
+        string $templateAr,
+        string $tenantQid,
+        string $signatureB64
+    ): \CodeIgniter\HTTP\Response|string {
+        $data = $this->viewData([
+            'title'              => 'Contract ' . ($contract['contract_number'] ?? ''),
+            'contract'           => $contract,
+            'tenantQid'          => $tenantQid,
+            'tenantSignatureB64' => $signatureB64,
+            'templateEn'         => $templateEn,
+            'templateAr'         => $templateAr,
+            'usePdf'             => true,
+        ]);
+
+        if (! class_exists(\Dompdf\Dompdf::class)) {
+            return redirect()->to(base_url('contracts/' . (int) $contract['id'] . '/print'))
+                ->with('warning', 'PDF engine not installed — use browser print from the contract page.');
+        }
+
+        $html   = view('leases/print', $data);
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+        $filename = 'Lease_' . preg_replace('/[^A-Za-z0-9_-]/', '_', (string) ($contract['contract_number'] ?? 'contract')) . '.pdf';
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($dompdf->output());
     }
 
     private function migrationView()

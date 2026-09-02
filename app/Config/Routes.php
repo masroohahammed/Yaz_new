@@ -64,6 +64,9 @@ $routes->post('scan/unit/(:segment)/complaint',       'EntityScan::unitComplaint
 $routes->get('file/logo/(:segment)', 'FileServe::logo/$1');
 $routes->get('file/logos/(:segment)', 'FileServe::serve/logos/$1');
 
+$routes->get('contract/sign/(:segment)', 'PublicContractSign::show/$1');
+$routes->post('contract/sign/(:segment)', 'PublicContractSign::submit/$1');
+
 // ── Authenticated ────────────────────────────────────────────────────────────
 $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function ($routes) {
 
@@ -399,6 +402,9 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('contracts/(:num)/amendment',                'Leases::amendmentForm/$1');
     $routes->post('contracts/(:num)/penalties',               'Leases::applyPenalties/$1', ['filter' => 'permission']);
     $routes->post('contracts/(:num)/save-print',              'Leases::savePrint/$1');
+    $routes->post('contracts/(:num)/generate-sign-link',     'Leases::generateSignLink/$1');
+    $routes->get('contracts/(:num)/signed-pdf',              'Leases::downloadSignedPdf/$1');
+    $routes->get('contracts/(:num)/whatsapp-share',          'Leases::whatsappShareSigned/$1');
     $routes->get('contracts/(:num)/print',                    'Leases::printView/$1');
     $routes->get('contracts/(:num)/parking-print',            'Leases::printParkingContract/$1');
     $routes->post('contracts/(:num)/parking-print',           'Leases::printParkingContract/$1');

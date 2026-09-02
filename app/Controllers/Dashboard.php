@@ -98,22 +98,29 @@ class Dashboard extends BaseController
 
         $expiringContracts = [];
         if ($this->db->tableExists('lease_contracts')) {
-            $expiringContracts = $this->db->table('lease_contracts lc')
-                ->select('lc.id, lc.contract_number, t.full_name AS client_name, lc.end_date, f.name AS facility_name')
+            $expiringQ = $this->db->table('lease_contracts lc')
+                ->select('lc.id, lc.contract_number, lc.contract_kind, t.full_name AS client_name, lc.end_date, f.name AS facility_name, u.unit_type')
                 ->join('tenants t', 't.id=lc.tenant_id', 'left')
                 ->join('facilities f', 'f.id=lc.facility_id', 'left')
+                ->join('units u', 'u.id=lc.unit_id', 'left')
                 ->where('lc.status', 'active')
                 ->where('lc.end_date <=', date('Y-m-d', strtotime('+90 days')))
-                ->where('lc.end_date >=', date('Y-m-d'))
-                ->orderBy('lc.end_date', 'ASC')->limit(8)->get()->getResultArray();
+                ->where('lc.end_date >=', date('Y-m-d'));
+            if ($this->db->fieldExists('deleted_at', 'lease_contracts')) {
+                $expiringQ->where('lc.deleted_at', null);
+            }
+            $this->scopeCompany($expiringQ, 'lc.company_id');
+            $this->scopeFacilities($expiringQ, 'lc.facility_id');
+            $expiringContracts = $expiringQ->orderBy('lc.end_date', 'ASC')->get()->getResultArray();
         } else {
-            $expiringContracts = $this->db->table('contracts c')
+            $expiringQ = $this->db->table('contracts c')
                 ->select('c.id, c.contract_number, c.client_name, c.end_date, f.name AS facility_name')
                 ->join('facilities f', 'f.id=c.facility_id', 'left')
                 ->where('c.status', 'active')
                 ->where('c.end_date <=', date('Y-m-d', strtotime('+90 days')))
-                ->where('c.end_date >=', date('Y-m-d'))
-                ->orderBy('c.end_date', 'ASC')->limit(8)->get()->getResultArray();
+                ->where('c.end_date >=', date('Y-m-d'));
+            $this->scopeFacilities($expiringQ, 'c.facility_id');
+            $expiringContracts = $expiringQ->orderBy('c.end_date', 'ASC')->get()->getResultArray();
         }
 
         $overdueInvoices = $this->db->table('invoices i')
@@ -121,7 +128,7 @@ class Dashboard extends BaseController
             ->join('facilities f', 'f.id=i.facility_id', 'left')
             ->where('i.status', 'overdue');
         $this->scopeFacilities($overdueInvoices, 'i.facility_id');
-        $overdueInvoices = $overdueInvoices->orderBy('i.due_date', 'ASC')->limit(8)->get()->getResultArray();
+        $overdueInvoices = $overdueInvoices->orderBy('i.due_date', 'ASC')->get()->getResultArray();
 
         $recentMaintenance = $this->db->table('maintenance_requests mr')
             ->select('mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at, f.name AS facility_name')

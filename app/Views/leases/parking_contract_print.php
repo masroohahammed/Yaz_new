@@ -37,6 +37,7 @@ $landlordName = esc($d['owner_name_en'] ?? $settings['company_name'] ?? '');
   ol.en li, ol.ar li { margin-bottom: 3px; }
   .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
   .sig-line { border-top: 1px solid #333; margin-top: 36px; padding-top: 4px; font-size: 9.5px; }
+  .sig-img { max-height: 56px; max-width: 100%; display: block; margin: 0 auto 4px; }
   .landlord-line { text-align: center; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; margin: 6px 0 10px; color: #333; }
   @media print {
     .no-print { display: none !important; }
@@ -199,11 +200,20 @@ $landlordName = esc($d['owner_name_en'] ?? $settings['company_name'] ?? '');
     </div>
     <div class="col-en" style="font-size:10px">
       <strong>Second Party / Lessee</strong><br><?= esc(strtoupper((string) ($d['tenant_name'] ?? ''))) ?><br>ID: <?= esc($d['tenant_qid'] ?? '') ?>
-      <div class="sig-line">Signature: ______________________</div>
+      <?php $tenantSig = $tenantSignatureB64 ?? ''; ?>
+      <?php if ($tenantSig !== ''): ?>
+        <img src="<?= esc($tenantSig) ?>" alt="Tenant signature" class="sig-img">
+      <?php else: ?>
+        <div class="sig-line">Signature: ______________________</div>
+      <?php endif; ?>
     </div>
     <div class="col-ar" style="font-size:10px;direction:rtl;text-align:right;font-family:'Cairo',sans-serif">
       <strong>الطرف الثاني / المستأجر</strong><br><?= esc($d['tenant_name'] ?? '') ?><br>رقم: <?= esc($d['tenant_qid'] ?? '') ?>
-      <div class="sig-line">التوقيع:</div>
+      <?php if ($tenantSig !== ''): ?>
+        <img src="<?= esc($tenantSig) ?>" alt="Tenant signature" class="sig-img">
+      <?php else: ?>
+        <div class="sig-line">التوقيع:</div>
+      <?php endif; ?>
     </div>
   </div>
 

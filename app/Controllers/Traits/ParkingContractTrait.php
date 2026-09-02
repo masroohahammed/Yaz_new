@@ -9,7 +9,7 @@ trait ParkingContractTrait
     /**
      * @param array<string, mixed> $d
      */
-    protected function renderParkingContractDocument(array $d, bool $wantPdf = false): \CodeIgniter\HTTP\Response|string
+    protected function renderParkingContractDocument(array $d, bool $wantPdf = false, string $tenantSignatureB64 = ''): \CodeIgniter\HTTP\Response|string
     {
         $svc = new ParkingContractService($this->db);
         $durationMonths = $svc->durationMonths(
@@ -19,22 +19,23 @@ trait ParkingContractTrait
         $contractDate = (string) ($d['contract_date'] ?? date('Y-m-d'));
 
         $data = $this->viewData([
-            'title'          => 'Parking Contract',
-            'd'              => $d,
-            'settings'       => $this->settings,
-            'durationMonths' => $durationMonths,
-            'englishDay'     => $svc->englishDayName($contractDate),
-            'arabicDay'      => $svc->arabicDayName($contractDate),
-            'contractDateEn' => $svc->formatDateEnLong($contractDate),
-            'contractDateAr' => $svc->formatDateAr($contractDate),
-            'startDateEn'    => $svc->formatDateEn((string) ($d['start_date'] ?? '')),
-            'endDateEn'      => $svc->formatDateEn((string) ($d['end_date'] ?? '')),
-            'startDateAr'    => $svc->formatDateAr((string) ($d['start_date'] ?? '')),
-            'endDateAr'      => $svc->formatDateAr((string) ($d['end_date'] ?? '')),
-            'poaDateFmt'     => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
-            'vehicleEn'      => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
-            'usePdf'         => true,
-            'pdfUrl'         => '',
+            'title'              => 'Parking Contract',
+            'd'                  => $d,
+            'settings'           => $this->settings,
+            'durationMonths'     => $durationMonths,
+            'englishDay'         => $svc->englishDayName($contractDate),
+            'arabicDay'          => $svc->arabicDayName($contractDate),
+            'contractDateEn'     => $svc->formatDateEnLong($contractDate),
+            'contractDateAr'     => $svc->formatDateAr($contractDate),
+            'startDateEn'        => $svc->formatDateEn((string) ($d['start_date'] ?? '')),
+            'endDateEn'          => $svc->formatDateEn((string) ($d['end_date'] ?? '')),
+            'startDateAr'        => $svc->formatDateAr((string) ($d['start_date'] ?? '')),
+            'endDateAr'          => $svc->formatDateAr((string) ($d['end_date'] ?? '')),
+            'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
+            'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
+            'usePdf'             => true,
+            'pdfUrl'             => '',
+            'tenantSignatureB64' => $tenantSignatureB64,
         ]);
 
         if ($wantPdf && class_exists(\Dompdf\Dompdf::class)) {
