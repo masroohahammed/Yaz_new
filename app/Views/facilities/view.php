@@ -42,12 +42,14 @@ $maintenanceCreateUrl = $isFm
 </div>
 
 <!-- KPI Row -->
+<?php if (fm_can_view_kpis()): ?>
 <div class="row g-3 mb-3">
   <div class="col-6 col-md-3"><div class="kpi-card kpi-primary"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-tools"></i></div><div><div class="kpi-label">Open WOs</div><div class="kpi-value"><?= count($openWO ?? []) ?></div></div></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-green"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-grid"></i></div><div><div class="kpi-label">Occupancy</div><div class="kpi-value"><?= $occupancyPct ?>%</div><div class="kpi-sub"><?= $occupied ?>/<?= $totalUnits ?> units</div></div></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-blue"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-cpu"></i></div><div><div class="kpi-label">Assets</div><div class="kpi-value"><?= count($assets ?? []) ?></div></div></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-teal"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-file-earmark-text"></i></div><div><div class="kpi-label">Contracts</div><div class="kpi-value"><?= count($contracts ?? []) ?></div></div></div></div></div>
 </div>
+<?php endif; ?>
 
 <!-- Tabs -->
 <ul class="nav fm-entity-tabs mb-0" role="tablist">

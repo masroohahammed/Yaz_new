@@ -30,6 +30,12 @@ class PmReports extends BaseController
 
     public function kpi()
     {
+        $role = (string) (session()->get('user_role') ?? 'client');
+        $rbac = new \App\Services\RbacService($this->db);
+        if (! $rbac->can($role, 'dashboard.kpi') && ! $rbac->can($role, 'reports.kpi')) {
+            $this->requirePermission('dashboard.kpi');
+        }
+
         $currency = $this->settings['currency'] ?? 'QAR';
         $dash     = new DashboardService($this->db);
 

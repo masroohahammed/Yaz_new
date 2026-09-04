@@ -11,7 +11,9 @@
   <?php endif; ?>
 </div>
 
+<?php helper('fm'); ?>
 <!-- KPI -->
+<?php if (fm_can_view_kpis()): ?>
 <div class="row g-3 mb-3">
   <?php
   $total     = count($upcoming);
@@ -24,6 +26,7 @@
   <div class="col-6 col-md-3"><div class="kpi-card kpi-gold"><div class="kpi-label">Due Today</div><div class="kpi-value"><?= $dueToday ?></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-teal"><div class="kpi-label">Due This Week</div><div class="kpi-value"><?= $dueWeek ?></div></div></div>
 </div>
+<?php endif; ?>
 
 <div class="fm-card">
   <div class="fm-card-body p-0">

@@ -14,7 +14,7 @@ class RbacService
     private const PERMISSIONS = [
         'super_admin' => ['*'],
         'facility_manager' => [
-            'dashboard', 'dashboard.kpi', 'helpdesk', 'workorders', 'job-cards', 'facilities', 'facilities.create', 'facilities.edit',
+            'dashboard', 'dashboard.kpi', 'ui.kpi', 'helpdesk', 'workorders', 'job-cards', 'facilities', 'facilities.create', 'facilities.edit',
             'units.view', 'units.create', 'units.edit',
             'assets',
             'employees', 'employee.create', 'employee.edit', 'employee.delete',
@@ -36,7 +36,7 @@ class RbacService
             'estimations', 'costing', 'settings.users', 'settings.activity', 'notifications', 'profile',
         ],
         'property_manager' => [
-            'dashboard', 'dashboard.kpi', 'helpdesk', 'facilities', 'facilities.create', 'facilities.edit',
+            'dashboard', 'dashboard.kpi', 'ui.kpi', 'helpdesk', 'facilities', 'facilities.create', 'facilities.edit',
             'units.view', 'units.create', 'units.edit',
             'assets',
             'tenants', 'landlords', 'leases', 'cheques', 'crm', 'sales',
@@ -47,7 +47,7 @@ class RbacService
             'estimations', 'notifications', 'profile',
         ],
         'real_estate_manager' => [
-            'dashboard', 'dashboard.kpi', 'helpdesk', 'facilities', 'facilities.create', 'facilities.edit',
+            'dashboard', 'dashboard.kpi', 'ui.kpi', 'helpdesk', 'facilities', 'facilities.create', 'facilities.edit',
             'units.view', 'units.create', 'units.edit',
             'assets',
             'tenants', 'landlords', 'leases', 'cheques', 'crm', 'sales',
@@ -76,7 +76,7 @@ class RbacService
             'leave.view', 'leave.apply',
         ],
         'finance_manager' => [
-            'dashboard', 'dashboard.kpi', 'finance', 'finance.invoices', 'finance.expenses',
+            'dashboard', 'dashboard.kpi', 'ui.kpi', 'finance', 'finance.invoices', 'finance.expenses',
             'finance.petty_cash', 'finance.reimbursements', 'finance.contracts',
             'finance.ledger', 'finance.payments', 'finance.coa', 'finance.gl', 'finance.ap',
             'finance.amc', 'finance.budgets', 'finance.reports',
@@ -127,7 +127,8 @@ class RbacService
     /** @var array<string, string> */
     public const PERMISSION_LABELS = [
         'dashboard'              => 'Dashboard',
-        'dashboard.kpi'          => 'KPI Analytics',
+        'dashboard.kpi'          => 'KPI Analytics (reports page)',
+        'ui.kpi'                 => 'Show KPI widgets on pages',
         'helpdesk'               => 'Help Desk',
         'workorders'             => 'Work Orders',
         'job-cards'              => 'Job Cards',
@@ -248,6 +249,19 @@ class RbacService
         }
 
         return $map;
+    }
+
+    public function canViewKpis(string $role): bool
+    {
+        if ($role === 'super_admin') {
+            return true;
+        }
+
+        if ($this->can($role, 'ui.kpi')) {
+            return true;
+        }
+
+        return $this->can($role, 'dashboard.kpi') || $this->can($role, 'reports.kpi');
     }
 
     public function can(string $role, string $permission): bool

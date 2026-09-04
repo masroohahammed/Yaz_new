@@ -11,7 +11,9 @@
   <?php endif; ?>
 </div>
 
+<?php helper('fm'); ?>
 <!-- KPI Row -->
+<?php if (fm_can_view_kpis()): ?>
 <div class="row g-3 mb-3">
   <div class="col-6 col-md-3">
     <div class="kpi-card kpi-blue">
@@ -46,6 +48,7 @@
     </div>
   </div>
 </div>
+<?php endif; ?>
 
 <!-- Filters -->
 <div class="fm-card mb-3">

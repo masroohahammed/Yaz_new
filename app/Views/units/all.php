@@ -1,5 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php helper('fm'); ?>
 <div class="page-header">
   <div>
     <h1><i class="bi bi-grid me-2"></i>Units</h1>
@@ -8,12 +9,14 @@
   <a href="<?= base_url('facilities') ?>" class="btn btn-fm-outline btn-sm">Open a property to add units</a>
 </div>
 
+<?php if (fm_can_view_kpis()): ?>
 <div class="row g-3 mb-3">
   <div class="col-6 col-md-3"><div class="kpi-card kpi-primary"><div class="kpi-label">Total</div><div class="kpi-value"><?= (int) $kpi['total'] ?></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-green"><div class="kpi-label">Occupied</div><div class="kpi-value"><?= (int) $kpi['occupied'] ?></div><div class="kpi-sub"><?= (int) $kpi['occupancy_pct'] ?>%</div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-teal"><div class="kpi-label">Vacant</div><div class="kpi-value"><?= (int) $kpi['vacant'] ?></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-orange"><div class="kpi-label">Maintenance</div><div class="kpi-value"><?= (int) $kpi['maintenance'] ?></div></div></div>
 </div>
+<?php endif; ?>
 
 <div class="fm-card mb-3">
   <div class="fm-card-body py-2">

@@ -91,16 +91,37 @@
                     <?php if (! empty($propertyManagers)): ?>
                     <div class="col-12">
                         <label class="form-label fw-medium">Property Managers <span class="text-muted small">(multiple allowed)</span></label>
-                        <select name="manager_ids[]" class="form-select" multiple size="<?= min(6, max(3, count($propertyManagers))) ?>">
+                        <select name="property_manager_ids[]" class="form-select" multiple size="<?= min(6, max(3, count($propertyManagers))) ?>">
                             <?php foreach ($propertyManagers as $pm): ?>
                                 <?php
-                                $selected = in_array((int) $pm['id'], array_map('intval', $assignedManagerIds ?? []), true)
-                                    || (string) old('manager_ids.0') === (string) $pm['id'];
+                                $selected = in_array((int) $pm['id'], array_map('intval', $assignedStaff['property_manager'] ?? $assignedManagerIds ?? []), true);
                                 ?>
                                 <option value="<?= (int) $pm['id'] ?>" <?= $selected ? 'selected' : '' ?>><?= esc($pm['name']) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <div class="form-text">Hold Ctrl/Cmd to select multiple managers for this property.</div>
+                        <div class="form-text">Property Managers have company-wide access; assignments are for reference and reporting.</div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (! empty($realEstateManagers)): ?>
+                    <div class="col-12">
+                        <label class="form-label fw-medium">Real Estate Managers <span class="text-muted small">(scoped to selected properties)</span></label>
+                        <select name="real_estate_manager_ids[]" class="form-select" multiple size="<?= min(6, max(3, count($realEstateManagers))) ?>">
+                            <?php foreach ($realEstateManagers as $rem): ?>
+                                <?php $selected = in_array((int) $rem['id'], array_map('intval', $assignedStaff['real_estate_manager'] ?? []), true); ?>
+                                <option value="<?= (int) $rem['id'] ?>" <?= $selected ? 'selected' : '' ?>><?= esc($rem['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (! empty($landlordUsers)): ?>
+                    <div class="col-12">
+                        <label class="form-label fw-medium">Landlord Users <span class="text-muted small">(portal access for this property)</span></label>
+                        <select name="landlord_user_ids[]" class="form-select" multiple size="<?= min(6, max(3, count($landlordUsers))) ?>">
+                            <?php foreach ($landlordUsers as $lu): ?>
+                                <?php $selected = in_array((int) $lu['id'], array_map('intval', $assignedStaff['landlord'] ?? []), true); ?>
+                                <option value="<?= (int) $lu['id'] ?>" <?= $selected ? 'selected' : '' ?>><?= esc($lu['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <?php endif; ?>
                 </div>

@@ -83,7 +83,9 @@ class Facilities extends BaseController
 
         $companies = $companyModel->where('status', 'active')->findAll();
         $managers  = $userModel->getUsersByRole('facility_manager');
-        $propertyManagers = $userModel->getUsersByRoles(['property_manager', 'manager', 'real_estate_manager']);
+        $propertyManagers = $userModel->getUsersByRoles(['property_manager', 'manager']);
+        $realEstateManagers = $userModel->getUsersByRole('real_estate_manager');
+        $landlordUsers = $userModel->getUsersByRole('landlord');
         $landlords = $this->db->tableExists('landlords')
             ? $this->db->table('landlords')->where('status', 'active')->where('deleted_at', null)->orderBy('full_name')->get()->getResultArray()
             : [];
@@ -93,7 +95,10 @@ class Facilities extends BaseController
             'companies' => $companies,
             'managers'  => $managers,
             'propertyManagers' => $propertyManagers,
+            'realEstateManagers' => $realEstateManagers,
+            'landlordUsers' => $landlordUsers,
             'assignedManagerIds' => [],
+            'assignedStaff' => [],
             'landlords' => $landlords,
             'facility'  => [],
         ]);
@@ -327,8 +332,10 @@ class Facilities extends BaseController
             ? $this->db->table('landlords')->where('status', 'active')->where('deleted_at', null)->orderBy('full_name')->get()->getResultArray()
             : [];
 
-        $propertyManagers = $userModel->getUsersByRoles(['property_manager', 'manager', 'real_estate_manager']);
-        $assignedManagerIds = $this->assignedManagerIds($id);
+        $propertyManagers = $userModel->getUsersByRoles(['property_manager', 'manager']);
+        $realEstateManagers = $userModel->getUsersByRole('real_estate_manager');
+        $landlordUsers = $userModel->getUsersByRole('landlord');
+        $assignedStaff = $this->assignedStaffIds($id);
 
         return view('facilities/create', [
             'pageTitle' => 'Edit Facility — ' . $facility['name'],
@@ -336,7 +343,10 @@ class Facilities extends BaseController
             'companies' => $companyModel->where('status', 'active')->findAll(),
             'managers'  => $userModel->getUsersByRole('facility_manager'),
             'propertyManagers' => $propertyManagers,
-            'assignedManagerIds' => $assignedManagerIds,
+            'realEstateManagers' => $realEstateManagers,
+            'landlordUsers' => $landlordUsers,
+            'assignedManagerIds' => $assignedStaff['property_manager'] ?: ($assignedStaff['manager'] ?? []),
+            'assignedStaff' => $assignedStaff,
             'landlords' => $landlords,
         ]);
     }
@@ -394,35 +404,38 @@ class Facilities extends BaseController
     /** @return list<int> */
     private function assignedManagerIds(int $facilityId): array
     {
-        if (! $this->db->tableExists('user_property_assignments')) {
-            $facility = $this->model->find($facilityId);
+        $staff = (new PropertyAssignmentService($this->db))->staffIdsForFacility($facilityId);
 
-            return ! empty($facility['manager_id']) ? [(int) $facility['manager_id']] : [];
-        }
+        return $staff['property_manager'] !== []
+            ? $staff['property_manager']
+            : ($staff['manager'] ?? []);
+    }
 
-        return array_map(
-            static fn ($r) => (int) $r['user_id'],
-            $this->db->table('user_property_assignments')
-                ->select('user_id')
-                ->where('facility_id', $facilityId)
-                ->where('role_type', 'manager')
-                ->get()
-                ->getResultArray()
-        );
+    /** @return array<string, list<int>> */
+    private function assignedStaffIds(int $facilityId): array
+    {
+        return (new PropertyAssignmentService($this->db))->staffIdsForFacility($facilityId);
     }
 
     /** @param array<string, mixed> $post */
     private function syncPropertyManagers(int $facilityId, array $post): void
     {
-        $managerIds = array_values(array_filter(array_map('intval', (array) ($post['manager_ids'] ?? []))));
-        if ($managerIds === [] && ! empty($post['manager_id'])) {
-            $managerIds = [(int) $post['manager_id']];
+        $staff = [
+            'property_manager'    => array_values(array_filter(array_map('intval', (array) ($post['property_manager_ids'] ?? $post['manager_ids'] ?? [])))),
+            'real_estate_manager' => array_values(array_filter(array_map('intval', (array) ($post['real_estate_manager_ids'] ?? [])))),
+            'landlord'            => array_values(array_filter(array_map('intval', (array) ($post['landlord_user_ids'] ?? [])))),
+            'caretaker'           => array_values(array_filter(array_map('intval', (array) ($post['caretaker_ids'] ?? [])))),
+        ];
+
+        if ($staff['property_manager'] === [] && ! empty($post['manager_id'])) {
+            $staff['manager'] = [(int) $post['manager_id']];
+        } elseif ($staff['property_manager'] !== []) {
+            $staff['manager'] = $staff['property_manager'];
         }
 
-        (new PropertyAssignmentService($this->db))->syncAssignments(
+        (new PropertyAssignmentService($this->db))->syncPropertyStaff(
             $facilityId,
-            $managerIds,
-            [],
+            $staff,
             (int) session()->get('user_id')
         );
     }

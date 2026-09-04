@@ -312,7 +312,7 @@ class Settings extends BaseController
 
         return view('settings/create_user', $this->viewData(array_merge(
             ['title' => 'Add User', 'roles' => $roles, 'tenants' => $tenants, 'companies' => $companies],
-            $this->userAccessFormExtras()
+            $this->userAccessFormExtras(null, $roles)
         )));
     }
 
@@ -376,7 +376,7 @@ class Settings extends BaseController
 
         return view('settings/edit_user', $this->viewData(array_merge(
             ['title' => 'Edit User', 'user' => $user, 'roles' => $roles, 'tenants' => $tenants, 'companies' => $companies],
-            $this->userAccessFormExtras($user)
+            $this->userAccessFormExtras($user, $roles)
         )));
     }
 
@@ -684,7 +684,7 @@ class Settings extends BaseController
     }
 
     /** @return array<string, mixed> */
-    private function userAccessFormExtras(?array $user = null): array
+    private function userAccessFormExtras(?array $user = null, ?array $roles = null): array
     {
         $facilities = [];
         if ($this->db->tableExists('facilities')) {
@@ -715,6 +715,7 @@ class Settings extends BaseController
             'assignedFacilityIds'  => $assignedFacilityIds,
             'userLandlordId'       => (int) ($user['landlord_id'] ?? 0),
             'hasLandlordUserCol'   => $this->db->fieldExists('landlord_id', 'users'),
+            'roles'                => $roles ?? $this->db->table('roles')->get()->getResultArray(),
         ];
     }
 
@@ -726,6 +727,9 @@ class Settings extends BaseController
         if (UserFacilityService::usesAssignedFacilities($roleName)) {
             $facilityIds = array_values(array_filter(array_map('intval', (array) $this->request->getPost('facility_ids'))));
             UserFacilityService::syncUserFacilities($this->db, $userId, $facilityIds);
+            UserFacilityService::syncUserPropertyAssignments($this->db, $userId, $roleName, $facilityIds);
+        } else {
+            UserFacilityService::syncUserFacilities($this->db, $userId, []);
         }
 
         if ($this->db->fieldExists('landlord_id', 'users')) {

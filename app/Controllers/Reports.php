@@ -19,6 +19,12 @@ class Reports extends BaseController
 
     public function kpi()
     {
+        $role = (string) (session()->get('user_role') ?? 'client');
+        $rbac = new \App\Services\RbacService($this->db);
+        if (! $rbac->can($role, 'dashboard.kpi') && ! $rbac->can($role, 'reports.kpi')) {
+            $this->requirePermission('reports.kpi');
+        }
+
         $dash = new DashboardService($this->db);
         $totalWO     = $this->scopeFacilities($this->db->table('work_orders'))->countAllResults();
         $breachedWO  = $this->scopeFacilities($this->db->table('work_orders'))->where('sla_breached', 1)->countAllResults();

@@ -734,16 +734,26 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringNotContainsString('Property Management', $sidebar);
 
         $ufs = file_get_contents($this->root . '/app/Services/UserFacilityService.php');
-        $this->assertStringContainsString('requiresExplicitAssignments', $ufs);
-        $this->assertStringContainsString('user_property_assignments', $ufs);
-        $this->assertStringContainsString('landlordIdForUser', $ufs);
+        $this->assertStringContainsString('hasCompanyWideAccess', $ufs);
+        $this->assertStringContainsString('COMPANY_WIDE_ROLES', $ufs);
+        $this->assertStringContainsString('ensureTableAutoIncrement', $ufs);
+        $this->assertStringContainsString('syncUserPropertyAssignments', $ufs);
 
         $scope = file_get_contents($this->root . '/app/Services/CompanyScopeService.php');
-        $this->assertStringContainsString('requiresExplicitAssignments', $scope);
+        $this->assertStringContainsString('hasCompanyWideAccess', $scope);
 
         $facilities = file_get_contents($this->root . '/app/Controllers/Facilities.php');
         $this->assertStringContainsString('assertFacilityAccess', $facilities);
         $this->assertStringContainsString('syncPropertyManagers', $facilities);
+        $this->assertStringContainsString('syncPropertyStaff', $facilities);
+        $this->assertStringContainsString('property_manager_ids', $facilities);
+        $this->assertStringContainsString('real_estate_manager_ids', $facilities);
+
+        $settings = file_get_contents($this->root . '/app/Controllers/Settings.php');
+        $this->assertStringContainsString('syncUserAccessFields', $settings);
+        $this->assertStringContainsString('syncUserFacilities', $settings);
+        $this->assertStringContainsString('syncUserPropertyAssignments', $settings);
+        $this->assertStringContainsString('tenant-signature-anchor', file_get_contents($this->root . '/app/Views/leases/partials/_tenant_signature_slot.php'));
 
         $tenants = file_get_contents($this->root . '/app/Controllers/Tenants.php');
         $this->assertStringContainsString('scopeTenants', $tenants);
@@ -753,13 +763,62 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('scopeLandlords', $landlords);
         $this->assertStringContainsString('assertLandlordAccess', $landlords);
 
-        $settings = file_get_contents($this->root . '/app/Controllers/Settings.php');
-        $this->assertStringContainsString('syncUserAccessFields', $settings);
-        $this->assertStringContainsString('syncUserFacilities', $settings);
-        $this->assertStringContainsString('tenant-signature-anchor', file_get_contents($this->root . '/app/Views/leases/partials/_tenant_signature_slot.php'));
-
         $sigSvc = file_get_contents($this->root . '/app/Services/ContractSignatureService.php');
         $this->assertStringContainsString('regenerateSigningLink', $sigSvc);
         $this->assertStringContainsString('clearSignature', $sigSvc);
+    }
+
+    public function testKpiVisibilityPermissionAndViewGuards(): void
+    {
+        $rbac = file_get_contents($this->root . '/app/Services/RbacService.php');
+        $this->assertStringContainsString("'ui.kpi'", $rbac);
+        $this->assertStringContainsString('canViewKpis', $rbac);
+        $this->assertStringContainsString('Show KPI widgets on pages', $rbac);
+
+        $helper = file_get_contents($this->root . '/app/Helpers/fm_helper.php');
+        $this->assertStringContainsString('fm_can_view_kpis', $helper);
+
+        foreach ([
+            'app/Views/dashboard/pm_dashboard.php',
+            'app/Views/units/index.php',
+            'app/Views/workorders/index.php',
+            'app/Views/facilities/view.php',
+        ] as $viewPath) {
+            $src = file_get_contents($this->root . '/' . $viewPath);
+            $this->assertStringContainsString('fm_can_view_kpis()', $src, "KPI guard missing in {$viewPath}");
+        }
+
+        $reports = file_get_contents($this->root . '/app/Controllers/Reports.php');
+        $this->assertStringContainsString('reports.kpi', $reports);
+        $this->assertStringContainsString('dashboard.kpi', $reports);
+    }
+
+    public function testUserFacilitiesAutoIncrementPatchExists(): void
+    {
+        $patch = file_get_contents($this->root . '/database/patches/2026-09-04-user-facilities-autoincrement.sql');
+        $this->assertStringContainsString('AUTO_INCREMENT', $patch);
+        $this->assertStringContainsString('user_facilities', $patch);
+        $this->assertStringContainsString('user_property_assignments', $patch);
+        $this->assertStringContainsString('property_manager', $patch);
+    }
+
+    public function testPropertyStaffMultiAssignForm(): void
+    {
+        $form = file_get_contents($this->root . '/app/Views/facilities/create.php');
+        $this->assertStringContainsString('property_manager_ids[]', $form);
+        $this->assertStringContainsString('real_estate_manager_ids[]', $form);
+        $this->assertStringContainsString('landlord_user_ids[]', $form);
+
+        $pas = file_get_contents($this->root . '/app/Services/PropertyAssignmentService.php');
+        $this->assertStringContainsString('syncPropertyStaff', $pas);
+        $this->assertStringContainsString('staffIdsForFacility', $pas);
+    }
+
+    public function testUserAccessFieldsRoleAwareUi(): void
+    {
+        $partial = file_get_contents($this->root . '/app/Views/settings/partials/user_access_fields.php');
+        $this->assertStringContainsString('property_manager', $partial);
+        $this->assertStringContainsString('real_estate_manager', $partial);
+        $this->assertStringContainsString('companyWide', $partial);
     }
 }

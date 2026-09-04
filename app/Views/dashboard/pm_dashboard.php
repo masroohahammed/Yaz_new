@@ -15,6 +15,8 @@
 
 <?= view('partials/ai_alert_banner', ['aiFlags' => $aiFlags ?? []]) ?>
 
+<?php helper('fm'); ?>
+<?php if (fm_can_view_kpis()): ?>
 <div class="row g-3 mb-3">
   <div class="col-6 col-sm-6 col-md-3 col-lg-3">
     <a href="<?= base_url('properties') ?>" class="text-decoration-none d-block h-100">
@@ -69,6 +71,7 @@
     </a>
   </div>
 </div>
+<?php endif; ?>
 
 <div class="row g-3 mb-3">
   <div class="col-md-4">

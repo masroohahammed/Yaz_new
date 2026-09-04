@@ -411,6 +411,17 @@ if (! function_exists('fm_unit_renew_url')) {
     }
 }
 
+}
+
+if (! function_exists('fm_can_view_kpis')) {
+    function fm_can_view_kpis(?string $role = null): bool
+    {
+        $role = $role ?? (string) (session()->get('user_role') ?? '');
+
+        return (new \App\Services\RbacService(\Config\Database::connect()))->canViewKpis($role);
+    }
+}
+
 if (! function_exists('fm_signature_migration_sql')) {
     function fm_signature_migration_sql(): string
     {

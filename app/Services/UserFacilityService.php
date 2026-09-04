@@ -23,12 +23,8 @@ class UserFacilityService
         'technician',
     ];
 
-    /**
-     * Roles that get zero access when no property assignments exist.
-     * facility_manager is excluded — unassigned FM managers keep company-wide scope.
-     */
+    /** Roles that get zero access when no property assignments exist. */
     private const STRICT_ASSIGNMENT_ROLES = [
-        'property_manager',
         'real_estate_manager',
         'manager',
         'caretaker',
@@ -39,6 +35,12 @@ class UserFacilityService
         'technician',
     ];
 
+    /** Roles with company-wide property access (all facilities in their company). */
+    private const COMPANY_WIDE_ROLES = [
+        'property_manager',
+        'facility_manager',
+    ];
+
     /** @deprecated Use requiresExplicitAssignments() */
     private const RESTRICTED_ROLES = self::STRICT_ASSIGNMENT_ROLES;
 
@@ -47,14 +49,18 @@ class UserFacilityService
      */
     public static function assignedFacilityIds(BaseConnection $db, int $userId, string $role, ?int $companyId = null): array
     {
-        if ($userId < 1 || ! in_array($role, self::ASSIGNED_ROLES, true)) {
+        if ($userId < 1 || self::hasCompanyWideAccess($role)) {
+            return [];
+        }
+
+        if (! in_array($role, self::ASSIGNED_ROLES, true)) {
             return [];
         }
 
         $ids = [];
 
         if ($db->tableExists('facilities')) {
-            if ($role === 'facility_manager' || $role === 'property_manager' || $role === 'manager' || $role === 'real_estate_manager') {
+            if ($role === 'facility_manager' || $role === 'manager' || $role === 'real_estate_manager') {
                 $managed = $db->table('facilities')
                     ->select('id')
                     ->where('manager_id', $userId)
@@ -103,11 +109,17 @@ class UserFacilityService
         }
 
         if ($db->tableExists('user_property_assignments')) {
-            $assignments = $db->table('user_property_assignments')
+            $assignQ = $db->table('user_property_assignments')
                 ->select('facility_id')
-                ->where('user_id', $userId)
-                ->get()
-                ->getResultArray();
+                ->where('user_id', $userId);
+            if ($role === 'real_estate_manager') {
+                $assignQ->whereIn('role_type', ['real_estate_manager', 'manager']);
+            } elseif ($role === 'landlord') {
+                $assignQ->whereIn('role_type', ['landlord', 'other']);
+            } elseif ($role === 'caretaker') {
+                $assignQ->where('role_type', 'caretaker');
+            }
+            $assignments = $assignQ->get()->getResultArray();
             $ids = array_merge($ids, array_map(static fn ($r) => (int) $r['facility_id'], $assignments));
         }
 
@@ -369,37 +381,36 @@ class UserFacilityService
                 return;
 
             case 'facility_manager':
+                $facilityIds = self::helpdeskFacilityIdsForUser($db, $user);
+                $model->groupStart();
+                if ($db->fieldExists('work_type', 'maintenance_requests')) {
+                    $model->where('work_type', 'non_facility');
+                } else {
+                    $model->where('facility_id', null);
+                }
+                if ($facilityIds !== []) {
+                    $unitIds = self::unitIdsForFacilities($db, $facilityIds);
+                    $model->orGroupStart();
+                    $model->whereIn('facility_id', $facilityIds);
+                    if ($unitIds !== []) {
+                        $model->orWhereIn('unit_id', $unitIds);
+                    }
+                    if ($db->fieldExists('work_type', 'maintenance_requests')) {
+                        $model->where('work_type !=', 'non_facility');
+                    }
+                    $model->groupEnd();
+                }
+                $model->groupEnd();
+
+                return;
+
             case 'property_manager':
             case 'real_estate_manager':
             case 'manager':
             case 'landlord':
-                $facilityIds = $role === 'facility_manager'
-                    ? self::helpdeskFacilityIdsForUser($db, $user)
+                $facilityIds = $role === 'property_manager'
+                    ? self::companyFacilityIds($db, $companyId > 0 ? $companyId : (int) (session()->get('company_id') ?? 0))
                     : self::assignedFacilityIds($db, $userId, $role, $companyId > 0 ? $companyId : null);
-
-                if ($role === 'facility_manager') {
-                    $model->groupStart();
-                    if ($db->fieldExists('work_type', 'maintenance_requests')) {
-                        $model->where('work_type', 'non_facility');
-                    } else {
-                        $model->where('facility_id', null);
-                    }
-                    if ($facilityIds !== []) {
-                        $unitIds = self::unitIdsForFacilities($db, $facilityIds);
-                        $model->orGroupStart();
-                        $model->whereIn('facility_id', $facilityIds);
-                        if ($unitIds !== []) {
-                            $model->orWhereIn('unit_id', $unitIds);
-                        }
-                        if ($db->fieldExists('work_type', 'maintenance_requests')) {
-                            $model->where('work_type !=', 'non_facility');
-                        }
-                        $model->groupEnd();
-                    }
-                    $model->groupEnd();
-
-                    return;
-                }
 
                 if ($facilityIds === []) {
                     $model->where('1', '0', false);
@@ -494,7 +505,9 @@ class UserFacilityService
             case 'real_estate_manager':
             case 'manager':
             case 'landlord':
-                $facilityIds = self::assignedFacilityIds($db, $userId, $role, $companyId > 0 ? $companyId : null);
+                $facilityIds = $role === 'property_manager'
+                    ? self::companyFacilityIds($db, $companyId > 0 ? $companyId : (int) (session()->get('company_id') ?? 0))
+                    : self::assignedFacilityIds($db, $userId, $role, $companyId > 0 ? $companyId : null);
                 if ($facilityIds === []) {
                     $builder->where('1', '0', false);
 
@@ -536,12 +549,50 @@ class UserFacilityService
 
     public static function usesAssignedFacilities(string $role): bool
     {
-        return in_array($role, self::ASSIGNED_ROLES, true);
+        return in_array($role, self::ASSIGNED_ROLES, true) && ! self::hasCompanyWideAccess($role);
+    }
+
+    /** @return list<int> */
+    public static function companyFacilityIds(BaseConnection $db, ?int $companyId): array
+    {
+        if ($companyId === null || $companyId < 1 || ! $db->tableExists('facilities')) {
+            return [];
+        }
+
+        $q = $db->table('facilities')->select('id')->where('company_id', $companyId);
+        if ($db->fieldExists('deleted_at', 'facilities')) {
+            $q->where('deleted_at', null);
+        }
+        if ($db->fieldExists('status', 'facilities')) {
+            $q->where('status', 'active');
+        }
+
+        return array_map(
+            static fn ($r) => (int) $r['id'],
+            $q->get()->getResultArray()
+        );
     }
 
     public static function requiresExplicitAssignments(string $role): bool
     {
         return in_array($role, self::STRICT_ASSIGNMENT_ROLES, true);
+    }
+
+    public static function hasCompanyWideAccess(string $role): bool
+    {
+        return in_array($role, self::COMPANY_WIDE_ROLES, true);
+    }
+
+    public static function assignmentRoleType(string $roleName): ?string
+    {
+        return match ($roleName) {
+            'property_manager'      => 'property_manager',
+            'real_estate_manager'   => 'real_estate_manager',
+            'landlord'              => 'landlord',
+            'caretaker'             => 'caretaker',
+            'manager'               => 'manager',
+            default                 => null,
+        };
     }
 
     /** @deprecated Use requiresExplicitAssignments() */
@@ -557,22 +608,128 @@ class UserFacilityService
             return;
         }
 
+        self::ensureTableAutoIncrement($db, 'user_facilities');
+
         $db->table('user_facilities')->where('user_id', $userId)->delete();
 
+        $now = date('Y-m-d H:i:s');
         foreach (array_unique(array_filter(array_map('intval', $facilityIds))) as $fid) {
             if ($fid < 1) {
                 continue;
             }
-            $db->table('user_facilities')->insert([
-                'user_id'     => $userId,
-                'facility_id' => $fid,
-                'created_at'  => date('Y-m-d H:i:s'),
-            ]);
+            try {
+                $db->table('user_facilities')->insert([
+                    'user_id'     => $userId,
+                    'facility_id' => $fid,
+                    'created_at'  => $now,
+                ]);
+            } catch (\Throwable $e) {
+                self::ensureTableAutoIncrement($db, 'user_facilities', true);
+                $db->table('user_facilities')->insert([
+                    'user_id'     => $userId,
+                    'facility_id' => $fid,
+                    'created_at'  => $now,
+                ]);
+            }
+        }
+    }
+
+    /** @param list<int> $facilityIds */
+    public static function syncUserPropertyAssignments(BaseConnection $db, int $userId, string $roleName, array $facilityIds): void
+    {
+        if (! $db->tableExists('user_property_assignments')) {
+            return;
+        }
+
+        self::ensureTableAutoIncrement($db, 'user_property_assignments');
+
+        $roleType = self::assignmentRoleType($roleName);
+        if ($roleType === null || self::hasCompanyWideAccess($roleName)) {
+            return;
+        }
+
+        $db->table('user_property_assignments')
+            ->where('user_id', $userId)
+            ->where('role_type', $roleType)
+            ->delete();
+
+        $assignedBy = function_exists('session') ? (int) (session()->get('user_id') ?? 0) : 0;
+        $now        = date('Y-m-d H:i:s');
+        $i          = 0;
+        foreach (array_unique(array_filter(array_map('intval', $facilityIds))) as $fid) {
+            if ($fid < 1) {
+                continue;
+            }
+            try {
+                $db->table('user_property_assignments')->insert([
+                    'user_id'     => $userId,
+                    'facility_id' => $fid,
+                    'role_type'   => $roleType,
+                    'is_primary'  => $i === 0 ? 1 : 0,
+                    'assigned_by' => $assignedBy > 0 ? $assignedBy : null,
+                    'assigned_at' => $now,
+                ]);
+            } catch (\Throwable $e) {
+                self::ensureTableAutoIncrement($db, 'user_property_assignments', true);
+                $db->table('user_property_assignments')->insert([
+                    'user_id'     => $userId,
+                    'facility_id' => $fid,
+                    'role_type'   => $roleType,
+                    'is_primary'  => $i === 0 ? 1 : 0,
+                    'assigned_by' => $assignedBy > 0 ? $assignedBy : null,
+                    'assigned_at' => $now,
+                ]);
+            }
+            $i++;
+        }
+    }
+
+    public static function ensureTableAutoIncrement(BaseConnection $db, string $table, bool $force = false): void
+    {
+        static $checked = [];
+        if (! $force && ! empty($checked[$table])) {
+            return;
+        }
+        $checked[$table] = true;
+
+        if (! $db->tableExists($table) || ! $db->fieldExists('id', $table)) {
+            return;
+        }
+
+        try {
+            $row = $db->query('SHOW COLUMNS FROM `' . $table . '` WHERE Field = \'id\'')->getRowArray();
+            $extra = strtolower((string) ($row['Extra'] ?? ''));
+            if (! str_contains($extra, 'auto_increment')) {
+                while ($db->table($table)->where('id', 0)->countAllResults() > 0) {
+                    $maxRow = $db->table($table)->selectMax('id', 'max_id')->get()->getRowArray();
+                    $nextId = ((int) ($maxRow['max_id'] ?? 0)) + 1;
+                    $db->table($table)->where('id', 0)->limit(1)->update(['id' => $nextId]);
+                }
+                $db->query('ALTER TABLE `' . $table . '` MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT');
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Auto-increment repair failed for ' . $table . ': ' . $e->getMessage());
         }
     }
 
     /** @return list<int> */
     public static function facilityIdsForUser(BaseConnection $db, int $userId): array
+    {
+        $ids = self::facilityIdsFromUserFacilities($db, $userId);
+
+        if ($db->tableExists('user_property_assignments')) {
+            $rows = $db->table('user_property_assignments')
+                ->select('facility_id')
+                ->where('user_id', $userId)
+                ->get()->getResultArray();
+            $ids = array_merge($ids, array_map(static fn ($r) => (int) $r['facility_id'], $rows));
+        }
+
+        return array_values(array_unique(array_filter($ids)));
+    }
+
+    /** @return list<int> */
+    private static function facilityIdsFromUserFacilities(BaseConnection $db, int $userId): array
     {
         if (! $db->tableExists('user_facilities')) {
             return [];

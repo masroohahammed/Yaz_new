@@ -52,7 +52,9 @@ class CompanyScopeService
             return null;
         }
 
-        if (UserFacilityService::usesAssignedFacilities($role)) {
+        if (UserFacilityService::hasCompanyWideAccess($role)) {
+            // property_manager / facility_manager — company-wide list below
+        } elseif (UserFacilityService::usesAssignedFacilities($role)) {
             $assigned = UserFacilityService::assignedFacilityIds($this->db, $userId, $role, $companyId);
 
             if ($assigned !== []) {

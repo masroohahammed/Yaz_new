@@ -2,7 +2,7 @@
 <?= $this->section('content') ?>
 <div class="page-header">
   <div><h1><i class="bi bi-shield-lock me-2"></i>Roles & Permissions</h1>
-    <div class="small text-muted">Check modules each role can access. Super Admin always has full access.</div>
+    <div class="small text-muted">Check modules each role can access. Use <strong>Show KPI widgets</strong> to control KPI cards on dashboards and list pages. Super Admin always has full access.</div>
   </div>
   <a href="<?= base_url('settings') ?>" class="btn btn-fm-outline btn-sm">← Settings</a>
 </div>

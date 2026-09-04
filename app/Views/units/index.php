@@ -27,12 +27,14 @@ $canViewUnit = $rbac->can($role, 'units.view');
 </div>
 
 <!-- KPI Strip -->
+<?php if (fm_can_view_kpis()): ?>
 <div class="row g-3 mb-3">
   <div class="col-6 col-md-3"><div class="kpi-card kpi-primary"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-grid"></i></div><div><div class="kpi-label">Total Units</div><div class="kpi-value"><?= $kpi['total'] ?></div></div></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-green"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-person-check"></i></div><div><div class="kpi-label">Occupied</div><div class="kpi-value"><?= $kpi['occupied'] ?></div><div class="kpi-sub"><?= $kpi['occupancy_pct'] ?>% rate</div></div></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-teal"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-house"></i></div><div><div class="kpi-label">Vacant</div><div class="kpi-value"><?= $kpi['vacant'] ?></div></div></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-orange"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-tools"></i></div><div><div class="kpi-label">Maintenance</div><div class="kpi-value"><?= $kpi['maintenance'] ?></div></div></div></div></div>
 </div>
+<?php endif; ?>
 
 <!-- Filter & View -->
 <div class="fm-card mb-3">
