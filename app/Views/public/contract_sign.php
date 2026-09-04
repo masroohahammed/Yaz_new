@@ -3,20 +3,91 @@
 /** @var string $token */
 /** @var bool $alreadySigned */
 /** @var array<string,mixed> $contract */
-$primary   = esc($settings['primary_color'] ?? '#76002b');
-$signUrl   = base_url('contract/sign/' . rawurlencode((string) $token));
-$loginUrl  = base_url('login?redirect=' . rawurlencode($signUrl));
-$loggedIn  = (bool) session()->get('logged_in');
-$docTitle  = ! empty($isParking)
-    ? 'Parking Contract — ' . esc($d['contract_number'] ?? $d['parking_unit_no'] ?? '')
-    : 'Lease Contract — ' . esc($contract['contract_number'] ?? '');
+$primary      = esc($settings['primary_color'] ?? '#76002b');
+$signUrl      = base_url('contract/sign/' . rawurlencode((string) $token));
+$loginUrl     = base_url('login?redirect=' . rawurlencode($signUrl));
+$loggedIn     = (bool) session()->get('logged_in');
+$companyName  = trim((string) ($settings['company_name'] ?? 'FM ERP'));
+$contractNo   = ! empty($isParking)
+    ? trim((string) ($d['contract_number'] ?? $d['parking_unit_no'] ?? $contract['contract_number'] ?? ''))
+    : trim((string) ($contract['contract_number'] ?? ''));
+$tenantName   = trim((string) (! empty($isParking)
+    ? ($d['tenant_name'] ?? $contract['tenant_name'] ?? '')
+    : ($contract['tenant_name'] ?? '')));
+$propertyName = trim((string) ($contract['facility_name'] ?? ''));
+$unitNo       = trim((string) (! empty($isParking)
+    ? ($d['parking_unit_no'] ?? $contract['unit_number'] ?? '')
+    : ($contract['unit_number'] ?? '')));
+$startDate    = trim((string) (! empty($isParking)
+    ? ($d['start_date'] ?? $contract['start_date'] ?? '')
+    : ($contract['start_date'] ?? '')));
+$endDate      = trim((string) (! empty($isParking)
+    ? ($d['end_date'] ?? $contract['end_date'] ?? '')
+    : ($contract['end_date'] ?? '')));
+$contractKind = ! empty($isParking) ? 'Parking Lease Contract' : 'Lease Contract';
+$docTitle     = $contractKind . ($contractNo !== '' ? ' — ' . esc($contractNo) : '');
+$pageTitle    = ($title ?? 'Sign Contract') . ' — ' . $docTitle;
+$metaStatus   = $alreadySigned ? 'Signed' : 'Awaiting tenant signature';
+$metaDesc     = implode(' · ', array_filter([
+    $companyName,
+    $contractNo !== '' ? 'Contract ' . $contractNo : '',
+    $tenantName !== '' ? 'Tenant: ' . $tenantName : '',
+    $propertyName !== '' ? $propertyName : '',
+    $unitNo !== '' ? 'Unit ' . $unitNo : '',
+    ($startDate !== '' && $endDate !== '') ? $startDate . ' – ' . $endDate : '',
+    $metaStatus,
+]));
+$ogTitle      = $docTitle;
+$ogImage      = '';
+if (! empty($companyLogoUrl)) {
+    $ogImage = str_starts_with((string) $companyLogoUrl, 'http')
+        ? (string) $companyLogoUrl
+        : base_url(ltrim((string) $companyLogoUrl, '/'));
+}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= esc($title ?? 'Sign Contract') ?> — <?= $docTitle ?></title>
+<title><?= esc($pageTitle) ?></title>
+<meta name="description" content="<?= esc($metaDesc) ?>">
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="<?= esc($companyName) ?>">
+<meta property="og:title" content="<?= esc($ogTitle) ?>">
+<meta property="og:description" content="<?= esc($metaDesc) ?>">
+<meta property="og:url" content="<?= esc($signUrl) ?>">
+<?php if ($ogImage !== ''): ?>
+<meta property="og:image" content="<?= esc($ogImage) ?>">
+<meta property="og:image:alt" content="<?= esc($companyName) ?> logo">
+<?php endif; ?>
+<meta name="twitter:card" content="<?= $ogImage !== '' ? 'summary' : 'summary' ?>">
+<meta name="twitter:title" content="<?= esc($ogTitle) ?>">
+<meta name="twitter:description" content="<?= esc($metaDesc) ?>">
+<?php if ($ogImage !== ''): ?>
+<meta name="twitter:image" content="<?= esc($ogImage) ?>">
+<?php endif; ?>
+<?php if ($contractNo !== ''): ?>
+<meta name="contract:number" content="<?= esc($contractNo) ?>">
+<?php endif; ?>
+<?php if ($tenantName !== ''): ?>
+<meta name="contract:tenant" content="<?= esc($tenantName) ?>">
+<?php endif; ?>
+<?php if ($propertyName !== ''): ?>
+<meta name="contract:property" content="<?= esc($propertyName) ?>">
+<?php endif; ?>
+<?php if ($unitNo !== ''): ?>
+<meta name="contract:unit" content="<?= esc($unitNo) ?>">
+<?php endif; ?>
+<?php if ($startDate !== ''): ?>
+<meta name="contract:start_date" content="<?= esc($startDate) ?>">
+<?php endif; ?>
+<?php if ($endDate !== ''): ?>
+<meta name="contract:end_date" content="<?= esc($endDate) ?>">
+<?php endif; ?>
+<meta name="contract:status" content="<?= esc($metaStatus) ?>">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
@@ -40,6 +111,23 @@ $docTitle  = ! empty($isParking)
   }
   .sign-toolbar-actions button.submit-btn { background: #198754; }
   .sign-body { padding: 72px 12px 24px; }
+  .sign-body.has-submit-bar { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  .sign-submit-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.98); border-top: 1px solid #dde3ea;
+    box-shadow: 0 -4px 20px rgba(0,0,0,.08);
+  }
+  .sign-submit-inner { max-width: 210mm; margin: 0 auto; }
+  .sign-submit-bar .submit-btn-main {
+    width: 100%; background: #198754; color: #fff; border: none;
+    padding: 14px 20px; border-radius: 10px; font-size: 15px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 14px rgba(25, 135, 84, .35);
+  }
+  .sign-submit-bar .submit-btn-main:active { transform: translateY(1px); }
+  .sign-submit-hint { text-align: center; font-size: 11px; color: #666; margin-top: 6px; }
   .page {
     max-width: 210mm; margin: 0 auto; padding: 12mm 14mm;
     background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,.08); border-radius: 4px;
@@ -95,8 +183,8 @@ $docTitle  = ! empty($isParking)
   }
   @media print {
     body { background: #fff; }
-    .sign-toolbar, .flash-wrap, .signed-banner, .sign-pad-clear, .submit-btn { display: none !important; }
-    .sign-body { padding: 0; }
+    .sign-toolbar, .sign-submit-bar, .flash-wrap, .signed-banner, .sign-pad-clear { display: none !important; }
+    .sign-body, .sign-body.has-submit-bar { padding: 0; }
     .page { box-shadow: none; border-radius: 0; padding: 10mm; }
     @page { size: A4 portrait; margin: 8mm; }
   }
@@ -116,13 +204,10 @@ $docTitle  = ! empty($isParking)
       <a href="<?= esc($loginUrl) ?>" class="secondary"><i class="bi bi-box-arrow-in-right"></i>Sign in</a>
     <?php endif; ?>
     <button type="button" class="secondary" onclick="window.print()"><i class="bi bi-printer"></i>Print</button>
-    <?php if (! $alreadySigned): ?>
-      <button type="submit" form="tenant-sign-form" class="submit-btn"><i class="bi bi-pen"></i>Submit Signature</button>
-    <?php endif; ?>
   </div>
 </div>
 
-<div class="sign-body">
+<div class="sign-body<?= ! $alreadySigned ? ' has-submit-bar' : '' ?>">
   <div class="flash-wrap no-print">
     <?php if ($msg = session()->getFlashdata('success')): ?>
       <div class="flash flash-success"><i class="bi bi-check-circle me-1"></i><?= esc($msg) ?></div>
@@ -166,6 +251,17 @@ $docTitle  = ! empty($isParking)
     <?= form_close() ?>
   <?php endif; ?>
 </div>
+
+<?php if (! $alreadySigned): ?>
+<div class="sign-submit-bar no-print">
+  <div class="sign-submit-inner">
+    <button type="submit" form="tenant-sign-form" class="submit-btn-main">
+      <i class="bi bi-pen-fill"></i>Submit Signature
+    </button>
+    <div class="sign-submit-hint">Draw your signature above, then submit to complete</div>
+  </div>
+</div>
+<?php endif; ?>
 
 <script src="<?= base_url('assets/js/signature-pad.js') ?>"></script>
 </body>
