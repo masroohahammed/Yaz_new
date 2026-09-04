@@ -53,7 +53,9 @@ $wsLabel     = match ($workspace) {
             <span class="sidebar-logo-placeholder me-2"><i class="bi bi-buildings"></i></span>
         <?php endif; ?>
         <div class="flex-grow-1 overflow-hidden">
+            <?php if (! $clogoUrl): ?>
             <span class="sidebar-brand-text fw-semibold text-truncate d-block"><?= esc($cname) ?></span>
+            <?php endif; ?>
             <span class="sidebar-workspace-badge"><?= esc($wsLabel) ?></span>
         </div>
         <button class="btn btn-sm ms-auto d-xl-none text-secondary" id="sidebarClose" aria-label="Close sidebar">
