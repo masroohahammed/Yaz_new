@@ -669,6 +669,9 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('parking_contract_document', $signView);
         $this->assertStringContainsString('_doc_letterhead', file_get_contents($this->root . '/app/Views/leases/partials/standard_contract_document.php'));
         $this->assertStringContainsString('Sign in', $signView);
+        $this->assertStringContainsString('sign-submit-bar', $signView);
+        $this->assertStringContainsString('og:title', $signView);
+        $this->assertStringContainsString('og:description', $signView);
         $this->assertStringContainsString('_tenant_signature_slot', file_get_contents($this->root . '/app/Views/leases/partials/standard_contract_document.php'));
 
         $controller = file_get_contents($this->root . '/app/Controllers/PublicContractSign.php');
