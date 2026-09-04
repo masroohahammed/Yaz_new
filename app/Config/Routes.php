@@ -66,6 +66,7 @@ $routes->get('file/logos/(:segment)', 'FileServe::serve/logos/$1');
 
 $routes->get('contract/sign/(:segment)', 'PublicContractSign::show/$1');
 $routes->post('contract/sign/(:segment)', 'PublicContractSign::submit/$1');
+$routes->get('remediation-check', 'RemediationCheck::index');
 
 // ── Authenticated ────────────────────────────────────────────────────────────
 $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function ($routes) {

@@ -821,4 +821,23 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('real_estate_manager', $partial);
         $this->assertStringContainsString('companyWide', $partial);
     }
+
+    public function testRemediationRestoreManifestAndVerifyEndpoint(): void
+    {
+        $build = file_get_contents($this->root . '/public/BUILD.json');
+        $this->assertStringContainsString('2026-09-04-remediation', $build);
+        $this->assertStringContainsString('digital_signature_and_signing_links', $build);
+
+        $check = file_get_contents($this->root . '/app/Controllers/RemediationCheck.php');
+        $this->assertStringContainsString('PublicContractSign.php', $check);
+        $this->assertStringContainsString('_lease_signature_panel.php', $check);
+
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString('remediation-check', $routes);
+        $this->assertStringContainsString('RemediationCheck::index', $routes);
+
+        $script = file_get_contents($this->root . '/scripts/verify-remediation.sh');
+        $this->assertStringContainsString('ContractSignatureService.php', $script);
+        $this->assertStringContainsString('fm-erp-complete.sql', $script);
+    }
 }

@@ -1,0 +1,16 @@
+{
+  "release": "2026-09-04-remediation",
+  "date": "2026-09-04",
+  "commit": "7423d1c",
+  "branch": "cursor/fm-erp-remediation-a002",
+  "features": [
+    "digital_signature_and_signing_links",
+    "property_access_scoping",
+    "kpi_visibility_permission",
+    "parking_contract_photos",
+    "user_facilities_autoincrement_fix",
+    "sidebar_company_branding"
+  ],
+  "verify_url": "remediation-check",
+  "sql_patch": "database/patches/fm-erp-complete.sql"
+}
