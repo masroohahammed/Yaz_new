@@ -3,8 +3,10 @@ namespace App\Controllers;
 
 use App\Controllers\Traits\ParkingContractTrait;
 use App\Database\AutoIncrementRepair;
+use App\Services\ContractSignatureService;
 use App\Services\EntityQrService;
 use App\Services\ParkingContractService;
+use App\Services\UnitLeaseSyncService;
 
 class Units extends BaseController
 {
@@ -222,6 +224,7 @@ class Units extends BaseController
         }
 
         $leaseContracts = [];
+        $activeLeaseContract = null;
         if ($this->db->tableExists('lease_contracts')) {
             $leaseContracts = $this->db->table('lease_contracts lc')
                 ->select('lc.*')
@@ -230,6 +233,12 @@ class Units extends BaseController
                 ->orderBy('lc.start_date', 'DESC')
                 ->limit(5)
                 ->get()->getResultArray();
+            foreach ($leaseContracts as $lc) {
+                if (in_array($lc['status'] ?? '', ['active', 'draft'], true)) {
+                    $activeLeaseContract = $lc;
+                    break;
+                }
+            }
         }
 
         $leasePayments = [];
@@ -264,6 +273,7 @@ class Units extends BaseController
             'checklists'    => $checklists,
             'daysToExpiry'  => $daysToExpiry,
             'leaseContracts'=> $leaseContracts,
+            'activeLeaseContract' => $activeLeaseContract,
             'leasePayments' => $leasePayments,
             'assets'        => $assets,
             'workspace'     => $workspace,
@@ -316,14 +326,26 @@ class Units extends BaseController
         $svc     = new ParkingContractService($this->db);
         $d       = $svc->buildDefaults($id, $leaseId > 0 ? $leaseId : null);
 
+        if ($leaseId < 1 && ! empty($d['lease_contract_id'])) {
+            $leaseId = (int) $d['lease_contract_id'];
+        }
+
+        $activeLease = null;
+        if ($leaseId > 0 && $this->db->tableExists('lease_contracts')) {
+            $activeLease = $this->db->table('lease_contracts')->where('id', $leaseId)->get()->getRowArray();
+        }
+
         helper('fm');
 
         return view('leases/parking_contract_form', $this->viewData([
-            'title'    => 'Parking Contract — Unit ' . $unit['unit_number'],
-            'unit'     => $unit,
-            'd'        => $d,
-            'backUrl'  => fm_unit_view_url($id),
-            'printUrl' => base_url('units/' . $id . '/parking-contract/print'),
+            'title'       => 'Parking Contract — Unit ' . $unit['unit_number'],
+            'unit'        => $unit,
+            'd'           => $d,
+            'backUrl'     => fm_unit_view_url($id),
+            'printUrl'    => base_url('units/' . $id . '/parking-contract/print'),
+            'renewMode'   => (bool) $this->request->getGet('renew'),
+            'activeLease' => $activeLease,
+            'signLink'    => session()->getFlashdata('sign_link'),
         ]));
     }
 
@@ -346,11 +368,21 @@ class Units extends BaseController
             $this->request->getGet() ?? []
         ));
 
-        $this->persistParkingContractFields($id, $leaseId > 0 ? $leaseId : ($d['lease_contract_id'] ?? null), $d);
+        $leaseId = $this->ensureLeaseFromParkingData($id, $d);
+        if ($leaseId > 0) {
+            $d['lease_contract_id'] = $leaseId;
+        }
+
+        $this->persistParkingContractFields($id, $leaseId > 0 ? $leaseId : null, $d);
 
         $wantPdf = $this->request->getPost('pdf') || $this->request->getGet('pdf');
+        $sigB64  = '';
+        if ($leaseId > 0) {
+            $leaseRow = $this->db->table('lease_contracts')->where('id', $leaseId)->get()->getRowArray();
+            $sigB64   = (new ContractSignatureService($this->db))->signatureDataUri($leaseRow['tenant_signature_path'] ?? '');
+        }
 
-        return $this->renderParkingContractDocument($d, (bool) $wantPdf);
+        return $this->renderParkingContractDocument($d, (bool) $wantPdf, $sigB64);
     }
 
     public function edit(int $id)

@@ -84,6 +84,10 @@ class Leases extends BaseController
         if ($preUnitId > 0 && $this->db->tableExists('units')) {
             $preUnit = $this->db->table('units')->where('id', $preUnitId)->get()->getRowArray();
             if ($preUnit) {
+                helper('fm');
+                if (fm_is_parking_unit($preUnit)) {
+                    return redirect()->to(fm_unit_parking_contract_url($preUnitId));
+                }
                 $units = $this->unitsForFacility((int) $preUnit['facility_id']);
             }
         }
@@ -209,6 +213,12 @@ class Leases extends BaseController
         $contract = $this->pmFind(self::TABLE, $id);
         if (! $contract) {
             return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
+        }
+
+        if ($this->isParkingContractRow($contract)) {
+            helper('fm');
+
+            return redirect()->to(base_url('contracts/' . $id . '/parking-print'));
         }
 
         $units = $this->unitsForFacility((int) $contract['facility_id']);
@@ -661,8 +671,11 @@ class Leases extends BaseController
 
         $svc = new ContractSignatureService($this->db);
         if (! $svc->tableReady()) {
-            return redirect()->to(base_url('contracts/' . $id))
-                ->with('error', 'Run database migration for lease contract signatures first.');
+            helper('fm');
+
+            return redirect()->back()
+                ->with('error', 'Digital signature columns are missing. Run this SQL in phpMyAdmin:')
+                ->with('sign_sql', fm_signature_migration_sql());
         }
 
         $token = $svc->ensureToken($id);
@@ -673,7 +686,7 @@ class Leases extends BaseController
         $link = $svc->signUrl($token);
         $this->logActivity('sign_link', 'lease_contracts', $id, 'Tenant signing link generated');
 
-        return redirect()->to(base_url('contracts/' . $id))
+        return redirect()->back()
             ->with('success', 'Signing link ready — copy and send to the tenant.')
             ->with('sign_link', $link);
     }
@@ -830,6 +843,9 @@ class Leases extends BaseController
                 'd'        => (new ParkingContractService($this->db))->buildDefaults($unitId, $id),
                 'backUrl'  => base_url('contracts/' . $id),
                 'printUrl' => base_url('contracts/' . $id . '/parking-print'),
+                'renewMode'=> (bool) $this->request->getGet('renew'),
+                'activeLease' => $contract,
+                'signLink' => session()->getFlashdata('sign_link'),
             ]));
         }
 
@@ -840,6 +856,12 @@ class Leases extends BaseController
             $this->request->getGet() ?? []
         ));
         $d['lease_contract_id'] = $id;
+
+        $leaseId = $this->ensureLeaseFromParkingData($unitId, $d);
+        if ($leaseId > 0) {
+            $id = $leaseId;
+            $d['lease_contract_id'] = $leaseId;
+        }
 
         $this->persistParkingContractFields($unitId, $id, $d);
 

@@ -150,6 +150,7 @@ class UnitLeaseSyncService
                 $row['contract_number'] = $contractNo;
             }
             $this->db->table('lease_contracts')->where('id', (int) $existing['id'])->update($row);
+            $this->dedupeActiveLeases($unitId, (int) $existing['id']);
 
             return 'updated';
         }
@@ -168,6 +169,10 @@ class UnitLeaseSyncService
         }
 
         $this->db->table('lease_contracts')->insert($row);
+        $newId = (int) $this->db->insertID();
+        if ($newId > 0) {
+            $this->dedupeActiveLeases($unitId, $newId);
+        }
 
         return 'created';
     }
@@ -195,13 +200,14 @@ class UnitLeaseSyncService
         return $q->get()->getRowArray() ?: null;
     }
 
-  /** @return array<string, mixed>|null */
+    /** @return array<string, mixed>|null */
     private function findExistingLease(int $unitId, string $contractNo): ?array
     {
         if ($contractNo !== '') {
             $byNumber = $this->db->table('lease_contracts')
                 ->where('contract_number', $contractNo)
                 ->where('deleted_at', null)
+                ->where('unit_id', $unitId)
                 ->limit(1)
                 ->get()->getRowArray();
             if ($byNumber) {
@@ -209,13 +215,41 @@ class UnitLeaseSyncService
             }
         }
 
+        $active = $this->db->table('lease_contracts')
+            ->where('unit_id', $unitId)
+            ->where('deleted_at', null)
+            ->where('status', 'active')
+            ->orderBy('id', 'DESC')
+            ->limit(1)
+            ->get()->getRowArray();
+        if ($active) {
+            return $active;
+        }
+
         return $this->db->table('lease_contracts')
             ->where('unit_id', $unitId)
             ->where('deleted_at', null)
-            ->whereIn('status', ['active', 'draft', 'renewed'])
+            ->whereIn('status', ['draft', 'renewed'])
             ->orderBy('id', 'DESC')
             ->limit(1)
             ->get()->getRowArray() ?: null;
+    }
+
+    private function dedupeActiveLeases(int $unitId, int $keepId): void
+    {
+        if (! $this->db->tableExists('lease_contracts')) {
+            return;
+        }
+
+        $this->db->table('lease_contracts')
+            ->where('unit_id', $unitId)
+            ->where('deleted_at', null)
+            ->where('status', 'active')
+            ->where('id !=', $keepId)
+            ->update([
+                'status'     => 'renewed',
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
     }
 
     private function resolveTenantId(string $name, string $phone, string $email, ?int $companyId): ?int

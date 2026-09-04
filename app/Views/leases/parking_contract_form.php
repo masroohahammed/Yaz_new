@@ -11,6 +11,10 @@
   <a href="<?= esc($backUrl) ?>" class="btn btn-fm-outline btn-sm">Back</a>
 </div>
 
+<?php if (!empty($renewMode)): ?>
+<div class="alert alert-info small mb-3">Renew mode — update dates, rent, and tenant details, then print the new parking agreement.</div>
+<?php endif; ?>
+
 <div class="form-card mb-3">
   <p class="small text-muted mb-3">
     Review fields below, then print. The document is generated as a full Arabic page followed by a full English page,
@@ -182,4 +186,11 @@
     </div>
   </form>
 </div>
+
+<?php if (!empty($activeLease)): ?>
+<?= view('partials/_lease_signature_panel', [
+    'lease' => $activeLease,
+    'signLink' => $signLink ?? null,
+]) ?>
+<?php endif; ?>
 <?= $this->endSection() ?>

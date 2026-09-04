@@ -8,6 +8,9 @@ $expCritical  = $daysLeft !== null && $daysLeft <= 7  && $unit['status'] === 'oc
 $rbac         = new \App\Services\RbacService(\Config\Database::connect());
 $canEditUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), 'units.edit');
 $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), 'units.view');
+helper('fm');
+$renewUrl = fm_unit_renew_url($unit, $activeLeaseContract ?? null);
+$parkingContractUrl = fm_unit_parking_contract_url((int) $unit['id'], isset($activeLeaseContract['id']) ? (int) $activeLeaseContract['id'] : null);
 ?>
 
 <div class="page-header">
@@ -26,7 +29,10 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
     <a href="<?= base_url('units/edit/'.$unit['id']) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
     <?php endif; ?>
     <?php if (!empty($isParkingUnit)): ?>
-    <a href="<?= base_url('units/'.$unit['id'].'/parking-contract') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-file-earmark-pdf me-1"></i>Parking Contract</a>
+    <a href="<?= esc($parkingContractUrl) ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-file-earmark-pdf me-1"></i>Parking Contract</a>
+    <?php if ($unit['status'] === 'occupied' && !empty($unit['contract_end'])): ?>
+    <a href="<?= esc($parkingContractUrl . (str_contains($parkingContractUrl, '?') ? '&' : '?') . 'renew=1') ?>" class="btn btn-success btn-sm"><i class="bi bi-arrow-repeat me-1"></i>Renew</a>
+    <?php endif; ?>
     <?php endif; ?>
     <?php if($unit['status']==='vacant'): ?>
     <a href="<?= base_url('units/checklist/'.$unit['id'].'/move_in') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-box-arrow-in-right me-1"></i>Move-In</a>
@@ -42,14 +48,28 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
 <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
   <i class="bi bi-exclamation-triangle-fill fs-5"></i>
   <div><strong>Contract expiring in <?= $daysLeft ?> day<?= $daysLeft===1?'':'s' ?>!</strong> Immediate renewal action required.</div>
-  <a href="<?= base_url('finance/contracts/create?unit_id='.$unit['id']) ?>" class="btn btn-sm btn-danger ms-auto">Renew Now</a>
+  <a href="<?= esc($renewUrl) ?>" class="btn btn-sm btn-danger ms-auto">Renew Now</a>
 </div>
 <?php elseif($expWarning): ?>
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
   <i class="bi bi-clock-history fs-5"></i>
   <div>Contract expires on <strong><?= date('d M Y',strtotime($unit['contract_end'])) ?></strong> (<?= $daysLeft ?> days remaining).</div>
-  <a href="<?= base_url('finance/contracts/create?unit_id='.$unit['id']) ?>" class="btn btn-sm btn-warning ms-auto">Renew Contract</a>
+  <a href="<?= esc($renewUrl) ?>" class="btn btn-sm btn-warning ms-auto">Renew Contract</a>
 </div>
+<?php endif; ?>
+
+<?php if (empty($activeLeaseContract) && ($signSql = session()->getFlashdata('sign_sql'))): ?>
+<div class="alert alert-warning">
+  <div class="small fw-semibold mb-1">Run this SQL in phpMyAdmin to enable digital signatures:</div>
+  <pre class="small mb-0" style="white-space:pre-wrap"><?= esc($signSql) ?></pre>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($isParkingUnit) && !empty($activeLeaseContract)): ?>
+<?= view('partials/_lease_signature_panel', [
+    'lease' => $activeLeaseContract,
+    'signLink' => session()->getFlashdata('sign_link'),
+]) ?>
 <?php endif; ?>
 
 <div class="row g-3">
@@ -118,9 +138,10 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
         <a href="<?= base_url('workorders/create?facility_id='.$unit['facility_id'].'&unit_id='.$unit['id']) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-tools me-2"></i>Create Work Order</a>
         <a href="<?= base_url('units/checklist/'.$unit['id'].'/routine') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-clipboard2-check me-2"></i>Routine Inspection</a>
     <a href="<?= base_url('utilities/by-unit/'.$unit['id']) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-lightning me-2"></i>Utilities</a>
-        <a href="<?= base_url('contracts/create?unit_id='.$unit['id']) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-file-earmark-plus me-2"></i>New Contract</a>
+        <a href="<?= !empty($isParkingUnit) ? esc($parkingContractUrl) : base_url('contracts/create?unit_id='.$unit['id']) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-file-earmark-plus me-2"></i>New Contract</a>
         <?php if (!empty($isParkingUnit)): ?>
-        <a href="<?= base_url('units/'.$unit['id'].'/parking-contract') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-file-earmark-pdf me-2"></i>Print Parking Contract</a>
+        <a href="<?= esc($parkingContractUrl) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-file-earmark-pdf me-2"></i>Print Parking Contract</a>
+        <a href="<?= esc($parkingContractUrl . (str_contains($parkingContractUrl, '?') ? '&' : '?') . 'renew=1') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-arrow-repeat me-2"></i>Renew Parking Contract</a>
         <?php endif; ?>
         <a href="<?= base_url('finance/invoices/create?unit_id='.$unit['id']) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-receipt me-2"></i>Create Invoice</a>
       </div>
@@ -240,7 +261,7 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
         <div class="fm-card">
           <div class="card-header-fm">
             <h5><i class="bi bi-person-check me-2"></i>Tenant &amp; Lease Contracts</h5>
-            <a href="<?= base_url('contracts/create?unit_id='.$unit['id']) ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus me-1"></i>New Lease</a>
+            <a href="<?= !empty($isParkingUnit) ? esc($parkingContractUrl) : base_url('contracts/create?unit_id='.$unit['id']) ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus me-1"></i>New Lease</a>
           </div>
           <div class="fm-card-body">
             <?php if(!empty($unit['tenant_name'])): ?>
@@ -269,7 +290,7 @@ $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), '
             </table>
             </div>
             <?php elseif(empty($unit['tenant_name'])): ?>
-            <p class="text-muted small text-center py-3">No active lease. <a href="<?= base_url('contracts/create?unit_id='.$unit['id']) ?>">Create one</a>.</p>
+            <p class="text-muted small text-center py-3">No active lease. <a href="<?= !empty($isParkingUnit) ? esc($parkingContractUrl) : base_url('contracts/create?unit_id='.$unit['id']) ?>">Create one</a>.</p>
             <?php endif; ?>
           </div>
         </div>

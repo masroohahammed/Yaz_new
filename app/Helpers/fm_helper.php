@@ -372,3 +372,54 @@ if (! function_exists('fm_document_types')) {
         ];
     }
 }
+
+if (! function_exists('fm_is_parking_unit')) {
+    function fm_is_parking_unit(array $unit): bool
+    {
+        return strtolower(trim((string) ($unit['unit_type'] ?? ''))) === 'parking';
+    }
+}
+
+if (! function_exists('fm_unit_parking_contract_url')) {
+    function fm_unit_parking_contract_url(int $unitId, ?int $leaseContractId = null): string
+    {
+        $url = base_url('units/' . $unitId . '/parking-contract');
+        if ($leaseContractId !== null && $leaseContractId > 0) {
+            $url .= '?contract_id=' . $leaseContractId;
+        }
+
+        return $url;
+    }
+}
+
+if (! function_exists('fm_unit_renew_url')) {
+    /**
+     * @param array<string,mixed>      $unit
+     * @param array<string,mixed>|null $activeLease
+     */
+    function fm_unit_renew_url(array $unit, ?array $activeLease = null): string
+    {
+        if (fm_is_parking_unit($unit)) {
+            return fm_unit_parking_contract_url((int) ($unit['id'] ?? 0), $activeLease ? (int) ($activeLease['id'] ?? 0) : null);
+        }
+
+        if ($activeLease && ! empty($activeLease['id'])) {
+            return base_url('contracts/' . (int) $activeLease['id']);
+        }
+
+        return base_url('contracts/create?unit_id=' . (int) ($unit['id'] ?? 0));
+    }
+}
+
+if (! function_exists('fm_signature_migration_sql')) {
+    function fm_signature_migration_sql(): string
+    {
+        return <<<'SQL'
+ALTER TABLE `lease_contracts`
+  ADD COLUMN IF NOT EXISTS `tenant_signature_path` VARCHAR(255) NULL,
+  ADD COLUMN IF NOT EXISTS `signature_token` VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS `tenant_signed_at` DATETIME NULL;
+CREATE INDEX IF NOT EXISTS `idx_lc_signature_token` ON `lease_contracts` (`signature_token`);
+SQL;
+    }
+}

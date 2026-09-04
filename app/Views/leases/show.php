@@ -37,36 +37,17 @@ $isParkingLease = strtolower((string)($contract['unit_type'] ?? '')) === 'parkin
   </div>
 </div>
 
-<?php if ($signLink = session()->getFlashdata('sign_link')): ?>
-<div class="alert alert-info">
-  <div class="small fw-semibold mb-1">Tenant signing link</div>
-  <div class="input-group input-group-sm">
-    <input type="text" class="form-control" id="tenantSignLink" readonly value="<?= esc($signLink) ?>">
-    <button type="button" class="btn btn-fm-outline" onclick="navigator.clipboard.writeText(document.getElementById('tenantSignLink').value)">Copy</button>
-    <a href="<?= esc($signLink) ?>" target="_blank" class="btn btn-fm-primary">Open</a>
-  </div>
+<?php if ($signSql = session()->getFlashdata('sign_sql')): ?>
+<div class="alert alert-warning">
+  <div class="small fw-semibold mb-1"><?= esc(session()->getFlashdata('error') ?? 'Run this SQL in phpMyAdmin:') ?></div>
+  <pre class="small mb-0" style="white-space:pre-wrap"><?= esc($signSql) ?></pre>
 </div>
 <?php endif; ?>
 
-<?php
-$hasSignature = trim((string)($contract['tenant_signature_path'] ?? '')) !== '';
-$signedAt = $contract['tenant_signed_at'] ?? null;
-?>
-<div class="form-card mb-3">
-  <h6 class="text-muted text-uppercase small mb-3">Digital signature</h6>
-  <?php if ($hasSignature): ?>
-    <?= view('partials/_signature_display', ['path' => $contract['tenant_signature_path'], 'label' => 'Tenant signature' . ($signedAt ? ' · ' . date('d M Y H:i', strtotime((string)$signedAt)) : '')]) ?>
-    <div class="d-flex gap-2 flex-wrap">
-      <a href="<?= base_url('contracts/'.$contract['id'].'/signed-pdf') ?>" class="btn btn-sm btn-fm-primary"><i class="bi bi-file-earmark-pdf me-1"></i>Download signed PDF</a>
-      <a href="<?= base_url('contracts/'.$contract['id'].'/whatsapp-share') ?>" class="btn btn-sm btn-success" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i>Share via WhatsApp</a>
-    </div>
-  <?php else: ?>
-    <p class="small text-muted mb-2">Generate a link and send it to the tenant. They can sign on any device without logging in.</p>
-    <form method="post" action="<?= base_url('contracts/'.$contract['id'].'/generate-sign-link') ?>" class="d-inline"><?= csrf_field() ?>
-      <button type="submit" class="btn btn-sm btn-fm-primary"><i class="bi bi-link-45deg me-1"></i>Generate signing link</button>
-    </form>
-  <?php endif; ?>
-</div>
+<?= view('partials/_lease_signature_panel', [
+    'lease' => $contract,
+    'signLink' => session()->getFlashdata('sign_link'),
+]) ?>
 
 <div class="row g-3 mb-3">
   <div class="col-lg-6">

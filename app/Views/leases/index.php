@@ -6,10 +6,11 @@
   <div class="d-flex gap-2 flex-wrap">
     <form method="post" action="<?= base_url('contracts/sync-units') ?>" class="d-inline">
       <?= csrf_field() ?>
-      <button type="submit" class="btn btn-fm-outline btn-sm" data-confirm="Import all property and parking unit contracts into the lease module? Existing leases for the same unit will be updated.">
-        <i class="bi bi-arrow-repeat me-1"></i>Sync from Units
+      <button type="submit" class="btn btn-fm-outline btn-sm" data-confirm="Import and update all unit contracts (property + parking) into this lease list? Existing leases for the same unit will be updated, not duplicated.">
+        <i class="bi bi-arrow-repeat me-1"></i>Sync all from Units
       </button>
     </form>
+    <a href="<?= base_url('reports/pm/leases?expiring=1') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-calendar-event me-1"></i>Renew expiring</a>
     <a href="<?= base_url('contracts/create') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New Contract</a>
   </div>
   <?php endif; ?>
@@ -46,7 +47,8 @@
 <td><?= number_format((float)$c['rent_amount'],2) ?> <?= esc($currency) ?></td>
 <td class="small"><?= esc($c['start_date']) ?> – <?= esc($c['end_date']) ?></td>
 <td><span class="badge bg-secondary"><?= esc($c['status']) ?></span></td>
-<td><a href="<?= base_url('contracts/'.$c['id'].'/edit') ?>" class="btn btn-sm btn-fm-outline">Edit</a></td>
+<td><a href="<?= base_url('contracts/'.$c['id'].'/edit') ?>" class="btn btn-sm btn-fm-outline">Edit</a>
+<?php if ($isParking): ?><a href="<?= base_url('contracts/'.$c['id'].'/parking-print') ?>" class="btn btn-sm btn-success">Renew</a><?php endif; ?></td>
 </tr><?php endforeach; ?><?php if (empty($contracts)): ?><tr><td colspan="9" class="text-center text-muted py-4">No contracts.</td></tr><?php endif; ?></tbody>
 </table></div></div>
 <?php endif; ?>

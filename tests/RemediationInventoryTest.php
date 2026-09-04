@@ -640,12 +640,22 @@ final class RemediationInventoryTest extends TestCase
 
         $show = file_get_contents($this->root . '/app/Views/leases/show.php');
         $this->assertStringContainsString('parking-print', $show);
-        $this->assertStringContainsString('generate-sign-link', $show);
-        $this->assertStringContainsString('whatsapp-share', $show);
+        $this->assertStringContainsString('_lease_signature_panel', $show);
+
+        $unitView = file_get_contents($this->root . '/app/Views/units/view.php');
+        $this->assertStringContainsString('fm_unit_renew_url', $unitView);
+        $this->assertStringContainsString('_lease_signature_panel', $unitView);
+        $this->assertStringContainsString('parking-contract', $unitView);
+
+        $helper = file_get_contents($this->root . '/app/Helpers/fm_helper.php');
+        $this->assertStringContainsString('fm_signature_migration_sql', $helper);
 
         $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
         $this->assertStringContainsString('{{tenant_qid}}', $leases);
         $this->assertStringContainsString('parking-print', $leases);
+
+        $sync = file_get_contents($this->root . '/app/Services/UnitLeaseSyncService.php');
+        $this->assertStringContainsString('dedupeActiveLeases', $sync);
 
         $sigPatch = file_get_contents($this->root . '/database/patches/2026-09-02-lease-contract-signature.sql');
         $this->assertStringContainsString('tenant_signature_path', $sigPatch);
