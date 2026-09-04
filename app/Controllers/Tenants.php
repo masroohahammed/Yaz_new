@@ -26,6 +26,7 @@ class Tenants extends BaseController
 
         $q = $this->db->table(self::TABLE . ' t')->where('t.deleted_at', null);
         $this->scopeCompany($q, 't.company_id');
+        $this->scopeTenants($q, 't.id');
 
         if ($filters['search'] !== '') {
             $q->groupStart()
@@ -115,6 +116,7 @@ class Tenants extends BaseController
         if (! $tenant) {
             return redirect()->to(base_url('tenants'))->with('error', 'Tenant not found.');
         }
+        $this->assertTenantAccess($id);
 
         $tenantModel = new \App\Models\Tenant_model();
         $detail      = $tenantModel->findDetail($id) ?: $tenant;
@@ -136,6 +138,7 @@ class Tenants extends BaseController
         if (! $tenant) {
             return redirect()->to(base_url('tenants'))->with('error', 'Tenant not found.');
         }
+        $this->assertTenantAccess($id);
 
         return view('tenants/form', $this->viewData([
             'title'  => 'Edit Tenant',
@@ -153,6 +156,7 @@ class Tenants extends BaseController
         if (! $tenant) {
             return redirect()->to(base_url('tenants'))->with('error', 'Tenant not found.');
         }
+        $this->assertTenantAccess($id);
 
         $rules = [
             'tenant_type' => 'required|in_list[Personal,Corporate]',

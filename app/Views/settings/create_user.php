@@ -17,6 +17,7 @@
 </div>
 <div class="mb-3"><label class="form-label">Password *</label><input type="password" name="password" class="form-control" required></div>
 <div class="mb-3"><label class="form-label">Confirm Password *</label><input type="password" name="confirm_password" class="form-control" required></div>
+<?= view('settings/partials/user_access_fields') ?>
 <button type="submit" class="btn btn-fm-primary w-100">Create User</button>
 </div></div></div>
 <?= form_close() ?>

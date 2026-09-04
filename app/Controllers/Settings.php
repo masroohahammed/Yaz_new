@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Services\Finance\FinanceModuleRegistry;
 use App\Services\RbacService;
+use App\Services\UserFacilityService;
 use App\Services\WorkflowSettingsService;
 
 class Settings extends BaseController
@@ -304,7 +305,10 @@ class Settings extends BaseController
             $tenants = $tq->get()->getResultArray();
         }
 
-        return view('settings/create_user', $this->viewData(['title' => 'Add User', 'roles' => $roles, 'tenants' => $tenants]));
+        return view('settings/create_user', $this->viewData(array_merge(
+            ['title' => 'Add User', 'roles' => $roles, 'tenants' => $tenants],
+            $this->userAccessFormExtras()
+        )));
     }
 
     public function storeUser()
@@ -337,6 +341,9 @@ class Settings extends BaseController
         if ($userId && $tenantId && $this->db->tableExists('tenants') && $this->db->fieldExists('user_id', 'tenants')) {
             $this->db->table('tenants')->where('id', $tenantId)->update(['user_id' => $userId]);
         }
+        if ($userId) {
+            $this->syncUserAccessFields($userId, (int) $this->request->getPost('role_id'));
+        }
 
         return redirect()->to(base_url('settings/users'))->with('success', 'User created.');
     }
@@ -355,7 +362,10 @@ class Settings extends BaseController
             $tenants = $tq->get()->getResultArray();
         }
 
-        return view('settings/edit_user', $this->viewData(['title' => 'Edit User', 'user' => $user, 'roles' => $roles, 'tenants' => $tenants]));
+        return view('settings/edit_user', $this->viewData(array_merge(
+            ['title' => 'Edit User', 'user' => $user, 'roles' => $roles, 'tenants' => $tenants],
+            $this->userAccessFormExtras($user)
+        )));
     }
 
     public function updateUser(int $id)
@@ -381,6 +391,7 @@ class Settings extends BaseController
             $this->db->table('tenants')->where('user_id', $id)->update(['user_id' => null]);
             $this->db->table('tenants')->where('id', $tenantId)->update(['user_id' => $id]);
         }
+        $this->syncUserAccessFields($id, (int) $this->request->getPost('role_id'));
 
         return redirect()->to(base_url('settings/users'))->with('success', 'User updated.');
     }
@@ -651,6 +662,61 @@ class Settings extends BaseController
             $this->db->table('system_settings')->where('setting_key', $key)->update(['setting_value' => $value]);
         } else {
             $this->db->table('system_settings')->insert(['setting_key' => $key, 'setting_value' => $value]);
+        }
+    }
+
+    /** @return array<string, mixed> */
+    private function userAccessFormExtras(?array $user = null): array
+    {
+        $facilities = [];
+        if ($this->db->tableExists('facilities')) {
+            $q = $this->db->table('facilities')->select('id, name, code')->where('status', 'active');
+            if ($this->db->fieldExists('deleted_at', 'facilities')) {
+                $q->where('deleted_at', null);
+            }
+            $facilities = $q->orderBy('name', 'ASC')->get()->getResultArray();
+        }
+
+        $landlords = [];
+        if ($this->db->tableExists('landlords')) {
+            $lq = $this->db->table('landlords')->select('id, full_name, email')->orderBy('full_name', 'ASC');
+            if ($this->db->fieldExists('deleted_at', 'landlords')) {
+                $lq->where('deleted_at', null);
+            }
+            $landlords = $lq->get()->getResultArray();
+        }
+
+        $assignedFacilityIds = [];
+        if ($user && ! empty($user['id'])) {
+            $assignedFacilityIds = UserFacilityService::facilityIdsForUser($this->db, (int) $user['id']);
+        }
+
+        return [
+            'facilities'           => $facilities,
+            'landlordsList'        => $landlords,
+            'assignedFacilityIds'  => $assignedFacilityIds,
+            'userLandlordId'       => (int) ($user['landlord_id'] ?? 0),
+            'hasLandlordUserCol'   => $this->db->fieldExists('landlord_id', 'users'),
+        ];
+    }
+
+    private function syncUserAccessFields(int $userId, int $roleId): void
+    {
+        $roleRow  = $this->db->table('roles')->select('name')->where('id', $roleId)->get()->getRowArray();
+        $roleName = (string) ($roleRow['name'] ?? '');
+
+        if (UserFacilityService::usesAssignedFacilities($roleName)) {
+            $facilityIds = array_values(array_filter(array_map('intval', (array) $this->request->getPost('facility_ids'))));
+            UserFacilityService::syncUserFacilities($this->db, $userId, $facilityIds);
+        }
+
+        if ($this->db->fieldExists('landlord_id', 'users')) {
+            $landlordId = (int) $this->request->getPost('landlord_id') ?: null;
+            if ($roleName === 'landlord') {
+                $this->db->table('users')->where('id', $userId)->update(['landlord_id' => $landlordId]);
+            } else {
+                $this->db->table('users')->where('id', $userId)->update(['landlord_id' => null]);
+            }
         }
     }
 }

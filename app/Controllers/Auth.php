@@ -1,6 +1,8 @@
 <?php
 namespace App\Controllers;
 
+use App\Services\UserFacilityService;
+
 class Auth extends BaseController
 {
     private const MAX_ATTEMPTS     = 5;
@@ -148,6 +150,10 @@ class Auth extends BaseController
     {
         $workspaceService = new \App\Services\WorkspaceService($this->db);
         $workspace        = $workspaceService->sessionWorkspace((string) $user['role_name']);
+        $landlordId       = 0;
+        if (($user['role_name'] ?? '') === 'landlord') {
+            $landlordId = UserFacilityService::landlordIdForUser($this->db, (int) $user['id'], (string) ($user['email'] ?? ''));
+        }
 
         session()->set([
             'logged_in'    => true,
@@ -158,6 +164,7 @@ class Auth extends BaseController
             'role_display' => $user['role_display'],
             'company_id'   => $user['company_id'] ?? null,
             'workspace'    => $workspace,
+            'landlord_id'  => $landlordId > 0 ? $landlordId : null,
         ]);
 
         session()->regenerate(false);

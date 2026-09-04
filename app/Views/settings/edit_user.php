@@ -17,6 +17,7 @@
 </div>
 <div class="mb-3"><label class="form-label">Status</label><select name="status" class="form-select"><option value="active" <?= $user['status']==='active'?'selected':'' ?>>Active</option><option value="inactive" <?= $user['status']==='inactive'?'selected':'' ?>>Inactive</option><option value="suspended" <?= $user['status']==='suspended'?'selected':'' ?>>Suspended</option></select></div>
 <div class="mb-3"><label class="form-label">New Password <span class="text-muted small">(leave blank to keep current)</span></label><input type="password" name="password" class="form-control"></div>
+<?= view('settings/partials/user_access_fields') ?>
 <button type="submit" class="btn btn-fm-primary w-100">Save Changes</button>
 </div></div></div>
 <?= form_close() ?>

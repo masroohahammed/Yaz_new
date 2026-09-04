@@ -23,6 +23,7 @@ class Landlords extends BaseController
 
         $q = $this->db->table(self::TABLE . ' l')->where('l.deleted_at', null);
         $this->scopeCompany($q, 'l.company_id');
+        $this->scopeLandlords($q, 'l.id');
 
         if ($search !== '') {
             $q->groupStart()
@@ -104,6 +105,7 @@ class Landlords extends BaseController
         if (! $landlord) {
             return redirect()->to(base_url('landlords'))->with('error', 'Landlord not found.');
         }
+        $this->assertLandlordAccess($id);
 
         $data360 = [];
         try {
@@ -130,6 +132,7 @@ class Landlords extends BaseController
         if (! $landlord) {
             return redirect()->to(base_url('landlords'))->with('error', 'Landlord not found.');
         }
+        $this->assertLandlordAccess($id);
 
         return view('landlords/form', $this->viewData([
             'title'    => 'Edit Landlord',
@@ -146,6 +149,7 @@ class Landlords extends BaseController
         if (! $this->pmFind(self::TABLE, $id)) {
             return redirect()->to(base_url('landlords'))->with('error', 'Landlord not found.');
         }
+        $this->assertLandlordAccess($id);
 
         $rules = [
             'full_name' => 'required|min_length[2]|max_length[200]',

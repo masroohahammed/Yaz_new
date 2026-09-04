@@ -52,9 +52,8 @@ class CompanyScopeService
             return null;
         }
 
-        // Roles that operate on explicitly-assigned facilities only.
         if (UserFacilityService::usesAssignedFacilities($role)) {
-            $assigned = UserFacilityService::assignedFacilityIds($this->db, $userId, $role);
+            $assigned = UserFacilityService::assignedFacilityIds($this->db, $userId, $role, $companyId);
 
             if ($assigned !== []) {
                 $this->facilityIds = $assigned;
@@ -62,13 +61,12 @@ class CompanyScopeService
                 return $this->facilityIds;
             }
 
-            // Restricted roles with no assignments get zero access.
-            if (UserFacilityService::isRestrictedRole($role)) {
+            if (UserFacilityService::requiresExplicitAssignments($role)) {
                 $this->facilityIds = [];
 
                 return $this->facilityIds;
             }
-            // property_manager / real_estate_manager / facility_manager: company-wide when unassigned.
+            // facility_manager: company-wide when unassigned.
         }
 
         $cacheKey = 'fm_facilities_' . $companyId;

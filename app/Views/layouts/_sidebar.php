@@ -37,12 +37,6 @@ $brandingId  = ($workspace === 'pm') ? 1 : null;
 $branding    = fm_company_branding([], $brandingId);
 $cname       = $branding['settings']['company_name'] ?? fm_setting('company_name', 'FM ERP');
 $clogoUrl    = $branding['logoUrl'] ?: fm_logo_url(fm_setting('company_logo', ''));
-$wsLabel     = match ($workspace) {
-    'pm'   => 'Property Management',
-    'fm'   => 'Facility Management',
-    'both' => 'Admin',
-    default => ucwords(str_replace('_', ' ', (string) $workspace)),
-};
 ?>
 <aside id="sidebar" class="sidebar cc-sidebar d-flex flex-column ch-sidebar">
 
@@ -56,7 +50,6 @@ $wsLabel     = match ($workspace) {
             <?php if (! $clogoUrl): ?>
             <span class="sidebar-brand-text fw-semibold text-truncate d-block"><?= esc($cname) ?></span>
             <?php endif; ?>
-            <span class="sidebar-workspace-badge"><?= esc($wsLabel) ?></span>
         </div>
         <button class="btn btn-sm ms-auto d-xl-none text-secondary" id="sidebarClose" aria-label="Close sidebar">
             <i class="bi bi-x-lg"></i>

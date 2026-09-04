@@ -677,4 +677,35 @@ final class RemediationInventoryTest extends TestCase
         $auth = file_get_contents($this->root . '/app/Controllers/Auth.php');
         $this->assertStringContainsString('captureLoginRedirect', $auth);
     }
+
+    public function testPropertyScopedAccessEnforcement(): void
+    {
+        $sidebar = file_get_contents($this->root . '/app/Views/layouts/_sidebar.php');
+        $this->assertStringNotContainsString('sidebar-workspace-badge', $sidebar);
+        $this->assertStringNotContainsString('Property Management', $sidebar);
+
+        $ufs = file_get_contents($this->root . '/app/Services/UserFacilityService.php');
+        $this->assertStringContainsString('requiresExplicitAssignments', $ufs);
+        $this->assertStringContainsString('user_property_assignments', $ufs);
+        $this->assertStringContainsString('landlordIdForUser', $ufs);
+
+        $scope = file_get_contents($this->root . '/app/Services/CompanyScopeService.php');
+        $this->assertStringContainsString('requiresExplicitAssignments', $scope);
+
+        $facilities = file_get_contents($this->root . '/app/Controllers/Facilities.php');
+        $this->assertStringContainsString('assertFacilityAccess', $facilities);
+        $this->assertStringContainsString('syncPropertyManagers', $facilities);
+
+        $tenants = file_get_contents($this->root . '/app/Controllers/Tenants.php');
+        $this->assertStringContainsString('scopeTenants', $tenants);
+        $this->assertStringContainsString('assertTenantAccess', $tenants);
+
+        $landlords = file_get_contents($this->root . '/app/Controllers/Landlords.php');
+        $this->assertStringContainsString('scopeLandlords', $landlords);
+        $this->assertStringContainsString('assertLandlordAccess', $landlords);
+
+        $settings = file_get_contents($this->root . '/app/Controllers/Settings.php');
+        $this->assertStringContainsString('syncUserAccessFields', $settings);
+        $this->assertStringContainsString('syncUserFacilities', $settings);
+    }
 }

@@ -7,6 +7,7 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use App\Services\CompanyScopeService;
+use App\Services\UserFacilityService;
 use App\Services\WorkspaceService;
 
 /**
@@ -307,6 +308,107 @@ abstract class BaseController extends Controller
             }
             session()->setFlashdata('error', 'You do not have access to this facility.');
             redirect()->to(base_url('dashboard'))->send();
+            exit;
+        }
+    }
+
+    /** Restrict tenant queries to those linked to the user's assigned properties. */
+    protected function scopeTenants(object $builder, string $tenantColumn = 't.id'): object
+    {
+        $ids = $this->companyScope()->facilityIds();
+        if ($ids === null) {
+            return $builder;
+        }
+        if ($ids === []) {
+            return $builder->where('1 = 0', null, false);
+        }
+
+        $tenantIds = UserFacilityService::tenantIdsForFacilities($this->db, $ids);
+        if ($tenantIds === []) {
+            return $builder->where('1 = 0', null, false);
+        }
+
+        return $builder->whereIn($tenantColumn, $tenantIds);
+    }
+
+    /** Restrict landlord queries to those owning the user's assigned properties. */
+    protected function scopeLandlords(object $builder, string $landlordColumn = 'l.id'): object
+    {
+        $role = (string) session()->get('user_role');
+        $ids  = $this->companyScope()->facilityIds();
+
+        if ($role === 'landlord') {
+            $landlordId = UserFacilityService::landlordIdForUser(
+                $this->db,
+                (int) session()->get('user_id'),
+                (string) session()->get('user_email')
+            );
+            if ($landlordId < 1) {
+                return $builder->where('1 = 0', null, false);
+            }
+
+            return $builder->where($landlordColumn, $landlordId);
+        }
+
+        if ($ids === null) {
+            return $builder;
+        }
+        if ($ids === []) {
+            return $builder->where('1 = 0', null, false);
+        }
+
+        $landlordIds = UserFacilityService::landlordIdsForFacilities($this->db, $ids);
+        if ($landlordIds === []) {
+            return $builder->where('1 = 0', null, false);
+        }
+
+        return $builder->whereIn($landlordColumn, $landlordIds);
+    }
+
+    protected function assertTenantAccess(int $tenantId): void
+    {
+        if ($tenantId < 1) {
+            return;
+        }
+        $ids = $this->companyScope()->facilityIds();
+        if ($ids === null) {
+            return;
+        }
+        if (! UserFacilityService::tenantAccessible($this->db, $tenantId, $ids)) {
+            session()->setFlashdata('error', 'You do not have access to this tenant.');
+            redirect()->to(base_url('tenants'))->send();
+            exit;
+        }
+    }
+
+    protected function assertLandlordAccess(int $landlordId): void
+    {
+        if ($landlordId < 1) {
+            return;
+        }
+        $role = (string) session()->get('user_role');
+        if ($role === 'landlord') {
+            $ownId = UserFacilityService::landlordIdForUser(
+                $this->db,
+                (int) session()->get('user_id'),
+                (string) session()->get('user_email')
+            );
+            if ($ownId !== $landlordId) {
+                session()->setFlashdata('error', 'You do not have access to this landlord record.');
+                redirect()->to(base_url('dashboard'))->send();
+                exit;
+            }
+
+            return;
+        }
+
+        $ids = $this->companyScope()->facilityIds();
+        if ($ids === null) {
+            return;
+        }
+        if (! UserFacilityService::landlordAccessible($this->db, $landlordId, $ids)) {
+            session()->setFlashdata('error', 'You do not have access to this landlord record.');
+            redirect()->to(base_url('landlords'))->send();
             exit;
         }
     }

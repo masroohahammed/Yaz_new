@@ -88,6 +88,21 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <?php if (! empty($propertyManagers)): ?>
+                    <div class="col-12">
+                        <label class="form-label fw-medium">Property Managers <span class="text-muted small">(multiple allowed)</span></label>
+                        <select name="manager_ids[]" class="form-select" multiple size="<?= min(6, max(3, count($propertyManagers))) ?>">
+                            <?php foreach ($propertyManagers as $pm): ?>
+                                <?php
+                                $selected = in_array((int) $pm['id'], array_map('intval', $assignedManagerIds ?? []), true)
+                                    || (string) old('manager_ids.0') === (string) $pm['id'];
+                                ?>
+                                <option value="<?= (int) $pm['id'] ?>" <?= $selected ? 'selected' : '' ?>><?= esc($pm['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">Hold Ctrl/Cmd to select multiple managers for this property.</div>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Finance & Property Classification -->

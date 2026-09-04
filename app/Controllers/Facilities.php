@@ -6,6 +6,7 @@ use App\Models\FacilityModel;
 use App\Models\CompanyModel;
 use App\Models\UserModel;
 use App\Services\EntityQrService;
+use App\Services\PropertyAssignmentService;
 
 /**
  * Facilities — manages facility CRUD.
@@ -29,25 +30,33 @@ class Facilities extends BaseController
 
     public function index()
     {
-        $user     = $this->currentUser();
-        $filters  = $this->request->getGet();
+        $filters = $this->request->getGet();
 
-        $builder = $this->model->scopeForUser($user);
-
-        if (! empty($filters['status']))   $builder->where('facilities.status', $filters['status']);
-        if (! empty($filters['company_id'])) $builder->where('facilities.company_id', $filters['company_id']);
-        if (! empty($filters['search']))   $builder->groupStart()
-                                                    ->like('facilities.name', $filters['search'])
-                                                    ->orLike('facilities.code', $filters['search'])
-                                                    ->groupEnd();
-
-        $facilities = $this->db->table('facilities f')
+        $q = $this->db->table('facilities f')
             ->select('f.*, c.name AS company_name, u.name AS manager_name')
             ->join('companies c', 'c.id = f.company_id', 'left')
-            ->join('users u',     'u.id = f.manager_id', 'left')
-            ->where('f.deleted_at', null)
-            ->orderBy('f.name', 'ASC')
-            ->get()->getResultArray();
+            ->join('users u', 'u.id = f.manager_id', 'left')
+            ->where('f.deleted_at', null);
+
+        if ($this->db->fieldExists('company_id', 'facilities')) {
+            $this->scopeCompany($q, 'f.company_id');
+        }
+        $this->scopeFacilities($q, 'f.id');
+
+        if (! empty($filters['status'])) {
+            $q->where('f.status', $filters['status']);
+        }
+        if (! empty($filters['company_id'])) {
+            $q->where('f.company_id', $filters['company_id']);
+        }
+        if (! empty($filters['search'])) {
+            $q->groupStart()
+                ->like('f.name', $filters['search'])
+                ->orLike('f.code', $filters['search'])
+                ->groupEnd();
+        }
+
+        $facilities = $q->orderBy('f.name', 'ASC')->get()->getResultArray();
 
         $companyModel = new CompanyModel();
         $companies    = $companyModel->where('status', 'active')->findAll();
@@ -74,6 +83,7 @@ class Facilities extends BaseController
 
         $companies = $companyModel->where('status', 'active')->findAll();
         $managers  = $userModel->getUsersByRole('facility_manager');
+        $propertyManagers = $userModel->getUsersByRoles(['property_manager', 'manager', 'real_estate_manager']);
         $landlords = $this->db->tableExists('landlords')
             ? $this->db->table('landlords')->where('status', 'active')->where('deleted_at', null)->orderBy('full_name')->get()->getResultArray()
             : [];
@@ -82,6 +92,8 @@ class Facilities extends BaseController
             'pageTitle' => 'Add Facility',
             'companies' => $companies,
             'managers'  => $managers,
+            'propertyManagers' => $propertyManagers,
+            'assignedManagerIds' => [],
             'landlords' => $landlords,
             'facility'  => [],
         ]);
@@ -130,6 +142,7 @@ class Facilities extends BaseController
 
         $id = $this->model->insert($data);
         (new EntityQrService($this->db))->ensureToken('property', (int) $id);
+        $this->syncPropertyManagers((int) $id, $post);
         $this->logActivity('create', 'facilities', $id, 'Facility created: ' . $data['name']);
 
         return redirect()->to('/facilities/' . $id)->with('success', 'Facility created successfully.');
@@ -147,6 +160,8 @@ class Facilities extends BaseController
     /** Rich facility dashboard with units, contracts, assets, and work orders. */
     public function viewFacility(int $id)
     {
+        $this->assertFacilityAccess($id);
+
         $facility = $this->db->table('facilities f')
             ->select('f.*, c.name AS company_name, u.name AS manager_name')
             ->join('companies c', 'c.id = f.company_id', 'left')
@@ -301,6 +316,7 @@ class Facilities extends BaseController
     public function edit(int $id)
     {
         $this->requirePermission('facilities.edit');
+        $this->assertFacilityAccess($id);
 
         $facility     = $this->model->find($id);
         if (! $facility) return redirect()->to('/facilities')->with('error', 'Facility not found.');
@@ -311,11 +327,16 @@ class Facilities extends BaseController
             ? $this->db->table('landlords')->where('status', 'active')->where('deleted_at', null)->orderBy('full_name')->get()->getResultArray()
             : [];
 
+        $propertyManagers = $userModel->getUsersByRoles(['property_manager', 'manager', 'real_estate_manager']);
+        $assignedManagerIds = $this->assignedManagerIds($id);
+
         return view('facilities/create', [
             'pageTitle' => 'Edit Facility — ' . $facility['name'],
             'facility'  => $facility,
             'companies' => $companyModel->where('status', 'active')->findAll(),
             'managers'  => $userModel->getUsersByRole('facility_manager'),
+            'propertyManagers' => $propertyManagers,
+            'assignedManagerIds' => $assignedManagerIds,
             'landlords' => $landlords,
         ]);
     }
@@ -323,6 +344,7 @@ class Facilities extends BaseController
     public function update(int $id)
     {
         $this->requirePermission('facilities.edit');
+        $this->assertFacilityAccess($id);
 
         $facility = $this->model->find($id);
         if (! $facility) return redirect()->to('/facilities')->with('error', 'Facility not found.');
@@ -364,8 +386,45 @@ class Facilities extends BaseController
             'finance_notes'           => $post['finance_notes'] ?: null,
         ]);
 
+        $this->syncPropertyManagers($id, $post);
         $this->logActivity('update', 'facilities', $id, 'Facility updated');
         return redirect()->to('/facilities/' . $id)->with('success', 'Facility updated.');
+    }
+
+    /** @return list<int> */
+    private function assignedManagerIds(int $facilityId): array
+    {
+        if (! $this->db->tableExists('user_property_assignments')) {
+            $facility = $this->model->find($facilityId);
+
+            return ! empty($facility['manager_id']) ? [(int) $facility['manager_id']] : [];
+        }
+
+        return array_map(
+            static fn ($r) => (int) $r['user_id'],
+            $this->db->table('user_property_assignments')
+                ->select('user_id')
+                ->where('facility_id', $facilityId)
+                ->where('role_type', 'manager')
+                ->get()
+                ->getResultArray()
+        );
+    }
+
+    /** @param array<string, mixed> $post */
+    private function syncPropertyManagers(int $facilityId, array $post): void
+    {
+        $managerIds = array_values(array_filter(array_map('intval', (array) ($post['manager_ids'] ?? []))));
+        if ($managerIds === [] && ! empty($post['manager_id'])) {
+            $managerIds = [(int) $post['manager_id']];
+        }
+
+        (new PropertyAssignmentService($this->db))->syncAssignments(
+            $facilityId,
+            $managerIds,
+            [],
+            (int) session()->get('user_id')
+        );
     }
 
     // ----------------------------------------------------------
