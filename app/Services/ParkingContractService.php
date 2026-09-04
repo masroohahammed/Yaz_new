@@ -48,7 +48,7 @@ class ParkingContractService
         $tenantPhone = $tenant['phone'] ?? $unit['tenant_mobile'] ?? '';
         $vehicleType = $lease['vehicle_type'] ?? 'Motorcycle';
 
-        return [
+        $defaults = [
             'contract_number'       => $lease['contract_number'] ?? $unit['contract_number'] ?? '',
             'contract_date'         => $contractDate,
             'header_title_deed_no'  => $settings['parking_header_title_deed'] ?? '211207',
@@ -110,6 +110,39 @@ class ParkingContractService
             'unit_id'               => $unitId,
             'contract_photos'       => ParkingContractPhotoService::pathsFromJson($lease['photos_json'] ?? null),
         ];
+
+        return $this->mergeSavedParkingForm($defaults, $lease);
+    }
+
+    /**
+     * Restore last saved parking form fields from lease_contracts.notes JSON.
+     *
+     * @param array<string, mixed>      $defaults
+     * @param array<string, mixed>|null $lease
+     * @return array<string, mixed>
+     */
+    public function mergeSavedParkingForm(array $defaults, ?array $lease): array
+    {
+        if (! $lease) {
+            return $defaults;
+        }
+
+        $decoded = json_decode((string) ($lease['notes'] ?? ''), true);
+        if (! is_array($decoded) || empty($decoded['parking_form']) || ! is_array($decoded['parking_form'])) {
+            return $defaults;
+        }
+
+        foreach ($decoded['parking_form'] as $key => $val) {
+            if (is_scalar($val) && trim((string) $val) !== '') {
+                $defaults[$key] = $val;
+            }
+        }
+
+        if (! empty($lease['id'])) {
+            $defaults['lease_contract_id'] = (int) $lease['id'];
+        }
+
+        return $defaults;
     }
 
     /**

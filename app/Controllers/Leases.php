@@ -897,30 +897,23 @@ class Leases extends BaseController
                 'd'        => (new ParkingContractService($this->db))->buildDefaults($unitId, $id),
                 'backUrl'  => base_url('contracts/' . $id),
                 'printUrl' => base_url('contracts/' . $id . '/parking-print'),
+                'saveUrl'     => base_url('units/' . $unitId . '/parking-contract/save'),
+                'signLinkUrl' => base_url('units/' . $unitId . '/parking-contract/generate-sign-link'),
                 'renewMode'=> (bool) $this->request->getGet('renew'),
                 'activeLease' => $contract,
                 'signLink' => session()->getFlashdata('sign_link'),
             ]));
         }
 
-        $svc      = new ParkingContractService($this->db);
-        $defaults = $svc->buildDefaults($unitId, $id);
-        $d        = $svc->mergeFormInput($defaults, array_merge(
-            $this->request->getPost() ?? [],
-            $this->request->getGet() ?? []
-        ));
+        $isRenew = (bool) ($this->request->getPost('renew') ?? $this->request->getGet('renew'));
+        $saved   = $this->saveParkingContractData($unitId, $isRenew);
+        $d       = $saved['d'];
+        $id      = (int) ($saved['lease_id'] ?? $id);
         $d['lease_contract_id'] = $id;
 
-        $leaseId = $this->ensureLeaseFromParkingData($unitId, $d);
-        if ($leaseId > 0) {
-            $id = $leaseId;
-            $d['lease_contract_id'] = $leaseId;
-        }
-
-        $d = $this->persistParkingContractFields($unitId, $id, $d);
-
         $wantPdf = $this->request->getPost('pdf') || $this->request->getGet('pdf');
-        $sigB64  = (new ContractSignatureService($this->db))->signatureDataUri($contract['tenant_signature_path'] ?? '');
+        $leaseRow = $this->db->table('lease_contracts')->where('id', $id)->get()->getRowArray();
+        $sigB64  = (new ContractSignatureService($this->db))->signatureDataUri($leaseRow['tenant_signature_path'] ?? '');
 
         return $this->renderParkingContractDocument($d, (bool) $wantPdf, $sigB64);
     }

@@ -93,6 +93,8 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->post('properties/(:num)/units/store', 'Units::store/$1');
     $routes->get('properties/units/view/(:num)', 'Units::view/$1');
     $routes->get('properties/units/(:num)/parking-contract', 'Units::parkingContract/$1');
+    $routes->post('properties/units/(:num)/parking-contract/save', 'Units::parkingContractSave/$1');
+    $routes->post('properties/units/(:num)/parking-contract/generate-sign-link', 'Units::parkingContractGenerateSignLink/$1');
     $routes->get('properties/units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
     $routes->post('properties/units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
     $routes->get('properties/qrcode/(:num)',        'Facilities::qrcode/$1');
@@ -226,6 +228,8 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('units',                         'Units::all');
     $routes->get('units/view/(:num)',             'Units::view/$1');
     $routes->get('units/(:num)/parking-contract', 'Units::parkingContract/$1');
+    $routes->post('units/(:num)/parking-contract/save', 'Units::parkingContractSave/$1');
+    $routes->post('units/(:num)/parking-contract/generate-sign-link', 'Units::parkingContractGenerateSignLink/$1');
     $routes->get('units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
     $routes->post('units/(:num)/parking-contract/print', 'Units::parkingContractPrint/$1');
     $routes->get('units/(:num)',                  'Units::index/$1');

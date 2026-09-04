@@ -299,6 +299,8 @@ final class RemediationInventoryTest extends TestCase
         }
         $routes = file_get_contents($this->root . '/app/Config/Routes.php');
         $this->assertStringContainsString("get('units/(:num)/parking-contract/print'", $routes);
+        $this->assertStringContainsString("post('units/(:num)/parking-contract/save'", $routes);
+        $this->assertStringContainsString("post('units/(:num)/parking-contract/generate-sign-link'", $routes);
         $this->assertFileExists($this->root . '/app/Services/CompanyBrandingService.php');
         $this->assertStringContainsString('function fm_company_branding', file_get_contents($this->root . '/app/Helpers/fm_helper.php'));
         $svc = file_get_contents($this->root . '/app/Services/ParkingContractService.php');
@@ -696,6 +698,41 @@ final class RemediationInventoryTest extends TestCase
 
         $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
         $this->assertStringContainsString("'photos_json'", $leases);
+    }
+
+    public function testParkingContractSaveSignLinkAndRenewArchive(): void
+    {
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString('Units::parkingContractSave', $routes);
+        $this->assertStringContainsString('Units::parkingContractGenerateSignLink', $routes);
+
+        $units = file_get_contents($this->root . '/app/Controllers/Units.php');
+        $this->assertStringContainsString('function parkingContractSave', $units);
+        $this->assertStringContainsString('function parkingContractGenerateSignLink', $units);
+        $this->assertStringContainsString('saveParkingContractData', $units);
+
+        $trait = file_get_contents($this->root . '/app/Controllers/Traits/ParkingContractTrait.php');
+        $this->assertStringContainsString('function saveParkingContractData', $trait);
+        $this->assertStringContainsString('function renewParkingLease', $trait);
+        $this->assertStringContainsString('function archiveParkingContractDocument', $trait);
+        $this->assertStringContainsString('function persistParkingFormSnapshot', $trait);
+        $this->assertStringContainsString("'doc_type'    => 'parking_contract'", $trait);
+
+        $svc = file_get_contents($this->root . '/app/Services/ParkingContractService.php');
+        $this->assertStringContainsString('mergeSavedParkingForm', $svc);
+        $this->assertStringContainsString("'parking_form'", $svc);
+
+        $form = file_get_contents($this->root . '/app/Views/leases/parking_contract_form.php');
+        $this->assertStringContainsString('Save contract data', $form);
+        $this->assertStringContainsString('Save &amp; generate signing link', $form);
+        $this->assertStringContainsString('saveUrl', $form);
+        $this->assertStringContainsString('signLinkUrl', $form);
+        $this->assertStringContainsString('renew=1', file_get_contents($this->root . '/app/Views/units/view.php'));
+
+        $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
+        $this->assertStringContainsString('saveUrl', $leases);
+        $this->assertStringContainsString('signLinkUrl', $leases);
+        $this->assertStringContainsString('saveParkingContractData', $leases);
     }
 
     public function testPublicContractSignShowsFullDocumentWithSignIn(): void

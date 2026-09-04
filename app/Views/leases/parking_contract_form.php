@@ -12,7 +12,17 @@
 </div>
 
 <?php if (!empty($renewMode)): ?>
-<div class="alert alert-info small mb-3">Renew mode — update dates, rent, and tenant details, then print the new parking agreement.</div>
+<div class="alert alert-info small mb-3">
+  Renew mode — update dates and rent, then <strong>Save</strong> or <strong>Generate signing link</strong>.
+  The previous agreement is archived automatically under this unit’s <strong>Documents</strong> tab when you save or print a renewal.
+</div>
+<?php endif; ?>
+
+<?php if ($signSql = session()->getFlashdata('sign_sql')): ?>
+<div class="alert alert-warning py-2 mb-3">
+  <div class="small fw-semibold mb-1"><?= esc(session()->getFlashdata('error') ?? 'Run this SQL in phpMyAdmin:') ?></div>
+  <pre class="small mb-0" style="white-space:pre-wrap"><?= esc($signSql) ?></pre>
+</div>
 <?php endif; ?>
 
 <div class="form-card mb-3">
@@ -220,8 +230,15 @@
     </details>
 
     <div class="d-flex gap-2 flex-wrap mt-4">
+      <?php
+      $saveAction = $saveUrl ?? base_url('units/' . (int) ($unit['id'] ?? 0) . '/parking-contract/save');
+      $signAction = $signLinkUrl ?? base_url('units/' . (int) ($unit['id'] ?? 0) . '/parking-contract/generate-sign-link');
+      ?>
+      <button type="submit" formaction="<?= esc($saveAction) ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-save me-1"></i>Save contract data</button>
+      <button type="submit" formaction="<?= esc($signAction) ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-link-45deg me-1"></i>Save &amp; generate signing link</button>
       <button type="submit" class="btn btn-fm-primary btn-sm"><i class="bi bi-printer me-1"></i>Preview &amp; Print</button>
       <button type="submit" class="btn btn-fm-outline btn-sm" name="pdf" value="1"><i class="bi bi-file-earmark-pdf me-1"></i>Download PDF</button>
+      <a href="<?= base_url('units/view/' . (int) ($unit['id'] ?? 0) . '#tab-documents') ?>" class="btn btn-fm-outline btn-sm ms-auto"><i class="bi bi-folder2-open me-1"></i>Unit documents</a>
     </div>
   </form>
 </div>

@@ -115,6 +115,9 @@ trait ParkingContractTrait
             if (! empty($d['payment_terms']) && $this->db->fieldExists('payment_type', 'lease_contracts')) {
                 $patch['payment_type'] = esc((string) $d['payment_terms']);
             }
+            if (! empty($d['contract_date']) && $this->db->fieldExists('signed_date', 'lease_contracts')) {
+                $patch['signed_date'] = esc((string) $d['contract_date']);
+            }
             if ($patch !== []) {
                 $patch['updated_at'] = date('Y-m-d H:i:s');
                 $this->db->table('lease_contracts')->where('id', $leaseId)->update($patch);
@@ -246,5 +249,266 @@ trait ParkingContractTrait
         $d['contract_photos'] = $final;
 
         return $d;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function collectParkingFormData(int $unitId, ?int $leaseId = null): array
+    {
+        $svc      = new ParkingContractService($this->db);
+        $defaults = $svc->buildDefaults($unitId, $leaseId);
+        $merged   = $svc->mergeFormInput($defaults, array_merge(
+            $this->request->getPost() ?? [],
+            $this->request->getGet() ?? []
+        ));
+        $postLeaseId = (int) ($this->request->getPost('lease_contract_id') ?? $this->request->getGet('contract_id') ?? 0);
+        if ($postLeaseId > 0) {
+            $merged['lease_contract_id'] = $postLeaseId;
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Save parking contract form data to unit + lease_contracts (no print).
+     *
+     * @return array{lease_id: int, d: array<string, mixed>}
+     */
+    protected function saveParkingContractData(int $unitId, bool $isRenew = false): array
+    {
+        $leaseId = (int) ($this->request->getPost('lease_contract_id') ?? $this->request->getGet('contract_id') ?? 0);
+        $d       = $this->collectParkingFormData($unitId, $leaseId > 0 ? $leaseId : null);
+
+        if ($isRenew && $leaseId > 0) {
+            $leaseId = $this->renewParkingLease($unitId, $leaseId, $d);
+        } else {
+            $leaseId = $this->ensureLeaseFromParkingData($unitId, $d);
+        }
+
+        if ($leaseId > 0) {
+            $d['lease_contract_id'] = $leaseId;
+            $d                      = $this->persistParkingContractFields($unitId, $leaseId, $d);
+            $this->persistParkingFormSnapshot($leaseId, $d);
+        }
+
+        return ['lease_id' => $leaseId, 'd' => $d];
+    }
+
+    /**
+     * Archive signed/unsigned parking agreement PDF under unit documents, mark lease renewed, create new lease row.
+     *
+     * @param array<string, mixed> $d
+     */
+    protected function renewParkingLease(int $unitId, int $oldLeaseId, array &$d): int
+    {
+        if (! $this->db->tableExists('lease_contracts')) {
+            return $oldLeaseId;
+        }
+
+        $old = $this->db->table('lease_contracts')->where('id', $oldLeaseId)->get()->getRowArray();
+        if (! $old) {
+            return $oldLeaseId;
+        }
+
+        $svc         = new ParkingContractService($this->db);
+        $archiveData = $svc->buildDefaults($unitId, $oldLeaseId);
+        $sigB64      = (new \App\Services\ContractSignatureService($this->db))
+            ->signatureDataUri($old['tenant_signature_path'] ?? '');
+        $this->archiveParkingContractDocument($unitId, $oldLeaseId, $archiveData, $sigB64);
+
+        $this->db->table('lease_contracts')->where('id', $oldLeaseId)->update([
+            'status'     => 'renewed',
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $newNumber = trim((string) ($d['contract_number'] ?? ''));
+        if ($newNumber === '' || $newNumber === ($old['contract_number'] ?? '')) {
+            $newNumber = $this->generateRenewedContractNumber((string) ($old['contract_number'] ?? 'PK'));
+            $d['contract_number'] = $newNumber;
+        }
+
+        $newRow = [
+            'contract_number'      => esc($newNumber),
+            'tenant_id'            => (int) ($old['tenant_id'] ?? 0),
+            'facility_id'          => (int) ($old['facility_id'] ?? 0),
+            'unit_id'              => $unitId,
+            'status'               => 'active',
+            'signed_date'          => ! empty($d['contract_date']) ? esc((string) $d['contract_date']) : ($d['start_date'] ?? date('Y-m-d')),
+            'billing_start_date'   => $d['start_date'] ?? $old['start_date'],
+            'start_date'           => $d['start_date'] ?? $old['start_date'],
+            'end_date'             => $d['end_date'] ?? $old['end_date'],
+            'rent_amount'          => (float) ($d['rent_amount'] ?? $old['rent_amount'] ?? 0),
+            'payment_frequency'    => $d['payment_frequency'] ?? $old['payment_frequency'] ?? 'monthly',
+            'payment_type'         => $d['payment_terms'] ?? $old['payment_type'] ?? 'cheque',
+            'created_by'           => function_exists('fm_session_user_id') ? fm_session_user_id() : null,
+            'created_at'           => date('Y-m-d H:i:s'),
+            'updated_at'           => date('Y-m-d H:i:s'),
+        ];
+
+        if ($this->db->fieldExists('company_id', 'lease_contracts')) {
+            $newRow['company_id'] = $old['company_id'] ?? null;
+        }
+        if ($this->db->fieldExists('contract_kind', 'lease_contracts')) {
+            $newRow['contract_kind'] = 'parking';
+        }
+        if ($this->db->fieldExists('tenant_signature_path', 'lease_contracts')) {
+            $newRow['tenant_signature_path'] = null;
+            $newRow['signature_token']       = null;
+            $newRow['tenant_signed_at']      = null;
+        }
+
+        $this->db->table('lease_contracts')->insert($newRow);
+        $newId = (int) $this->db->insertID();
+
+        return $newId > 0 ? $newId : $oldLeaseId;
+    }
+
+    protected function generateRenewedContractNumber(string $base): string
+    {
+        $base = trim($base) !== '' ? trim($base) : 'PK';
+        $base = preg_replace('/-R\d+$/', '', $base) ?? $base;
+
+        for ($i = 2; $i <= 99; $i++) {
+            $candidate = $base . '-R' . $i;
+            if ($this->db->table('lease_contracts')->where('contract_number', $candidate)->countAllResults() === 0) {
+                return $candidate;
+            }
+        }
+
+        return $base . '-R' . date('ymd');
+    }
+
+    /**
+     * @param array<string, mixed> $d
+     */
+    protected function persistParkingFormSnapshot(int $leaseId, array $d): void
+    {
+        if ($leaseId < 1 || ! $this->db->fieldExists('notes', 'lease_contracts')) {
+            return;
+        }
+
+        $snapshot = [];
+        foreach ($d as $key => $val) {
+            if (is_scalar($val) || $val === null) {
+                $snapshot[$key] = $val;
+            }
+        }
+
+        $this->db->table('lease_contracts')->where('id', $leaseId)->update([
+            'notes'      => json_encode(['parking_form' => $snapshot], JSON_UNESCAPED_UNICODE),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $d
+     */
+    protected function archiveParkingContractDocument(int $unitId, int $leaseId, array $d, string $tenantSignatureB64 = ''): void
+    {
+        if (! $this->db->tableExists('documents') || $unitId < 1) {
+            return;
+        }
+
+        $dir = WRITEPATH . 'uploads/documents';
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $contractNo = (string) ($d['contract_number'] ?? $leaseId);
+        $period     = ($d['start_date'] ?? '') . '_' . ($d['end_date'] ?? '');
+        $baseName   = 'parking_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $contractNo) . '_' . preg_replace('/[^0-9_-]/', '', $period);
+        $relPath    = null;
+
+        try {
+            if (class_exists(\Dompdf\Dompdf::class)) {
+                $html   = $this->renderParkingContractHtml($d, $tenantSignatureB64);
+                $dompdf = new \Dompdf\Dompdf();
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'portrait');
+                $dompdf->render();
+                $fileName = $baseName . '.pdf';
+                $fullPath = $dir . '/' . $fileName;
+                file_put_contents($fullPath, $dompdf->output());
+                $relPath = 'documents/' . $fileName;
+            } else {
+                $html     = $this->renderParkingContractHtml($d, $tenantSignatureB64);
+                $fileName = $baseName . '.html';
+                $fullPath = $dir . '/' . $fileName;
+                file_put_contents($fullPath, $html);
+                $relPath = 'documents/' . $fileName;
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Parking contract archive failed: ' . $e->getMessage());
+
+            return;
+        }
+
+        if ($relPath === null) {
+            return;
+        }
+
+        $title = 'Parking Contract ' . $contractNo . ' (' . ($d['start_date'] ?? '') . ' – ' . ($d['end_date'] ?? '') . ')';
+        $row   = [
+            'module'      => 'unit',
+            'ref_id'      => $unitId,
+            'title'       => $title,
+            'doc_type'    => 'parking_contract',
+            'description' => 'Archived lease #' . $leaseId . ' before renewal',
+            'file_path'   => $relPath,
+            'doc_number'  => $contractNo,
+            'doc_date'    => $d['contract_date'] ?? $d['start_date'] ?? null,
+            'uploaded_by' => function_exists('fm_session_user_id') ? fm_session_user_id() : null,
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ];
+
+        if ($this->db->fieldExists('facility_id', 'documents')) {
+            $unit = $this->db->table('units')->select('facility_id')->where('id', $unitId)->get()->getRowArray();
+            $row['facility_id'] = (int) ($unit['facility_id'] ?? 0) ?: null;
+        }
+
+        $this->db->table('documents')->insert($row);
+    }
+
+    /**
+     * @param array<string, mixed> $d
+     */
+    protected function renderParkingContractHtml(array $d, string $tenantSignatureB64 = ''): string
+    {
+        $svc          = new ParkingContractService($this->db);
+        $contractDate = (string) ($d['contract_date'] ?? date('Y-m-d'));
+        $duration     = $svc->durationMonths((string) ($d['start_date'] ?? ''), (string) ($d['end_date'] ?? ''));
+
+        return view('leases/parking_contract_print', $this->viewData([
+            'title'              => 'Parking Contract',
+            'd'                  => $d,
+            'settings'           => $this->settings,
+            'durationMonths'     => $duration,
+            'englishDay'         => $svc->englishDayName($contractDate),
+            'arabicDay'          => $svc->arabicDayName($contractDate),
+            'contractDateEn'     => $svc->formatDateEnLong($contractDate),
+            'contractDateAr'     => $svc->formatDateAr($contractDate),
+            'startDateEn'        => $svc->formatDateEn((string) ($d['start_date'] ?? '')),
+            'endDateEn'          => $svc->formatDateEn((string) ($d['end_date'] ?? '')),
+            'startDateAr'        => $svc->formatDateAr((string) ($d['start_date'] ?? '')),
+            'endDateAr'          => $svc->formatDateAr((string) ($d['end_date'] ?? '')),
+            'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
+            'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
+            'usePdf'             => true,
+            'pdfUrl'             => '',
+            'tenantSignatureB64' => $tenantSignatureB64,
+        ]));
+    }
+
+    protected function parkingContractRedirect(int $unitId, ?int $leaseId = null, bool $renew = false): string
+    {
+        helper('fm');
+        $url = fm_unit_parking_contract_url($unitId, $leaseId);
+        if ($renew) {
+            $url .= (str_contains($url, '?') ? '&' : '?') . 'renew=1';
+        }
+
+        return $url;
     }
 }

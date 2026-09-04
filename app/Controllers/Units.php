@@ -327,11 +327,19 @@ class Units extends BaseController
         }
 
         $leaseId = (int) ($this->request->getGet('contract_id') ?? 0);
+        $renewMode = (bool) $this->request->getGet('renew');
         $svc     = new ParkingContractService($this->db);
         $d       = $svc->buildDefaults($id, $leaseId > 0 ? $leaseId : null);
 
         if ($leaseId < 1 && ! empty($d['lease_contract_id'])) {
             $leaseId = (int) $d['lease_contract_id'];
+        }
+
+        if ($leaseId < 1) {
+            $leaseId = $this->ensureLeaseFromParkingData($id, $d);
+            if ($leaseId > 0) {
+                $d['lease_contract_id'] = $leaseId;
+            }
         }
 
         $activeLease = null;
@@ -347,10 +355,77 @@ class Units extends BaseController
             'd'           => $d,
             'backUrl'     => fm_unit_view_url($id),
             'printUrl'    => base_url('units/' . $id . '/parking-contract/print'),
-            'renewMode'   => (bool) $this->request->getGet('renew'),
+            'saveUrl'     => base_url('units/' . $id . '/parking-contract/save'),
+            'signLinkUrl' => base_url('units/' . $id . '/parking-contract/generate-sign-link'),
+            'renewMode'   => $renewMode,
             'activeLease' => $activeLease,
             'signLink'    => session()->getFlashdata('sign_link'),
         ]));
+    }
+
+    public function parkingContractSave(int $id)
+    {
+        if (! $this->request->is('post')) {
+            return redirect()->back();
+        }
+
+        $unit = $this->db->table('units')->where('id', $id)->get()->getRowArray();
+        if (! $unit || ! $this->isParkingUnitRow($unit)) {
+            return redirect()->back()->with('error', 'Invalid parking unit.');
+        }
+        $this->assertFacilityAccess((int) $unit['facility_id']);
+
+        $isRenew = (bool) ($this->request->getPost('renew') ?? $this->request->getGet('renew'));
+        $saved   = $this->saveParkingContractData($id, $isRenew);
+        $leaseId = (int) ($saved['lease_id'] ?? 0);
+
+        $msg = $isRenew && $leaseId > 0
+            ? 'Renewed parking contract saved. Previous agreement archived under unit Documents.'
+            : 'Parking contract data saved.';
+
+        return redirect()->to($this->parkingContractRedirect($id, $leaseId > 0 ? $leaseId : null))
+            ->with('success', $msg);
+    }
+
+    public function parkingContractGenerateSignLink(int $id)
+    {
+        if (! $this->request->is('post')) {
+            return redirect()->back();
+        }
+
+        $unit = $this->db->table('units')->where('id', $id)->get()->getRowArray();
+        if (! $unit || ! $this->isParkingUnitRow($unit)) {
+            return redirect()->back()->with('error', 'Invalid parking unit.');
+        }
+        $this->assertFacilityAccess((int) $unit['facility_id']);
+
+        $isRenew = (bool) ($this->request->getPost('renew') ?? false);
+        $saved   = $this->saveParkingContractData($id, $isRenew);
+        $leaseId = (int) ($saved['lease_id'] ?? 0);
+
+        if ($leaseId < 1) {
+            return redirect()->to($this->parkingContractRedirect($id))
+                ->with('error', 'Save tenant and contract dates before generating a signing link.');
+        }
+
+        $svc = new ContractSignatureService($this->db);
+        if (! $svc->tableReady()) {
+            helper('fm');
+
+            return redirect()->to($this->parkingContractRedirect($id, $leaseId))
+                ->with('error', 'Digital signature columns are missing. Run this SQL in phpMyAdmin:')
+                ->with('sign_sql', fm_signature_migration_sql());
+        }
+
+        $token = $svc->ensureToken($leaseId);
+        if ($token === null) {
+            return redirect()->to($this->parkingContractRedirect($id, $leaseId))
+                ->with('error', 'Could not generate signing link.');
+        }
+
+        return redirect()->to($this->parkingContractRedirect($id, $leaseId))
+            ->with('success', 'Contract saved. Signing link ready — copy and send to the tenant.')
+            ->with('sign_link', $svc->signUrl($token));
     }
 
     public function parkingContractPrint(int $id)
@@ -364,25 +439,10 @@ class Units extends BaseController
             return redirect()->to(base_url('units/view/' . $id))->with('error', 'Not a parking unit.');
         }
 
-        $svc      = new ParkingContractService($this->db);
-        $leaseId  = (int) ($this->request->getPost('lease_contract_id') ?? $this->request->getGet('contract_id') ?? 0);
-        $defaults = $svc->buildDefaults($id, $leaseId > 0 ? $leaseId : null);
-        $d        = $svc->mergeFormInput($defaults, array_merge(
-            $this->request->getPost() ?? [],
-            $this->request->getGet() ?? []
-        ));
-
-        $leaseId = $this->ensureLeaseFromParkingData($id, $d);
-        if ($leaseId > 0) {
-            $d['lease_contract_id'] = $leaseId;
-        }
-
         $isRenew = (bool) ($this->request->getPost('renew') ?? $this->request->getGet('renew'));
-        if ($isRenew && $leaseId > 0) {
-            (new ContractSignatureService($this->db))->clearSignature($leaseId, true);
-        }
-
-        $d = $this->persistParkingContractFields($id, $leaseId > 0 ? $leaseId : null, $d);
+        $saved   = $this->saveParkingContractData($id, $isRenew);
+        $leaseId = (int) ($saved['lease_id'] ?? 0);
+        $d       = $saved['d'];
 
         $wantPdf = $this->request->getPost('pdf') || $this->request->getGet('pdf');
         $sigB64  = '';
