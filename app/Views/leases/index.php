@@ -25,6 +25,11 @@
 <?php endif; ?>
 <?php if (!empty($migrationRequired)): ?>
 <div class="alert alert-warning">Run migration <strong>2026-07-23-120000_PmErpModules</strong> to create <code>lease_contracts</code>.</div>
+<?php elseif (empty($signatureReady)): ?>
+<div class="alert alert-warning small">
+  <strong>Digital signature</strong> needs DB columns. Run section 14 of <code>database/patches/fm-erp-complete.sql</code> or
+  <code>database/patches/2026-09-02-lease-contract-signature.sql</code> in phpMyAdmin.
+</div>
 <?php else: ?>
 <form class="filters-inline form-card mb-3" method="get">
   <input type="text" name="search" class="form-control form-control-sm" placeholder="Contract, tenant, unit…" value="<?= esc($filters['search'] ?? '') ?>">
@@ -37,9 +42,10 @@
   <strong>Sync from Units</strong> copies inline unit contracts (property + parking) and legacy FM unit contracts into this lease list, including plate numbers for parking units.
 </p>
 <div class="form-card p-0"><div class="table-responsive"><table class="table table-registry table-sm mb-0">
-<thead><tr><th>Contract</th><th>Tenant</th><th>Property</th><th>Unit</th><th>Type</th><th>Rent</th><th>Period</th><th>Status</th><th></th></tr></thead>
+<thead><tr><th>Contract</th><th>Tenant</th><th>Property</th><th>Unit</th><th>Type</th><th>Rent</th><th>Period</th><th>Status</th><th>Sign</th><th></th></tr></thead>
 <tbody><?php foreach ($contracts as $c):
   $isParking = strtolower((string)($c['unit_type'] ?? '')) === 'parking' || ($c['contract_kind'] ?? '') === 'parking';
+  $isSigned = trim((string)($c['tenant_signature_path'] ?? '')) !== '';
 ?><tr>
 <td><a href="<?= base_url('contracts/'.$c['id']) ?>"><?= esc($c['contract_number']) ?></a></td>
 <td><?= esc($c['tenant_name'] ?? '—') ?></td><td><?= esc($c['facility_name'] ?? '—') ?></td><td><?= esc($c['unit_number'] ?? '—') ?></td>
@@ -47,9 +53,20 @@
 <td><?= number_format((float)$c['rent_amount'],2) ?> <?= esc($currency) ?></td>
 <td class="small"><?= esc($c['start_date']) ?> – <?= esc($c['end_date']) ?></td>
 <td><span class="badge bg-secondary"><?= esc($c['status']) ?></span></td>
-<td><a href="<?= base_url('contracts/'.$c['id'].'/edit') ?>" class="btn btn-sm btn-fm-outline">Edit</a>
+<td class="small">
+  <?php if ($signatureReady ?? false): ?>
+    <?php if ($isSigned): ?><span class="badge bg-success">Signed</span><?php else: ?><span class="badge bg-warning text-dark">Pending</span><?php endif; ?>
+  <?php else: ?><span class="text-muted">—</span><?php endif; ?>
+</td>
+<td>
+  <a href="<?= base_url('contracts/'.$c['id']) ?>" class="btn btn-sm btn-fm-outline" title="Open contract">View</a>
+  <?php if (($signatureReady ?? false) && ! $isSigned): ?>
+  <form method="post" action="<?= base_url('contracts/'.$c['id'].'/generate-sign-link') ?>" class="d-inline"><?= csrf_field() ?>
+    <button type="submit" class="btn btn-sm btn-fm-primary" title="Generate tenant signing link"><i class="bi bi-pen"></i></button>
+  </form>
+  <?php endif; ?>
 <?php if ($isParking): ?><a href="<?= base_url('contracts/'.$c['id'].'/parking-print') ?>" class="btn btn-sm btn-success">Renew</a><?php endif; ?></td>
-</tr><?php endforeach; ?><?php if (empty($contracts)): ?><tr><td colspan="9" class="text-center text-muted py-4">No contracts.</td></tr><?php endif; ?></tbody>
+</tr><?php endforeach; ?><?php if (empty($contracts)): ?><tr><td colspan="10" class="text-center text-muted py-4">No contracts.</td></tr><?php endif; ?></tbody>
 </table></div></div>
 <?php endif; ?>
 <?= $this->endSection() ?>

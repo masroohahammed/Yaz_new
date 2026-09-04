@@ -65,11 +65,16 @@ $parkingContractUrl = fm_unit_parking_contract_url((int) $unit['id'], isset($act
 </div>
 <?php endif; ?>
 
-<?php if (!empty($isParkingUnit) && !empty($activeLeaseContract)): ?>
+<?php if (!empty($activeLeaseContract)): ?>
 <?= view('partials/_lease_signature_panel', [
     'lease' => $activeLeaseContract,
     'signLink' => session()->getFlashdata('sign_link'),
+    'signatureReady' => $signatureReady ?? null,
 ]) ?>
+<?php elseif (!empty($leaseContracts)): ?>
+<div class="alert alert-info small mb-3">
+  Open the <a href="<?= base_url('contracts/' . (int) $leaseContracts[0]['id']) ?>">lease contract</a> to generate a tenant signing link.
+</div>
 <?php endif; ?>
 
 <div class="row g-3">

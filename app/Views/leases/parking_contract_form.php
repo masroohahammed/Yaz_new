@@ -227,9 +227,18 @@
 </div>
 
 <?php if (!empty($activeLease)): ?>
+<?php
+$sigReady = null;
+try {
+    $sigReady = (new \App\Services\ContractSignatureService(\Config\Database::connect()))->tableReady();
+} catch (\Throwable $e) {
+    $sigReady = false;
+}
+?>
 <?= view('partials/_lease_signature_panel', [
     'lease' => $activeLease,
     'signLink' => $signLink ?? null,
+    'signatureReady' => $sigReady,
 ]) ?>
 <?php endif; ?>
 <?= $this->endSection() ?>

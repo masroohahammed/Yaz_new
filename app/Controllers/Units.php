@@ -254,6 +254,9 @@ class Units extends BaseController
             ? $this->db->table('assets')->where('facility_id', $unit['facility_id'])->where('deleted_at', null)->limit(20)->get()->getResultArray()
             : [];
 
+        $signatureReady = $this->db->tableExists('lease_contracts')
+            && $this->db->fieldExists('signature_token', 'lease_contracts');
+
         $workspace = $this->currentWorkspace();
 
         $unitDocuments = [];
@@ -278,6 +281,7 @@ class Units extends BaseController
             'assets'        => $assets,
             'workspace'     => $workspace,
             'isParkingUnit' => $this->isParkingUnitRow($unit),
+            'signatureReady' => $signatureReady,
             'unitDocuments' => $unitDocuments,
             'scanUrl'       => $scanUrl,
             'qrImageUrl'    => $qrImageUrl,

@@ -42,6 +42,14 @@ $preUnit = $preUnit ?? null;
   </div>
   <div class="mt-3"><button class="btn btn-fm-primary"><?= $isEdit ? 'Update' : 'Create' ?> Contract</button></div>
 </form></div>
+
+<?php if ($isEdit && ! empty($contract['id'])): ?>
+<?= view('partials/_lease_signature_panel', [
+    'lease' => $contract,
+    'signLink' => session()->getFlashdata('sign_link'),
+    'signatureReady' => $signatureReady ?? null,
+]) ?>
+<?php endif; ?>
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
 <script>

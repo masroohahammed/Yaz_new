@@ -840,4 +840,26 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('ContractSignatureService.php', $script);
         $this->assertStringContainsString('fm-erp-complete.sql', $script);
     }
+
+    public function testSignatureUiOnAllContractSurfaces(): void
+    {
+        $index = file_get_contents($this->root . '/app/Views/leases/index.php');
+        $this->assertStringContainsString('generate-sign-link', $index);
+        $this->assertStringContainsString('Sign</th>', $index);
+
+        $show = file_get_contents($this->root . '/app/Views/leases/show.php');
+        $this->assertStringContainsString('Send for signature', $show);
+        $this->assertStringContainsString('_lease_signature_panel', $show);
+
+        $form = file_get_contents($this->root . '/app/Views/leases/form.php');
+        $this->assertStringContainsString('_lease_signature_panel', $form);
+
+        $unitView = file_get_contents($this->root . '/app/Views/units/view.php');
+        $this->assertStringContainsString('_lease_signature_panel', $unitView);
+        $this->assertStringNotContainsString('isParkingUnit) && !empty($activeLeaseContract', $unitView);
+
+        $panel = file_get_contents($this->root . '/app/Views/partials/_lease_signature_panel.php');
+        $this->assertStringContainsString('signatureReady', $panel);
+        $this->assertStringContainsString('Generate signing link', $panel);
+    }
 }

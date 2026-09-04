@@ -69,6 +69,7 @@ class Leases extends BaseController
             'total'       => $total,
             'currentPage' => $pg['page'],
             'perPage'     => $pg['perPage'],
+            'signatureReady' => (new ContractSignatureService($this->db))->tableReady(),
         ]));
     }
 
@@ -201,6 +202,7 @@ class Leases extends BaseController
             'amendments' => $amendments,
             'offers'     => $offers,
             'documents'  => $documents,
+            'signatureReady' => (new ContractSignatureService($this->db))->tableReady(),
         ]));
     }
 
@@ -229,6 +231,7 @@ class Leases extends BaseController
             'tenants'    => $this->tenantOptions(),
             'facilities' => $this->facilityOptions(),
             'units'      => $units,
+            'signatureReady' => (new ContractSignatureService($this->db))->tableReady(),
         ]));
     }
 

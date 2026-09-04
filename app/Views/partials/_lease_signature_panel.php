@@ -1,8 +1,9 @@
 <?php
 /**
  * Digital signature actions for a lease contract row.
- * @var array<string,mixed>|null $lease
- * @var string|null $signLink Flash copy of signing URL
+ * @var array<string,mixed>|null  $lease
+ * @var string|null               $signLink Flash copy of signing URL
+ * @var bool|null                 $signatureReady DB columns present (null = auto-detect)
  */
 $lease = $lease ?? null;
 if (empty($lease['id'])) {
@@ -11,8 +12,15 @@ if (empty($lease['id'])) {
 $leaseId = (int) $lease['id'];
 $hasSignature = trim((string) ($lease['tenant_signature_path'] ?? '')) !== '';
 $signedAt = $lease['tenant_signed_at'] ?? null;
+if ($signatureReady === null) {
+    try {
+        $signatureReady = (new \App\Services\ContractSignatureService(\Config\Database::connect()))->tableReady();
+    } catch (\Throwable $e) {
+        $signatureReady = false;
+    }
+}
 ?>
-<div class="form-card mb-3">
+<div class="form-card mb-3" id="digitalSignaturePanel">
   <h6 class="text-muted text-uppercase small mb-3">Digital signature</h6>
   <?php if (! empty($signLink)): ?>
 <div class="alert alert-info py-2 mb-3">
@@ -30,7 +38,13 @@ $signedAt = $lease['tenant_signed_at'] ?? null;
   <pre class="small mb-0" style="white-space:pre-wrap"><?= esc($signSql) ?></pre>
 </div>
 <?php endif; ?>
-  <?php if ($hasSignature): ?>
+  <?php if (! $signatureReady): ?>
+    <div class="alert alert-warning py-2 mb-3">
+      <div class="small fw-semibold mb-1">Digital signature requires a database update</div>
+      <p class="small mb-2">Run this SQL in phpMyAdmin, then refresh this page:</p>
+      <pre class="small mb-2" style="white-space:pre-wrap"><?php helper('fm'); echo esc(fm_signature_migration_sql()); ?></pre>
+    </div>
+  <?php elseif ($hasSignature): ?>
     <?= view('partials/_signature_display', [
         'path'  => $lease['tenant_signature_path'],
         'label' => 'Tenant signature' . ($signedAt ? ' · ' . date('d M Y H:i', strtotime((string) $signedAt)) : ''),

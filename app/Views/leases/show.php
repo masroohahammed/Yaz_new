@@ -34,6 +34,13 @@ $isParkingLease = strtolower((string)($contract['unit_type'] ?? '')) === 'parkin
       <button class="btn btn-sm btn-primary" data-confirm="Generate invoices for the full contract period? Existing periods will be skipped."><i class="bi bi-receipt me-1"></i>Generate Invoices</button>
     </form>
     <?php endif; ?>
+    <?php if (($signatureReady ?? true) && empty(trim($contract['tenant_signature_path'] ?? ''))): ?>
+    <form method="post" action="<?= base_url('contracts/'.$contract['id'].'/generate-sign-link') ?>" class="d-inline"><?= csrf_field() ?>
+      <button type="submit" class="btn btn-sm btn-fm-primary"><i class="bi bi-pen me-1"></i>Send for signature</button>
+    </form>
+    <?php elseif (! empty(trim($contract['tenant_signature_path'] ?? ''))): ?>
+    <span class="badge bg-success align-self-center"><i class="bi bi-check-circle me-1"></i>Signed</span>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -47,6 +54,7 @@ $isParkingLease = strtolower((string)($contract['unit_type'] ?? '')) === 'parkin
 <?= view('partials/_lease_signature_panel', [
     'lease' => $contract,
     'signLink' => session()->getFlashdata('sign_link'),
+    'signatureReady' => $signatureReady ?? null,
 ]) ?>
 
 <div class="row g-3 mb-3">
