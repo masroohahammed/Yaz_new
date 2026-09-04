@@ -41,7 +41,7 @@
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     const rect = canvas.getBoundingClientRect();
     const cssWidth = Math.max(rect.width || canvas.offsetWidth || 320, 1);
-    const cssHeight = Math.max(rect.height || canvas.offsetHeight || 72, 1);
+    const cssHeight = Math.max(rect.height || canvas.offsetHeight || 120, 1);
     const needsResize =
       canvas.width !== Math.round(cssWidth * ratio) ||
       canvas.height !== Math.round(cssHeight * ratio);
@@ -224,7 +224,7 @@
         }
         const rect = canvas.getBoundingClientRect();
         const cssWidth = Math.max(rect.width || canvas.offsetWidth || 320, 1);
-        const cssHeight = Math.max(rect.height || canvas.offsetHeight || 72, 1);
+        const cssHeight = Math.max(rect.height || canvas.offsetHeight || 120, 1);
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, cssWidth, cssHeight);
         if (input) {

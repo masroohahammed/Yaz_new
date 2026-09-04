@@ -20,7 +20,7 @@ $showImage     = $tenantSig !== '';
 <div class="tenant-signature-anchor<?= $showPad ? ' is-signing' : '' ?><?= $showImage ? ' is-signed' : '' ?>">
   <?php if ($showPad): ?>
     <div class="sign-pad-wrap">
-      <canvas id="<?= esc($padId) ?>_canvas" class="fm-signature-canvas" style="width:100%;height:72px;display:block"></canvas>
+      <canvas id="<?= esc($padId) ?>_canvas" class="fm-signature-canvas"></canvas>
       <input type="hidden" name="<?= esc($fieldName) ?>" id="<?= esc($padId) ?>_input">
     </div>
     <button type="button" class="sign-pad-clear fm-sig-clear" data-canvas="<?= esc($padId) ?>_canvas" data-input="<?= esc($padId) ?>_input">Clear</button>

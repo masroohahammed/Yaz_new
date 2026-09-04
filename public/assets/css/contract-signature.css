@@ -1,0 +1,148 @@
+/**
+ * Contract tenant signature pad — shared by public sign and print views.
+ */
+:root {
+  --contract-sig-height: 120px;
+  --contract-sig-min-height: 120px;
+  --contract-sig-image-max: 84px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --contract-sig-height: 168px;
+    --contract-sig-min-height: 168px;
+    --contract-sig-image-max: 100px;
+  }
+}
+
+.tenant-signature-anchor {
+  position: relative;
+  min-height: var(--contract-sig-min-height);
+  margin: 16px 0 8px;
+  width: 100%;
+}
+
+.tenant-signature-anchor .tenant-signature-line {
+  border-top: 1px solid #333;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.tenant-signature-anchor .tenant-signature-image {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  max-height: var(--contract-sig-image-max);
+  max-width: 96%;
+  display: block;
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+.tenant-signature-anchor.is-signing {
+  position: relative;
+  border: 1.5px dashed #888;
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 12px 4px;
+  box-sizing: border-box;
+  min-height: calc(var(--contract-sig-height) + 28px);
+}
+
+.tenant-signature-anchor.is-signing .sign-pad-wrap {
+  position: relative;
+  width: 100%;
+  margin: 0 0 6px;
+}
+
+.tenant-signature-anchor.is-signing .fm-signature-canvas {
+  width: 100% !important;
+  height: var(--contract-sig-height) !important;
+  min-height: var(--contract-sig-height);
+  background: #fff;
+  touch-action: none;
+  cursor: crosshair;
+  -webkit-user-select: none;
+  user-select: none;
+  display: block;
+  border-radius: 4px;
+}
+
+.tenant-signature-anchor.is-signing .tenant-signature-line {
+  position: relative;
+  margin-top: 6px;
+}
+
+.tenant-signature-anchor.is-signing .sign-pad-clear {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 2;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  border: none;
+  color: #666;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.sign-pad-clear {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 10px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-top: 4px;
+}
+
+.signature-hint {
+  font-size: 10px;
+  color: #666;
+  margin-top: 8px;
+}
+
+/* Public sign page — full-width signing area on web and mobile */
+.sign-body .signature-block {
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+
+.sign-body .signature-party:has(.tenant-signature-anchor.is-signing) {
+  width: 100%;
+}
+
+.sign-body .signatures .col-en:has(.tenant-signature-anchor.is-signing) {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .sign-body .tenant-signature-anchor.is-signing {
+    padding: 14px 14px 6px;
+  }
+
+  .sign-body .tenant-signature-anchor.is-signing .fm-signature-canvas {
+    height: var(--contract-sig-height) !important;
+  }
+}
+
+@media print {
+  .tenant-signature-anchor.is-signing .sign-pad-clear,
+  .sign-pad-clear {
+    display: none !important;
+  }
+
+  .tenant-signature-anchor.is-signing {
+    border: none;
+    padding: 0;
+    min-height: var(--contract-sig-min-height);
+  }
+}

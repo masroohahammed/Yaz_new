@@ -90,6 +90,7 @@ if (! empty($companyLogoUrl)) {
 <meta name="contract:status" content="<?= esc($metaStatus) ?>">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="<?= base_url('assets/css/contract-signature.css') ?>" rel="stylesheet">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; background: #eef1f5; color: #333; line-height: 1.55; font-family: 'DM Sans', Arial, sans-serif; }
@@ -153,36 +154,7 @@ if (! empty($companyLogoUrl)) {
   .signature-party { text-align: center; font-size: 11px; }
   .signature-line { border-top: 1px solid #333; margin: 36px 0 6px; }
   .signature-img { max-height: 64px; max-width: 100%; margin: 0 auto 6px; display: block; }
-  .tenant-signature-anchor { position: relative; min-height: 72px; margin: 28px 0 6px; }
-  .tenant-signature-anchor .tenant-signature-line { border-top: 1px solid #333; width: 100%; position: absolute; left: 0; right: 0; bottom: 0; }
-  .tenant-signature-anchor .tenant-signature-image { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); max-height: 56px; max-width: 92%; display: block; object-fit: contain; object-position: bottom center; }
-  .tenant-signature-anchor.is-signing {
-    position: relative;
-    border: 1.5px dashed #888;
-    background: #fff;
-    border-radius: 6px;
-    padding: 8px 10px 0;
-    box-sizing: border-box;
-  }
-  .tenant-signature-anchor.is-signing .sign-pad-wrap {
-    position: relative;
-    left: auto; right: auto; bottom: auto;
-    border: none;
-    background: transparent;
-    margin: 0 0 4px;
-  }
-  .tenant-signature-anchor.is-signing .fm-signature-canvas {
-    height: 72px !important;
-    background: #fff;
-    touch-action: none;
-    cursor: crosshair;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  .tenant-signature-anchor.is-signing .tenant-signature-line { position: relative; margin-top: 4px; }
-  .tenant-signature-anchor.is-signing .sign-pad-clear { position: absolute; top: 6px; right: 8px; font-size: 9px; background: rgba(255,255,255,.9); border: none; color: #666; cursor: pointer; text-decoration: underline; padding: 2px 4px; }
   .signature-label { font-size: 10px; color: #666; }
-  .signature-hint { font-size: 9px; color: #666; margin-top: 6px; }
   /* Parking lease styles */
   .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; align-items: start; }
   .col-en { font-family: 'DM Sans', Arial, sans-serif; font-size: 10.5px; direction: ltr; text-align: left; }
@@ -198,39 +170,7 @@ if (! empty($companyLogoUrl)) {
   .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
   .sig-line { border-top: 1px solid #333; margin-top: 36px; padding-top: 4px; font-size: 9.5px; }
   .sig-img { max-height: 56px; max-width: 100%; display: block; margin: 0 auto 4px; }
-  .tenant-signature-anchor { position: relative; min-height: 68px; margin: 12px 0 0; }
-  .tenant-signature-anchor .tenant-signature-line { border-top: 1px solid #333; width: 100%; position: absolute; left: 0; right: 0; bottom: 0; }
-  .tenant-signature-anchor .tenant-signature-image { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); max-height: 50px; max-width: 92%; display: block; object-fit: contain; object-position: bottom center; }
-  .tenant-signature-anchor.is-signing {
-    position: relative;
-    border: 1.5px dashed #888;
-    background: #fff;
-    border-radius: 6px;
-    padding: 8px 10px 0;
-    box-sizing: border-box;
-  }
-  .tenant-signature-anchor.is-signing .sign-pad-wrap {
-    position: relative;
-    left: auto; right: auto; bottom: auto;
-    border: none;
-    background: transparent;
-    margin: 0 0 4px;
-  }
-  .tenant-signature-anchor.is-signing .fm-signature-canvas {
-    height: 72px !important;
-    background: #fff;
-    touch-action: none;
-    cursor: crosshair;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  .tenant-signature-anchor.is-signing .tenant-signature-line { position: relative; margin-top: 4px; }
-  .tenant-signature-anchor.is-signing .sign-pad-clear { position: absolute; top: 6px; right: 8px; font-size: 9px; background: rgba(255,255,255,.9); border: none; color: #666; cursor: pointer; text-decoration: underline; padding: 2px 4px; }
   .landlord-line { text-align: center; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; margin: 6px 0 10px; color: #333; }
-  .sign-pad-clear {
-    background: none; border: none; color: #666; font-size: 10px; cursor: pointer;
-    text-decoration: underline; padding: 0; margin-top: 2px;
-  }
   .signed-banner {
     max-width: 210mm; margin: 0 auto 12px; padding: 10px 14px; border-radius: 8px;
     background: #d1e7dd; color: #0f5132; font-size: 12px; text-align: center;
@@ -243,9 +183,11 @@ if (! empty($companyLogoUrl)) {
     @page { size: A4 portrait; margin: 8mm; }
   }
   @media (max-width: 768px) {
-    .info-grid, .signature-block, .bilingual, .signatures { grid-template-columns: 1fr; }
+    .info-grid, .bilingual, .signatures { grid-template-columns: 1fr; }
     .sign-toolbar { position: static; }
-    .sign-body { padding: 12px; }
+    .sign-body { padding: 12px 12px 24px; }
+    .sign-body.has-submit-bar { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+    .page { padding: 10mm 10mm; }
   }
 </style>
 </head>
