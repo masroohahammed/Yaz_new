@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\ContractSignatureService;
+use App\Services\LeaseContractDocumentService;
 use App\Services\SignatureStorageService;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\RequestInterface;
@@ -26,7 +27,7 @@ class PublicContractSign extends Controller
         LoggerInterface $logger
     ): void {
         parent::initController($request, $response, $logger);
-        $this->db = \Config\Database::connect();
+        $this->db       = \Config\Database::connect();
         $this->settings = self::loadSettings($this->db);
     }
 
@@ -39,20 +40,30 @@ class PublicContractSign extends Controller
         }
 
         helper('fm');
-        $branding = fm_company_branding($this->settings, (int) ($contract['company_id'] ?? 1) ?: 1);
+        $docSvc   = new LeaseContractDocumentService($this->db);
         $signed   = trim((string) ($contract['tenant_signature_path'] ?? '')) !== '';
+        $sigB64   = $signed ? $svc->signatureDataUri($contract['tenant_signature_path']) : '';
+        $isParking = $docSvc->isParking($contract);
 
-        return view('public/contract_sign', [
-            'title'              => 'Sign Lease Contract',
-            'settings'           => $branding['settings'],
-            'companyLogoUrl'     => $branding['logoUrl'],
-            'contract'           => $contract,
-            'tenantQid'          => $svc->tenantQid($contract),
-            'token'              => $token,
-            'alreadySigned'      => $signed,
-            'signaturePreview'   => $signed ? $svc->signatureDataUri($contract['tenant_signature_path']) : '',
-            'signedAt'           => $contract['tenant_signed_at'] ?? null,
-        ]);
+        $viewData = [
+            'title'          => 'Sign Lease Contract',
+            'contract'       => $contract,
+            'token'          => $token,
+            'alreadySigned'  => $signed,
+            'signedAt'       => $contract['tenant_signed_at'] ?? null,
+            'isParking'      => $isParking,
+            'signMode'       => true,
+            'tenantSignatureB64' => $sigB64,
+            'usePdf'         => false,
+        ];
+
+        if ($isParking) {
+            $viewData = array_merge($viewData, $docSvc->parkingViewData($contract, $this->settings, $sigB64));
+        } else {
+            $viewData = array_merge($viewData, $docSvc->standardViewData($contract, $this->settings, $sigB64));
+        }
+
+        return view('public/contract_sign', $viewData);
     }
 
     public function submit(string $token)

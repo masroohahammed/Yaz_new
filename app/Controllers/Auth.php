@@ -8,13 +8,17 @@ class Auth extends BaseController
 
     public function login()
     {
+        $this->captureLoginRedirect();
+
         if (session()->get('logged_in')) {
             return $this->postLoginRedirect();
         }
+
         return view('auth/login', [
             'settings'       => $this->settings,
             'companyLogoUrl' => $this->logoUrl(),
             'title'          => 'Login',
+            'redirectAfter'  => session()->get('redirect_after_login'),
         ]);
     }
 
@@ -317,6 +321,26 @@ class Auth extends BaseController
             }
         } catch (\Throwable $e) {
             log_message('error', 'login_attempt log failed: ' . $e->getMessage());
+        }
+    }
+
+    private function captureLoginRedirect(): void
+    {
+        $redirect = $this->request->getGet('redirect');
+        if (! is_string($redirect) || trim($redirect) === '') {
+            return;
+        }
+
+        $redirect = trim($redirect);
+        $base     = rtrim(base_url(), '/');
+        if (str_starts_with($redirect, $base)) {
+            session()->set('redirect_after_login', $redirect);
+
+            return;
+        }
+
+        if (str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//')) {
+            session()->set('redirect_after_login', base_url(ltrim($redirect, '/')));
         }
     }
 

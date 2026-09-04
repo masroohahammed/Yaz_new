@@ -661,4 +661,20 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('tenant_signature_path', $sigPatch);
         $this->assertStringContainsString('signature_token', $sigPatch);
     }
+
+    public function testPublicContractSignShowsFullDocumentWithSignIn(): void
+    {
+        $signView = file_get_contents($this->root . '/app/Views/public/contract_sign.php');
+        $this->assertStringContainsString('standard_contract_document', $signView);
+        $this->assertStringContainsString('parking_contract_document', $signView);
+        $this->assertStringContainsString('_doc_letterhead', file_get_contents($this->root . '/app/Views/leases/partials/standard_contract_document.php'));
+        $this->assertStringContainsString('Sign in', $signView);
+        $this->assertStringContainsString('_tenant_signature_slot', file_get_contents($this->root . '/app/Views/leases/partials/standard_contract_document.php'));
+
+        $controller = file_get_contents($this->root . '/app/Controllers/PublicContractSign.php');
+        $this->assertStringContainsString('LeaseContractDocumentService', $controller);
+
+        $auth = file_get_contents($this->root . '/app/Controllers/Auth.php');
+        $this->assertStringContainsString('captureLoginRedirect', $auth);
+    }
 }
