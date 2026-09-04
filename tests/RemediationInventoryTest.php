@@ -628,6 +628,7 @@ final class RemediationInventoryTest extends TestCase
         $routes = file_get_contents($this->root . '/app/Config/Routes.php');
         $this->assertStringContainsString('PublicContractSign::show', $routes);
         $this->assertStringContainsString('Leases::generateSignLink', $routes);
+        $this->assertStringContainsString('Leases::regenerateSignLink', $routes);
         $this->assertStringContainsString('Leases::downloadSignedPdf', $routes);
         $this->assertStringContainsString('Leases::whatsappShareSigned', $routes);
     }
@@ -708,7 +709,10 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('assertLandlordAccess', $landlords);
 
         $settings = file_get_contents($this->root . '/app/Controllers/Settings.php');
-        $this->assertStringContainsString('syncUserAccessFields', $settings);
-        $this->assertStringContainsString('syncUserFacilities', $settings);
+        $this->assertStringContainsString('tenant-signature-anchor', file_get_contents($this->root . '/app/Views/leases/partials/_tenant_signature_slot.php'));
+
+        $sigSvc = file_get_contents($this->root . '/app/Services/ContractSignatureService.php');
+        $this->assertStringContainsString('regenerateSigningLink', $sigSvc);
+        $this->assertStringContainsString('clearSignature', $sigSvc);
     }
 }
