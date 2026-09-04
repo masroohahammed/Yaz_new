@@ -610,11 +610,22 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('ADD COLUMN IF NOT EXISTS `scope_type`', $patch);
     }
 
-    public function testPmSidebarUsesCompanyOneBranding(): void
+    public function testSidebarUsesSessionCompanyBranding(): void
     {
         $sidebar = file_get_contents($this->root . '/app/Views/layouts/_sidebar.php');
-        $this->assertStringContainsString("(\$workspace === 'pm') ? 1", $sidebar);
+        $this->assertStringContainsString("session()->get('company_id')", $sidebar);
         $this->assertStringContainsString('fm_company_branding', $sidebar);
+        $this->assertStringContainsString('sidebar-brand-logo', $sidebar);
+
+        $css = file_get_contents($this->root . '/public/assets/css/fm-theme-shell.css');
+        $this->assertStringContainsString('width: 100%', $css);
+        $this->assertStringContainsString('height: 40px', $css);
+
+        $createUser = file_get_contents($this->root . '/app/Views/settings/create_user.php');
+        $this->assertStringContainsString('name="company_id"', $createUser);
+
+        $settings = file_get_contents($this->root . '/app/Controllers/Settings.php');
+        $this->assertStringContainsString("'company_id' => (int) \$this->request->getPost('company_id')", $settings);
     }
 
     public function testPmDashboardExpiryLinksAndSignatureRoutes(): void
@@ -709,6 +720,8 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('assertLandlordAccess', $landlords);
 
         $settings = file_get_contents($this->root . '/app/Controllers/Settings.php');
+        $this->assertStringContainsString('syncUserAccessFields', $settings);
+        $this->assertStringContainsString('syncUserFacilities', $settings);
         $this->assertStringContainsString('tenant-signature-anchor', file_get_contents($this->root . '/app/Views/leases/partials/_tenant_signature_slot.php'));
 
         $sigSvc = file_get_contents($this->root . '/app/Services/ContractSignatureService.php');

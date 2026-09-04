@@ -32,26 +32,25 @@ foreach ($menu as &$item) {
 }
 unset($item);
 
-$currentPath = service('uri')->getPath();
-$brandingId  = ($workspace === 'pm') ? 1 : null;
-$branding    = fm_company_branding([], $brandingId);
+$currentPath     = service('uri')->getPath();
+$sessionCompanyId = (int) session()->get('company_id');
+$brandingId      = $sessionCompanyId > 0 ? $sessionCompanyId : null;
+$branding        = fm_company_branding([], $brandingId);
 $cname       = $branding['settings']['company_name'] ?? fm_setting('company_name', 'FM ERP');
 $clogoUrl    = $branding['logoUrl'] ?: fm_logo_url(fm_setting('company_logo', ''));
 ?>
 <aside id="sidebar" class="sidebar cc-sidebar d-flex flex-column ch-sidebar">
 
-<div class="sidebar-brand d-flex align-items-center px-3 py-3">
-        <?php if ($clogoUrl): ?>
-            <img src="<?= esc($clogoUrl) ?>" alt="<?= esc($cname) ?>" class="sidebar-logo me-2">
-        <?php else: ?>
-            <span class="sidebar-logo-placeholder me-2"><i class="bi bi-buildings"></i></span>
-        <?php endif; ?>
-        <div class="flex-grow-1 overflow-hidden">
-            <?php if (! $clogoUrl): ?>
-            <span class="sidebar-brand-text fw-semibold text-truncate d-block"><?= esc($cname) ?></span>
+<div class="sidebar-brand d-flex align-items-center px-3 py-3 gap-2">
+        <div class="sidebar-brand-logo flex-grow-1 min-w-0">
+            <?php if ($clogoUrl): ?>
+                <img src="<?= esc($clogoUrl) ?>" alt="<?= esc($cname) ?>" class="sidebar-logo">
+            <?php else: ?>
+                <span class="sidebar-logo-placeholder"><i class="bi bi-buildings"></i></span>
+                <span class="sidebar-brand-text fw-semibold text-truncate d-block mt-1"><?= esc($cname) ?></span>
             <?php endif; ?>
         </div>
-        <button class="btn btn-sm ms-auto d-xl-none text-secondary" id="sidebarClose" aria-label="Close sidebar">
+        <button class="btn btn-sm flex-shrink-0 d-xl-none text-secondary" id="sidebarClose" aria-label="Close sidebar">
             <i class="bi bi-x-lg"></i>
         </button>
     </div>

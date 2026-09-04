@@ -33,20 +33,28 @@ body.fm-layout {
   font-weight: 700 !important;
 }
 
+.sidebar.cc-sidebar .sidebar-brand-logo {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .sidebar.cc-sidebar .sidebar-logo {
-  max-height: 40px;
-  max-width: 120px;
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 40px;
   object-fit: contain;
+  object-position: left center;
+  display: block;
 }
 
 .sidebar.cc-sidebar .sidebar-logo-placeholder {
   background: rgba(255, 255, 255, 0.15) !important;
   color: #fff !important;
-  width: 40px;
+  width: 100%;
   height: 40px;
   border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sidebar.cc-sidebar .sidebar-workspace-badge {

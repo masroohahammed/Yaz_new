@@ -305,8 +305,13 @@ class Settings extends BaseController
             $tenants = $tq->get()->getResultArray();
         }
 
+        $companies = [];
+        if ($this->db->tableExists('companies')) {
+            $companies = $this->db->table('companies')->orderBy('name', 'ASC')->get()->getResultArray();
+        }
+
         return view('settings/create_user', $this->viewData(array_merge(
-            ['title' => 'Add User', 'roles' => $roles, 'tenants' => $tenants],
+            ['title' => 'Add User', 'roles' => $roles, 'tenants' => $tenants, 'companies' => $companies],
             $this->userAccessFormExtras()
         )));
     }
@@ -319,17 +324,19 @@ class Settings extends BaseController
             'email'            => 'required|valid_email|is_unique[users.email]',
             'password'         => 'required|min_length[8]',
             'confirm_password' => 'required|matches[password]',
+            'company_id'       => 'required|integer|greater_than[0]',
         ];
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         $row = [
-            'role_id'  => (int) $this->request->getPost('role_id'),
-            'name'     => esc($this->request->getPost('name')),
-            'email'    => $this->request->getPost('email'),
-            'phone'    => esc($this->request->getPost('phone')),
-            'password' => password_hash($this->request->getPost('password'), PASSWORD_BCRYPT),
-            'status'   => 'active',
+            'role_id'    => (int) $this->request->getPost('role_id'),
+            'name'       => esc($this->request->getPost('name')),
+            'email'      => $this->request->getPost('email'),
+            'phone'      => esc($this->request->getPost('phone')),
+            'password'   => password_hash($this->request->getPost('password'), PASSWORD_BCRYPT),
+            'status'     => 'active',
+            'company_id' => (int) $this->request->getPost('company_id'),
         ];
         if ($this->db->fieldExists('tenant_id', 'users')) {
             $row['tenant_id'] = (int) $this->request->getPost('tenant_id') ?: null;
@@ -362,8 +369,13 @@ class Settings extends BaseController
             $tenants = $tq->get()->getResultArray();
         }
 
+        $companies = [];
+        if ($this->db->tableExists('companies')) {
+            $companies = $this->db->table('companies')->orderBy('name', 'ASC')->get()->getResultArray();
+        }
+
         return view('settings/edit_user', $this->viewData(array_merge(
-            ['title' => 'Edit User', 'user' => $user, 'roles' => $roles, 'tenants' => $tenants],
+            ['title' => 'Edit User', 'user' => $user, 'roles' => $roles, 'tenants' => $tenants, 'companies' => $companies],
             $this->userAccessFormExtras($user)
         )));
     }
@@ -371,11 +383,17 @@ class Settings extends BaseController
     public function updateUser(int $id)
     {
         $this->requireRole('super_admin');
+        $companyId = (int) $this->request->getPost('company_id');
+        if ($companyId <= 0) {
+            return redirect()->back()->withInput()->with('error', 'Please select a company.');
+        }
+
         $update = [
-            'name'    => esc($this->request->getPost('name')),
-            'phone'   => esc($this->request->getPost('phone')),
-            'role_id' => (int) $this->request->getPost('role_id'),
-            'status'  => $this->request->getPost('status'),
+            'name'       => esc($this->request->getPost('name')),
+            'phone'      => esc($this->request->getPost('phone')),
+            'role_id'    => (int) $this->request->getPost('role_id'),
+            'status'     => $this->request->getPost('status'),
+            'company_id' => $companyId,
         ];
         if ($this->db->fieldExists('tenant_id', 'users')) {
             $update['tenant_id'] = (int) $this->request->getPost('tenant_id') ?: null;

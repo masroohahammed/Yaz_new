@@ -6,6 +6,14 @@
 <div class="mb-3"><label class="form-label">Full Name *</label><input type="text" name="name" class="form-control" value="<?= esc($user['name']) ?>" required></div>
 <div class="mb-3"><label class="form-label">Email *</label><input type="email" name="email" class="form-control" value="<?= esc($user['email']) ?>" required></div>
 <div class="mb-3"><label class="form-label">Phone</label><input type="text" name="phone" class="form-control" value="<?= esc($user['phone']) ?>"></div>
+<div class="mb-3"><label class="form-label">Company *</label>
+  <select name="company_id" class="form-select" required>
+    <option value="">— Select company —</option>
+    <?php foreach ($companies ?? [] as $c): ?>
+      <option value="<?= (int) $c['id'] ?>" <?= (int) ($user['company_id'] ?? 0) === (int) $c['id'] ? 'selected' : '' ?>><?= esc($c['name']) ?></option>
+    <?php endforeach; ?>
+  </select>
+</div>
 <div class="mb-3"><label class="form-label">Role</label><select name="role_id" class="form-select"><?php foreach($roles as $r): ?><option value="<?= $r['id'] ?>" <?= $user['role_id']==$r['id']?'selected':'' ?>><?= esc($r['display_name']) ?></option><?php endforeach; ?></select></div>
 <div class="mb-3"><label class="form-label">Link to Tenant <span class="text-muted small">(portal access)</span></label>
   <select name="tenant_id" class="form-select">
