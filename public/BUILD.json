@@ -1,7 +1,7 @@
 {
   "release": "2026-09-04-remediation",
   "date": "2026-09-04",
-  "commit": "10fe1b1",
+  "commit": "813a561",
   "branch": "cursor/fm-erp-remediation-a002",
   "features": [
     "digital_signature_and_signing_links",
