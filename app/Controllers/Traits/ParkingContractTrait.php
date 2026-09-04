@@ -196,20 +196,216 @@ trait ParkingContractTrait
         }
 
         helper('fm');
-        (new UnitLeaseSyncService($this->db))->syncUnitRow(
-            $unit,
-            function_exists('fm_session_user_id') ? fm_session_user_id() : null
-        );
+        try {
+            (new UnitLeaseSyncService($this->db))->syncUnitRow(
+                $unit,
+                function_exists('fm_session_user_id') ? fm_session_user_id() : null
+            );
+        } catch (\Throwable $e) {
+            log_message('error', 'Parking lease sync skipped: ' . $e->getMessage());
+        }
 
-        $existing = $this->db->table('lease_contracts')
-            ->where('unit_id', $unitId)
-            ->where('deleted_at', null)
-            ->whereIn('status', ['active', 'draft'])
+        $existingQ = $this->db->table('lease_contracts')->where('unit_id', $unitId);
+        if ($this->db->fieldExists('deleted_at', 'lease_contracts')) {
+            $existingQ->where('deleted_at', null);
+        }
+        $existing = $existingQ
+            ->whereIn('status', ['active', 'draft', 'expired'])
             ->orderBy('id', 'DESC')
             ->limit(1)
             ->get()->getRowArray();
 
-        return (int) ($existing['id'] ?? 0);
+        if ($existing) {
+            return (int) $existing['id'];
+        }
+
+        return $this->upsertParkingLeaseFromForm($unitId, $d);
+    }
+
+    /**
+     * Create or update lease_contracts directly from parking form data when unit sync did not produce a row.
+     *
+     * @param array<string, mixed> $d
+     */
+    protected function upsertParkingLeaseFromForm(int $unitId, array $d): int
+    {
+        if (! $this->db->tableExists('lease_contracts') || ! $this->db->tableExists('units')) {
+            return 0;
+        }
+
+        $start      = trim((string) ($d['start_date'] ?? ''));
+        $end        = trim((string) ($d['end_date'] ?? ''));
+        $tenantName = trim((string) ($d['tenant_name'] ?? ''));
+        if ($start === '' || $end === '' || $tenantName === '') {
+            return 0;
+        }
+
+        $unit = $this->db->table('units u')
+            ->select('u.*, f.company_id as facility_company_id')
+            ->join('facilities f', 'f.id = u.facility_id', 'left')
+            ->where('u.id', $unitId)
+            ->get()->getRowArray();
+        if (! $unit) {
+            return 0;
+        }
+
+        $tenantId = $this->resolveParkingTenantId(
+            $tenantName,
+            (string) ($d['tenant_phone'] ?? ''),
+            (string) ($d['tenant_qid'] ?? ''),
+            (int) ($unit['facility_company_id'] ?? 0) ?: null
+        );
+        if ($tenantId < 1) {
+            return 0;
+        }
+
+        $preferredId = (int) ($d['lease_contract_id'] ?? 0);
+        $existing    = null;
+        if ($preferredId > 0) {
+            $existing = $this->db->table('lease_contracts')->where('id', $preferredId)->get()->getRowArray();
+        }
+        if (! $existing) {
+            $existingQ = $this->db->table('lease_contracts')->where('unit_id', $unitId);
+            if ($this->db->fieldExists('deleted_at', 'lease_contracts')) {
+                $existingQ->where('deleted_at', null);
+            }
+            $existing = $existingQ
+                ->whereIn('status', ['active', 'draft', 'expired'])
+                ->orderBy('id', 'DESC')
+                ->limit(1)
+                ->get()->getRowArray();
+        }
+
+        $contractNo = trim((string) ($d['contract_number'] ?? ''));
+        if ($contractNo === '') {
+            $contractNo = trim((string) ($unit['contract_number'] ?? ''));
+        }
+        if ($contractNo === '') {
+            $contractNo = 'PK-' . $unitId . '-' . date('ymd');
+        }
+
+        $row = [
+            'tenant_id'          => $tenantId,
+            'facility_id'        => (int) $unit['facility_id'],
+            'unit_id'            => $unitId,
+            'status'             => 'active',
+            'signed_date'        => ! empty($d['contract_date']) ? esc((string) $d['contract_date']) : $start,
+            'billing_start_date' => $start,
+            'start_date'         => $start,
+            'end_date'           => $end,
+            'rent_amount'        => (float) ($d['rent_amount'] ?? 0),
+            'payment_frequency'  => $d['payment_frequency'] ?? 'monthly',
+            'payment_type'       => $d['payment_terms'] ?? 'cheque',
+            'updated_at'         => date('Y-m-d H:i:s'),
+        ];
+
+        if ($this->db->fieldExists('company_id', 'lease_contracts')) {
+            $row['company_id'] = (int) ($unit['facility_company_id'] ?? 0) ?: null;
+        }
+        if ($this->db->fieldExists('contract_kind', 'lease_contracts')) {
+            $row['contract_kind'] = 'parking';
+        }
+        if ($this->db->fieldExists('contract_number', 'lease_contracts')) {
+            $row['contract_number'] = esc($contractNo);
+        }
+        if ($this->db->fieldExists('plate_number', 'lease_contracts') && ! empty($d['plate_number'])) {
+            $row['plate_number'] = esc((string) $d['plate_number']);
+        }
+        if ($this->db->fieldExists('vehicle_type', 'lease_contracts') && ! empty($d['vehicle_type'])) {
+            $row['vehicle_type'] = esc((string) $d['vehicle_type']);
+        }
+        if ($this->db->fieldExists('tenant_qid', 'lease_contracts')) {
+            $qid = trim((string) ($d['tenant_qid'] ?? ''));
+            $row['tenant_qid'] = $qid !== '' ? esc($qid) : null;
+        }
+
+        if ($existing) {
+            $this->db->table('lease_contracts')->where('id', (int) $existing['id'])->update($row);
+
+            return (int) $existing['id'];
+        }
+
+        $row['created_by'] = function_exists('fm_session_user_id') ? fm_session_user_id() : null;
+        $row['created_at'] = date('Y-m-d H:i:s');
+        $this->db->table('lease_contracts')->insert($row);
+        $newId = (int) $this->db->insertID();
+
+        return $newId > 0 ? $newId : 0;
+    }
+
+    protected function resolveParkingTenantId(
+        string $name,
+        string $phone,
+        string $qid,
+        ?int $companyId
+    ): int {
+        if (! $this->db->tableExists('tenants')) {
+            return 0;
+        }
+
+        $name  = trim($name);
+        $phone = trim($phone);
+        $qid   = trim($qid);
+
+        if ($qid !== '' && $this->db->fieldExists('qid_no', 'tenants')) {
+            $q = $this->db->table('tenants')->where('qid_no', $qid);
+            if ($this->db->fieldExists('deleted_at', 'tenants')) {
+                $q->where('deleted_at', null);
+            }
+            if ($companyId) {
+                $q->where('company_id', $companyId);
+            }
+            $row = $q->limit(1)->get()->getRowArray();
+            if ($row) {
+                return (int) $row['id'];
+            }
+        }
+
+        if ($phone !== '') {
+            $q = $this->db->table('tenants')->where('phone', $phone);
+            if ($this->db->fieldExists('deleted_at', 'tenants')) {
+                $q->where('deleted_at', null);
+            }
+            if ($companyId) {
+                $q->where('company_id', $companyId);
+            }
+            $row = $q->limit(1)->get()->getRowArray();
+            if ($row) {
+                return (int) $row['id'];
+            }
+        }
+
+        if ($name !== '') {
+            $q = $this->db->table('tenants')->where('full_name', $name);
+            if ($this->db->fieldExists('deleted_at', 'tenants')) {
+                $q->where('deleted_at', null);
+            }
+            if ($companyId) {
+                $q->where('company_id', $companyId);
+            }
+            $row = $q->limit(1)->get()->getRowArray();
+            if ($row) {
+                return (int) $row['id'];
+            }
+        }
+
+        $insert = [
+            'full_name'   => $name,
+            'phone'       => $phone !== '' ? $phone : '00000000',
+            'tenant_type' => 'Personal',
+            'status'      => 'active',
+            'created_at'  => date('Y-m-d H:i:s'),
+        ];
+        if ($companyId && $this->db->fieldExists('company_id', 'tenants')) {
+            $insert['company_id'] = $companyId;
+        }
+        if ($qid !== '' && $this->db->fieldExists('qid_no', 'tenants')) {
+            $insert['qid_no'] = $qid;
+        }
+
+        $this->db->table('tenants')->insert($insert);
+
+        return (int) $this->db->insertID();
     }
 
     /**
@@ -284,6 +480,9 @@ trait ParkingContractTrait
             $leaseId = $this->renewParkingLease($unitId, $leaseId, $d);
         } else {
             $leaseId = $this->ensureLeaseFromParkingData($unitId, $d);
+            if ($leaseId < 1) {
+                $leaseId = $this->upsertParkingLeaseFromForm($unitId, $d);
+            }
         }
 
         if ($leaseId > 0) {

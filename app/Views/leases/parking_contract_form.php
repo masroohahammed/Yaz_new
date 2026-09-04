@@ -35,8 +35,11 @@
     <?php if (!empty($renewMode)): ?>
     <input type="hidden" name="renew" value="1">
     <?php endif; ?>
-    <?php if (!empty($d['lease_contract_id'])): ?>
-    <input type="hidden" name="lease_contract_id" value="<?= (int) $d['lease_contract_id'] ?>">
+    <?php
+      $formLeaseId = (int) ($d['lease_contract_id'] ?? ($activeLease['id'] ?? 0));
+    ?>
+    <?php if ($formLeaseId > 0): ?>
+    <input type="hidden" name="lease_contract_id" value="<?= $formLeaseId ?>">
     <?php endif; ?>
     <div class="row g-3">
       <div class="col-md-4">
@@ -67,7 +70,7 @@
 
       <div class="col-md-6">
         <label class="form-label small fw-semibold">Tenant name</label>
-        <input type="text" name="tenant_name" class="form-control form-control-sm" value="<?= esc($d['tenant_name'] ?? '') ?>">
+        <input type="text" name="tenant_name" class="form-control form-control-sm" value="<?= esc($d['tenant_name'] ?? '') ?>" required>
       </div>
       <div class="col-md-3">
         <label class="form-label small fw-semibold">QID / Passport</label>

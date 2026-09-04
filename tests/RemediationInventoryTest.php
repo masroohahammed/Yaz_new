@@ -716,6 +716,8 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('function renewParkingLease', $trait);
         $this->assertStringContainsString('function archiveParkingContractDocument', $trait);
         $this->assertStringContainsString('function persistParkingFormSnapshot', $trait);
+        $this->assertStringContainsString('function upsertParkingLeaseFromForm', $trait);
+        $this->assertStringContainsString('function resolveParkingTenantId', $trait);
         $this->assertStringContainsString("'doc_type'    => 'parking_contract'", $trait);
 
         $svc = file_get_contents($this->root . '/app/Services/ParkingContractService.php');
@@ -725,8 +727,9 @@ final class RemediationInventoryTest extends TestCase
         $form = file_get_contents($this->root . '/app/Views/leases/parking_contract_form.php');
         $this->assertStringContainsString('Save contract data', $form);
         $this->assertStringContainsString('Save &amp; generate signing link', $form);
-        $this->assertStringContainsString('saveUrl', $form);
-        $this->assertStringContainsString('signLinkUrl', $form);
+        $this->assertStringContainsString('name="lease_contract_id"', $form);
+        $this->assertStringContainsString('name="tenant_name"', $form);
+        $this->assertStringContainsString('required', $form);
         $this->assertStringContainsString('renew=1', file_get_contents($this->root . '/app/Views/units/view.php'));
 
         $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');

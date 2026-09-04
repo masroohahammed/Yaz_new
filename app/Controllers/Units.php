@@ -345,6 +345,9 @@ class Units extends BaseController
         $activeLease = null;
         if ($leaseId > 0 && $this->db->tableExists('lease_contracts')) {
             $activeLease = $this->db->table('lease_contracts')->where('id', $leaseId)->get()->getRowArray();
+            if ($activeLease) {
+                $d['lease_contract_id'] = $leaseId;
+            }
         }
 
         helper('fm');
@@ -404,8 +407,23 @@ class Units extends BaseController
         $leaseId = (int) ($saved['lease_id'] ?? 0);
 
         if ($leaseId < 1) {
+            $d       = $saved['d'];
+            $missing = [];
+            if (trim((string) ($d['tenant_name'] ?? '')) === '') {
+                $missing[] = 'tenant name';
+            }
+            if (trim((string) ($d['start_date'] ?? '')) === '') {
+                $missing[] = 'start date';
+            }
+            if (trim((string) ($d['end_date'] ?? '')) === '') {
+                $missing[] = 'end date';
+            }
+            $msg = $missing !== []
+                ? 'Please fill in: ' . implode(', ', $missing) . ' before generating a signing link.'
+                : 'Could not save the contract record. Ensure tenant name and contract dates are filled in.';
+
             return redirect()->to($this->parkingContractRedirect($id))
-                ->with('error', 'Save tenant and contract dates before generating a signing link.');
+                ->with('error', $msg);
         }
 
         $svc = new ContractSignatureService($this->db);
