@@ -301,3 +301,33 @@ ALTER TABLE `lease_contracts`
   ADD COLUMN IF NOT EXISTS `tenant_signed_at` DATETIME NULL;
 
 CREATE INDEX IF NOT EXISTS `idx_lc_signature_token` ON `lease_contracts` (`signature_token`);
+
+-- 15) Parking contract photos (optional, up to 3 on form and print)
+ALTER TABLE `lease_contracts`
+  ADD COLUMN IF NOT EXISTS `photos_json` TEXT NULL AFTER `building_no`;
+
+-- 16) User ↔ landlord link (property ownership scoping for landlord portal users)
+ALTER TABLE `users`
+  ADD COLUMN IF NOT EXISTS `landlord_id` INT UNSIGNED NULL AFTER `tenant_id`;
+
+CREATE INDEX IF NOT EXISTS `idx_users_landlord` ON `users` (`landlord_id`);
+
+-- 17) user_facilities / user_property_assignments AUTO_INCREMENT (fixes users/update duplicate PK '0')
+UPDATE `user_facilities` uf
+JOIN (SELECT COALESCE(MAX(id), 0) AS mx FROM `user_facilities`) t
+SET uf.id = t.mx + uf.user_id
+WHERE uf.id = 0;
+
+ALTER TABLE `user_facilities`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `user_property_assignments`
+  MODIFY `role_type` enum('manager','property_manager','real_estate_manager','landlord','caretaker','other') NOT NULL DEFAULT 'manager';
+
+UPDATE `user_property_assignments` upa
+JOIN (SELECT COALESCE(MAX(id), 0) AS mx FROM `user_property_assignments`) t
+SET upa.id = t.mx + upa.user_id
+WHERE upa.id = 0;
+
+ALTER TABLE `user_property_assignments`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;

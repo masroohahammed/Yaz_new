@@ -1,11 +1,18 @@
--- Consolidated PM ERP upgrade patches (run after base fmstech_fm.sql)
--- Prefer: php spark migrate
--- Migrations covered:
---   2026-07-23-100000_WorkspaceArchitecture
---   2026-07-23-120000_PmErpModules
---   2026-07-23-140000_PmWorkflowExtras
---   2026-07-23-150000_PmSecondaryModules
---   2026-07-23-160000_PmOpsSecurityMedia
+-- PM ERP / FM ERP — deployment checklist (Sep 2026 remediation)
+-- Preferred: php spark migrate
+-- Alternative: run database/patches/fm-erp-complete.sql (single consolidated patch)
 
--- If spark is unavailable, run migrations via CLI or apply each migration class.
-SELECT 'Run: php spark migrate' AS deploy_instruction;
+-- Individual patches (if applying selectively):
+--   database/patches/2026-09-02-lease-contract-signature.sql   — digital signature + signing links
+--   database/patches/2026-09-04-parking-contract-photos.sql    — parking contract photos_json
+--   database/patches/2026-09-04-user-landlord-link.sql         — users.landlord_id
+--   database/patches/2026-09-04-user-facilities-autoincrement.sql — user update PK fix
+
+-- Application features on cursor/fm-erp-remediation-a002 / main (948bdb8+):
+--   • Digital signature: generate/regenerate tenant signing link, public sign page, signed PDF
+--   • Property access: PM company-wide, REM/landlord assigned-only, multi-assign on property form
+--   • KPI visibility: ui.kpi permission in Settings → Roles & Permissions
+--   • Parking contract photos (optional, max 3)
+--   • Sidebar company logo from session; company picker on user forms
+
+SELECT 'Run: php spark migrate  OR  source database/patches/fm-erp-complete.sql' AS deploy_instruction;
