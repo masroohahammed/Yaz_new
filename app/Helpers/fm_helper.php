@@ -411,8 +411,6 @@ if (! function_exists('fm_unit_renew_url')) {
     }
 }
 
-}
-
 if (! function_exists('fm_can_view_kpis')) {
     function fm_can_view_kpis(?string $role = null): bool
     {
