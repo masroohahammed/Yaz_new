@@ -25,12 +25,13 @@
 <?php endif; ?>
 <?php if (!empty($migrationRequired)): ?>
 <div class="alert alert-warning">Run migration <strong>2026-07-23-120000_PmErpModules</strong> to create <code>lease_contracts</code>.</div>
-<?php elseif (empty($signatureReady)): ?>
+<?php else: ?>
+<?php if (empty($signatureReady)): ?>
 <div class="alert alert-warning small">
   <strong>Digital signature</strong> needs DB columns. Run section 14 of <code>database/patches/fm-erp-complete.sql</code> or
   <code>database/patches/2026-09-02-lease-contract-signature.sql</code> in phpMyAdmin.
 </div>
-<?php else: ?>
+<?php endif; ?>
 <form class="filters-inline form-card mb-3" method="get">
   <input type="text" name="search" class="form-control form-control-sm" placeholder="Contract, tenant, unit…" value="<?= esc($filters['search'] ?? '') ?>">
   <select name="status" class="form-select form-select-sm"><option value="">All statuses</option><?php foreach (['draft','active','expired','terminated','renewed'] as $s): ?><option value="<?= $s ?>" <?= ($filters['status']??'')===$s?'selected':'' ?>><?= ucfirst($s) ?></option><?php endforeach; ?></select>
