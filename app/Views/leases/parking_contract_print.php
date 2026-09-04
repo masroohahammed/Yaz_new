@@ -34,6 +34,12 @@ $unitNo    = esc($d['parking_unit_no'] ?? '');
   .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
   .sig-line { border-top: 1px solid #333; margin-top: 36px; padding-top: 4px; font-size: 9.5px; }
   .sig-img { max-height: 56px; max-width: 100%; display: block; margin: 0 auto 4px; }
+  .tenant-signature-anchor { position: relative; min-height: 68px; margin: 12px 0 0; }
+  .tenant-signature-anchor .tenant-signature-line { border-top: 1px solid #333; width: 100%; position: absolute; left: 0; right: 0; bottom: 0; }
+  .tenant-signature-anchor .tenant-signature-image { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); max-height: 50px; max-width: 92%; display: block; object-fit: contain; object-position: bottom center; }
+  .tenant-signature-anchor.is-signing .sign-pad-wrap { position: absolute; left: 0; right: 0; bottom: 8px; border: none; background: transparent; margin: 0; }
+  .tenant-signature-anchor.is-signing .fm-signature-canvas { height: 54px !important; background: transparent; }
+  .tenant-signature-anchor.is-signing .sign-pad-clear { position: absolute; top: -2px; right: 0; font-size: 9px; background: none; border: none; color: #666; cursor: pointer; text-decoration: underline; padding: 0; }
   .landlord-line { text-align: center; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; margin: 6px 0 10px; color: #333; }
   @media print {
     .no-print { display: none !important; }

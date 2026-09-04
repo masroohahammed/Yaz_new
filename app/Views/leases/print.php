@@ -22,6 +22,12 @@
   .signature-party { text-align: center; font-size: 11px; }
   .signature-line { border-top: 1px solid #333; margin: 36px 0 6px; }
   .signature-img { max-height: 64px; max-width: 100%; margin: 0 auto 6px; display: block; }
+  .tenant-signature-anchor { position: relative; min-height: 72px; margin: 28px 0 6px; }
+  .tenant-signature-anchor .tenant-signature-line { border-top: 1px solid #333; width: 100%; position: absolute; left: 0; right: 0; bottom: 0; }
+  .tenant-signature-anchor .tenant-signature-image { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); max-height: 56px; max-width: 92%; display: block; object-fit: contain; object-position: bottom center; }
+  .tenant-signature-anchor.is-signing .sign-pad-wrap { position: absolute; left: 0; right: 0; bottom: 10px; border: none; background: transparent; margin: 0; }
+  .tenant-signature-anchor.is-signing .fm-signature-canvas { height: 58px !important; background: transparent; }
+  .tenant-signature-anchor.is-signing .sign-pad-clear { position: absolute; top: 0; right: 0; font-size: 9px; background: none; border: none; color: #666; cursor: pointer; text-decoration: underline; padding: 0; }
   .signature-label { font-size: 10px; color: #666; }
   .print-btn { position: fixed; top: 15px; right: 15px; background: <?= esc($settings['primary_color'] ?? '#76002b') ?>; color: #fff; border: none; padding: 8px 16px; cursor: pointer; border-radius: 8px; font-size: 12px; }
   @media print { .print-btn { display: none; } .page { padding: 10mm; } }

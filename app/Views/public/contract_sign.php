@@ -153,6 +153,12 @@ if (! empty($companyLogoUrl)) {
   .signature-party { text-align: center; font-size: 11px; }
   .signature-line { border-top: 1px solid #333; margin: 36px 0 6px; }
   .signature-img { max-height: 64px; max-width: 100%; margin: 0 auto 6px; display: block; }
+  .tenant-signature-anchor { position: relative; min-height: 72px; margin: 28px 0 6px; }
+  .tenant-signature-anchor .tenant-signature-line { border-top: 1px solid #333; width: 100%; position: absolute; left: 0; right: 0; bottom: 0; }
+  .tenant-signature-anchor .tenant-signature-image { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); max-height: 56px; max-width: 92%; display: block; object-fit: contain; object-position: bottom center; }
+  .tenant-signature-anchor.is-signing .sign-pad-wrap { position: absolute; left: 0; right: 0; bottom: 10px; border: none; background: transparent; margin: 0; }
+  .tenant-signature-anchor.is-signing .fm-signature-canvas { height: 58px !important; background: transparent; }
+  .tenant-signature-anchor.is-signing .sign-pad-clear { position: absolute; top: 0; right: 0; font-size: 9px; background: none; border: none; color: #666; cursor: pointer; text-decoration: underline; padding: 0; }
   .signature-label { font-size: 10px; color: #666; }
   .signature-hint { font-size: 9px; color: #666; margin-top: 6px; }
   /* Parking lease styles */
@@ -170,6 +176,12 @@ if (! empty($companyLogoUrl)) {
   .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
   .sig-line { border-top: 1px solid #333; margin-top: 36px; padding-top: 4px; font-size: 9.5px; }
   .sig-img { max-height: 56px; max-width: 100%; display: block; margin: 0 auto 4px; }
+  .tenant-signature-anchor { position: relative; min-height: 68px; margin: 12px 0 0; }
+  .tenant-signature-anchor .tenant-signature-line { border-top: 1px solid #333; width: 100%; position: absolute; left: 0; right: 0; bottom: 0; }
+  .tenant-signature-anchor .tenant-signature-image { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); max-height: 50px; max-width: 92%; display: block; object-fit: contain; object-position: bottom center; }
+  .tenant-signature-anchor.is-signing .sign-pad-wrap { position: absolute; left: 0; right: 0; bottom: 8px; border: none; background: transparent; margin: 0; }
+  .tenant-signature-anchor.is-signing .fm-signature-canvas { height: 54px !important; background: transparent; }
+  .tenant-signature-anchor.is-signing .sign-pad-clear { position: absolute; top: -2px; right: 0; font-size: 9px; background: none; border: none; color: #666; cursor: pointer; text-decoration: underline; padding: 0; }
   .landlord-line { text-align: center; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; margin: 6px 0 10px; color: #333; }
   /* Signature pad in document */
   .sign-pad-wrap { border: 1px dashed #999; background: #fff; border-radius: 4px; margin: 8px 0 4px; }
@@ -236,13 +248,13 @@ if (! empty($companyLogoUrl)) {
   <div class="page">
     <?php if (! empty($isParking)): ?>
       <?= $this->include('leases/partials/parking_contract_document', [
-          'signMode' => true,
-          'alreadySigned' => $alreadySigned,
+          'signMode' => ! empty($signMode),
+          'alreadySigned' => ! empty($alreadySigned),
       ]) ?>
     <?php else: ?>
       <?= $this->include('leases/partials/standard_contract_document', [
-          'signMode' => true,
-          'alreadySigned' => $alreadySigned,
+          'signMode' => ! empty($signMode),
+          'alreadySigned' => ! empty($alreadySigned),
       ]) ?>
     <?php endif; ?>
   </div>
@@ -258,7 +270,7 @@ if (! empty($companyLogoUrl)) {
     <button type="submit" form="tenant-sign-form" class="submit-btn-main">
       <i class="bi bi-pen-fill"></i>Submit Signature
     </button>
-    <div class="sign-submit-hint">Draw your signature above, then submit to complete</div>
+    <div class="sign-submit-hint">Sign on the line in the tenant block above, then submit</div>
   </div>
 </div>
 <?php endif; ?>

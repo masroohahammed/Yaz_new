@@ -57,13 +57,11 @@ $displayQid = trim((string) ($tenantQid ?? $contract['tenant_qid'] ?? $contract[
         'signMode' => $signMode ?? false,
         'alreadySigned' => $alreadySigned ?? false,
         'tenantSignatureB64' => $tenantSignatureB64 ?? '',
-        'lineClass' => 'signature-line',
-        'imgClass' => 'signature-img',
     ]) ?>
     <strong>Tenant / المستأجر</strong>
     <div class="signature-label"><?= esc($contract['tenant_name'] ?? '') ?><?php if ($displayQid !== ''): ?> · QID <?= esc($displayQid) ?><?php endif; ?></div>
     <?php if (! empty($signMode) && empty($alreadySigned)): ?>
-      <div class="signature-hint">Draw your signature above / وقع في المربع أعلاه</div>
+      <div class="signature-hint">Draw your signature on the line / وقع على الخط</div>
     <?php endif; ?>
   </div>
 </div>

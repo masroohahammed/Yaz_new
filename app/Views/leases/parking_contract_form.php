@@ -22,6 +22,9 @@
   </p>
   <form method="post" action="<?= esc($printUrl) ?>" target="_blank" id="parkingContractForm">
     <?= csrf_field() ?>
+    <?php if (!empty($renewMode)): ?>
+    <input type="hidden" name="renew" value="1">
+    <?php endif; ?>
     <?php if (!empty($d['lease_contract_id'])): ?>
     <input type="hidden" name="lease_contract_id" value="<?= (int) $d['lease_contract_id'] ?>">
     <?php endif; ?>

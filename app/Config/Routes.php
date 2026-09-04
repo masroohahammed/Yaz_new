@@ -403,6 +403,7 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->post('contracts/(:num)/penalties',               'Leases::applyPenalties/$1', ['filter' => 'permission']);
     $routes->post('contracts/(:num)/save-print',              'Leases::savePrint/$1');
     $routes->post('contracts/(:num)/generate-sign-link',     'Leases::generateSignLink/$1');
+    $routes->post('contracts/(:num)/regenerate-sign-link',   'Leases::regenerateSignLink/$1');
     $routes->get('contracts/(:num)/signed-pdf',              'Leases::downloadSignedPdf/$1');
     $routes->get('contracts/(:num)/whatsapp-share',          'Leases::whatsappShareSigned/$1');
     $routes->get('contracts/(:num)/print',                    'Leases::printView/$1');

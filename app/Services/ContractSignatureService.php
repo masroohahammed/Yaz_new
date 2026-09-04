@@ -26,7 +26,7 @@ class ContractSignatureService
         }
 
         $row = $this->db->table('lease_contracts')
-            ->select('signature_token')
+            ->select('signature_token, tenant_signature_path')
             ->where('id', $contractId)
             ->get()->getRowArray();
 
@@ -39,6 +39,42 @@ class ContractSignatureService
             return $existing;
         }
 
+        return $this->issueToken($contractId);
+    }
+
+    /** Clear tenant signature and invalidate the public signing link (renewal / re-sign). */
+    public function clearSignature(int $contractId, bool $invalidateToken = true): void
+    {
+        if (! $this->tableReady()) {
+            return;
+        }
+
+        $update = [
+            'tenant_signature_path' => null,
+            'tenant_signed_at'      => null,
+            'updated_at'            => date('Y-m-d H:i:s'),
+        ];
+        if ($invalidateToken) {
+            $update['signature_token'] = null;
+        }
+
+        $this->db->table('lease_contracts')->where('id', $contractId)->update($update);
+    }
+
+    /** Reset signature and issue a fresh signing token for a new tenant sign round. */
+    public function regenerateSigningLink(int $contractId): ?string
+    {
+        if (! $this->tableReady()) {
+            return null;
+        }
+
+        $this->clearSignature($contractId, true);
+
+        return $this->issueToken($contractId);
+    }
+
+    private function issueToken(int $contractId): ?string
+    {
         $token = bin2hex(random_bytes(24));
         $this->db->table('lease_contracts')->where('id', $contractId)->update([
             'signature_token' => $token,

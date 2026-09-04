@@ -373,6 +373,11 @@ class Units extends BaseController
             $d['lease_contract_id'] = $leaseId;
         }
 
+        $isRenew = (bool) ($this->request->getPost('renew') ?? $this->request->getGet('renew'));
+        if ($isRenew && $leaseId > 0) {
+            (new ContractSignatureService($this->db))->clearSignature($leaseId, true);
+        }
+
         $this->persistParkingContractFields($id, $leaseId > 0 ? $leaseId : null, $d);
 
         $wantPdf = $this->request->getPost('pdf') || $this->request->getGet('pdf');

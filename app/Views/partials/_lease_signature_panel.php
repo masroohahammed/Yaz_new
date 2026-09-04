@@ -35,9 +35,13 @@ $signedAt = $lease['tenant_signed_at'] ?? null;
         'path'  => $lease['tenant_signature_path'],
         'label' => 'Tenant signature' . ($signedAt ? ' · ' . date('d M Y H:i', strtotime((string) $signedAt)) : ''),
     ]) ?>
+    <p class="small text-muted mb-2">The public sign page shows the signed contract only — no signature form until you regenerate a link (e.g. after renewal).</p>
     <div class="d-flex gap-2 flex-wrap">
       <a href="<?= base_url('contracts/' . $leaseId . '/signed-pdf') ?>" class="btn btn-sm btn-fm-primary"><i class="bi bi-file-earmark-pdf me-1"></i>Download signed PDF</a>
       <a href="<?= base_url('contracts/' . $leaseId . '/whatsapp-share') ?>" class="btn btn-sm btn-success" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i>Share via WhatsApp</a>
+      <form method="post" action="<?= base_url('contracts/' . $leaseId . '/regenerate-sign-link') ?>" class="d-inline" onsubmit="return confirm('Clear the current signature and create a new signing link for the tenant?')"><?= csrf_field() ?>
+        <button type="submit" class="btn btn-sm btn-warning"><i class="bi bi-arrow-repeat me-1"></i>Regenerate signing link</button>
+      </form>
       <a href="<?= base_url('contracts/' . $leaseId) ?>" class="btn btn-sm btn-fm-outline">Contract detail</a>
     </div>
   <?php else: ?>

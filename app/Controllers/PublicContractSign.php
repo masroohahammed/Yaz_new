@@ -46,15 +46,15 @@ class PublicContractSign extends Controller
         $isParking = $docSvc->isParking($contract);
 
         $viewData = [
-            'title'          => 'Sign Lease Contract',
-            'contract'       => $contract,
-            'token'          => $token,
-            'alreadySigned'  => $signed,
-            'signedAt'       => $contract['tenant_signed_at'] ?? null,
-            'isParking'      => $isParking,
-            'signMode'       => true,
+            'title'              => 'Sign Lease Contract',
+            'contract'           => $contract,
+            'token'              => $token,
+            'alreadySigned'      => $signed,
+            'signedAt'           => $contract['tenant_signed_at'] ?? null,
+            'isParking'          => $isParking,
+            'signMode'           => ! $signed,
             'tenantSignatureB64' => $sigB64,
-            'usePdf'         => false,
+            'usePdf'             => false,
         ];
 
         if ($isParking) {

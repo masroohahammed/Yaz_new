@@ -164,19 +164,17 @@ $alreadySigned = ! empty($alreadySigned);
         'signMode' => $signMode,
         'alreadySigned' => $alreadySigned,
         'tenantSignatureB64' => $tenantSignatureB64 ?? '',
-        'lineClass' => 'sig-line',
-        'imgClass' => 'sig-img',
     ]) ?>
     <?php if ($signMode && ! $alreadySigned): ?>
-      <div class="signature-hint">Draw your signature above / وقع في المربع أعلاه</div>
+      <div class="signature-hint">Draw your signature on the line / وقع على الخط</div>
     <?php endif; ?>
   </div>
   <div class="col-ar" style="font-size:10px;direction:rtl;text-align:right;font-family:'Cairo',sans-serif">
     <strong>الطرف الثاني / المستأجر</strong><br><?= esc($d['tenant_name'] ?? '') ?><br>رقم: <?= esc($d['tenant_qid'] ?? '') ?>
     <?php if ($tenantSig !== ''): ?>
-      <img src="<?= esc($tenantSig) ?>" alt="Tenant signature" class="sig-img">
+      <img src="<?= esc($tenantSig) ?>" alt="Tenant signature" class="tenant-signature-image" style="position:static;transform:none;margin:8px auto 0;display:block;max-height:50px">
     <?php elseif ($signMode && ! $alreadySigned): ?>
-      <div class="sig-line" style="margin-top:12px;font-size:9px">التوقيع في العمود الإنجليزي ←</div>
+      <div class="sig-line" style="margin-top:12px;font-size:9px;border:none;padding-top:8px">← التوقيع</div>
     <?php else: ?>
       <div class="sig-line">التوقيع:</div>
     <?php endif; ?>

@@ -691,6 +691,43 @@ class Leases extends BaseController
             ->with('sign_link', $link);
     }
 
+    public function regenerateSignLink(int $id)
+    {
+        if (! $this->request->is('post')) {
+            return redirect()->back();
+        }
+
+        if (! $this->pmTableExists(self::TABLE)) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Leases module not available.');
+        }
+
+        $contract = $this->contractDetail($id);
+        if (! $contract) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
+        }
+
+        $svc = new ContractSignatureService($this->db);
+        if (! $svc->tableReady()) {
+            helper('fm');
+
+            return redirect()->back()
+                ->with('error', 'Digital signature columns are missing. Run this SQL in phpMyAdmin:')
+                ->with('sign_sql', fm_signature_migration_sql());
+        }
+
+        $token = $svc->regenerateSigningLink($id);
+        if ($token === null) {
+            return redirect()->to(base_url('contracts/' . $id))->with('error', 'Could not regenerate signing link.');
+        }
+
+        $link = $svc->signUrl($token);
+        $this->logActivity('sign_link_regen', 'lease_contracts', $id, 'Tenant signing link regenerated after renewal');
+
+        return redirect()->back()
+            ->with('success', 'Previous signature cleared. New signing link ready for the tenant.')
+            ->with('sign_link', $link);
+    }
+
     public function downloadSignedPdf(int $id)
     {
         if (! $this->pmTableExists(self::TABLE)) {
