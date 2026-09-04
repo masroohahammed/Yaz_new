@@ -20,7 +20,7 @@
     Review fields below, then print. The document is generated as a full Arabic page followed by a full English page,
     using your company logo and the legal text configured under Settings.
   </p>
-  <form method="post" action="<?= esc($printUrl) ?>" target="_blank" id="parkingContractForm">
+  <form method="post" action="<?= esc($printUrl) ?>" target="_blank" id="parkingContractForm" enctype="multipart/form-data">
     <?= csrf_field() ?>
     <?php if (!empty($renewMode)): ?>
     <input type="hidden" name="renew" value="1">
@@ -161,6 +161,42 @@
       <div class="col-md-3">
         <label class="form-label small fw-semibold">Collector CR</label>
         <input type="text" name="collector_cr" class="form-control form-control-sm" value="<?= esc($d['collector_cr'] ?? '') ?>">
+      </div>
+
+      <?php
+        helper('fm');
+        $existingPhotos = $d['contract_photos'] ?? [];
+        $photoSlots = max(0, 3 - count($existingPhotos));
+      ?>
+      <div class="col-12">
+        <label class="form-label small fw-semibold">Contract photos <span class="text-muted fw-normal">(optional, up to 3 — vehicle / parking)</span></label>
+        <?php if ($existingPhotos !== []): ?>
+        <div class="d-flex flex-wrap gap-3 mb-2">
+          <?php foreach ($existingPhotos as $photoPath): ?>
+          <?php $thumb = fm_logo_url((string) $photoPath); ?>
+          <div class="border rounded p-2 text-center" style="width:120px">
+            <?php if ($thumb !== ''): ?>
+            <img src="<?= esc($thumb) ?>" alt="Contract photo" class="d-block mx-auto mb-1" style="max-height:72px;max-width:100%;object-fit:contain">
+            <?php endif; ?>
+            <label class="small text-danger mb-0">
+              <input type="checkbox" name="remove_photos[]" value="<?= esc($photoPath) ?>"> Remove
+            </label>
+          </div>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+        <?php if ($photoSlots > 0): ?>
+        <div class="row g-2">
+          <?php for ($pi = 0; $pi < $photoSlots; $pi++): ?>
+          <div class="col-md-4">
+            <input type="file" name="contract_photos[]" class="form-control form-control-sm" accept="image/jpeg,image/png,image/webp">
+          </div>
+          <?php endfor; ?>
+        </div>
+        <div class="form-text">JPEG, PNG, or WebP · max 5 MB each · shown on the printed agreement</div>
+        <?php else: ?>
+        <div class="form-text">Maximum of 3 photos reached. Remove one above to replace it.</div>
+        <?php endif; ?>
       </div>
     </div>
 

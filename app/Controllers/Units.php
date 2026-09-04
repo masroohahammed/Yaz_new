@@ -378,7 +378,7 @@ class Units extends BaseController
             (new ContractSignatureService($this->db))->clearSignature($leaseId, true);
         }
 
-        $this->persistParkingContractFields($id, $leaseId > 0 ? $leaseId : null, $d);
+        $d = $this->persistParkingContractFields($id, $leaseId > 0 ? $leaseId : null, $d);
 
         $wantPdf = $this->request->getPost('pdf') || $this->request->getGet('pdf');
         $sigB64  = '';

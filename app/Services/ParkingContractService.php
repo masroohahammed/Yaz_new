@@ -108,6 +108,7 @@ class ParkingContractService
             'currency'              => $settings['currency'] ?? 'QAR',
             'lease_contract_id'     => $lease['id'] ?? null,
             'unit_id'               => $unitId,
+            'contract_photos'       => ParkingContractPhotoService::pathsFromJson($lease['photos_json'] ?? null),
         ];
     }
 

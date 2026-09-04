@@ -14,6 +14,8 @@ $landlordName = esc($d['owner_name_en'] ?? $settings['company_name'] ?? '');
 $tenantSig    = trim((string) ($tenantSignatureB64 ?? ''));
 $signMode     = ! empty($signMode);
 $alreadySigned = ! empty($alreadySigned);
+$contractPhotos = array_values(array_filter($d['contract_photos'] ?? [], static fn ($p) => is_string($p) && trim($p) !== ''));
+$usePdfEmbed  = ! empty($usePdf);
 ?>
 <?= $this->include('layouts/_doc_letterhead', [
     'settings' => $settings,
@@ -147,6 +149,28 @@ $alreadySigned = ! empty($alreadySigned);
     التأخر أو المخالفة يلغي العقد تلقائياً ويحق للمالك إخلاء المركبة.
     يخضع لقوانين قطر وتختص المحاكم القطرية. أُبرم من نسختين أصليتين.
   </div>
+
+  <?php if ($contractPhotos !== []): ?>
+  <div class="col-en block">
+    <span class="clause-title">Photos</span>
+    Vehicle / parking photos attached to this agreement.
+  </div>
+  <div class="col-ar block">
+    <span class="clause-title">الصور</span>
+    صور المركبة / الموقف المرفقة بهذا العقد.
+  </div>
+  <div class="contract-photos-grid" style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:8px 0 12px">
+    <?php foreach ($contractPhotos as $photoPath): ?>
+    <?php
+      $photoSrc = \App\Services\ParkingContractPhotoService::photoSrc((string) $photoPath, $usePdfEmbed);
+      if ($photoSrc === '') {
+          continue;
+      }
+    ?>
+    <img src="<?= esc($photoSrc) ?>" alt="Parking contract photo" style="max-height:140px;max-width:31%;object-fit:contain;border:1px solid #ccc;border-radius:4px;padding:4px;background:#fff">
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
 </div>
 
 <div class="signatures">

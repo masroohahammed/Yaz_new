@@ -674,6 +674,30 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('signature_token', $sigPatch);
     }
 
+    public function testParkingContractOptionalPhotos(): void
+    {
+        $photoPatch = file_get_contents($this->root . '/database/patches/2026-09-04-parking-contract-photos.sql');
+        $this->assertStringContainsString('photos_json', $photoPatch);
+
+        $photoSvc = file_get_contents($this->root . '/app/Services/ParkingContractPhotoService.php');
+        $this->assertStringContainsString('MAX_PHOTOS = 3', $photoSvc);
+        $this->assertStringContainsString('uploads/parking_contracts', $photoSvc);
+
+        $form = file_get_contents($this->root . '/app/Views/leases/parking_contract_form.php');
+        $this->assertStringContainsString('enctype="multipart/form-data"', $form);
+        $this->assertStringContainsString('name="contract_photos[]"', $form);
+
+        $doc = file_get_contents($this->root . '/app/Views/leases/partials/parking_contract_document.php');
+        $this->assertStringContainsString('contract_photos', $doc);
+        $this->assertStringContainsString('ParkingContractPhotoService::photoSrc', $doc);
+
+        $trait = file_get_contents($this->root . '/app/Controllers/Traits/ParkingContractTrait.php');
+        $this->assertStringContainsString('syncParkingContractPhotos', $trait);
+
+        $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
+        $this->assertStringContainsString("'photos_json'", $leases);
+    }
+
     public function testPublicContractSignShowsFullDocumentWithSignIn(): void
     {
         $signView = file_get_contents($this->root . '/app/Views/public/contract_sign.php');

@@ -346,6 +346,20 @@ class Leases extends BaseController
             'created_at'             => date('Y-m-d H:i:s'),
         ];
 
+        if ($this->isParkingContractRow($old)) {
+            if ($this->db->fieldExists('contract_kind', self::TABLE)) {
+                $newData['contract_kind'] = 'parking';
+            }
+            foreach ([
+                'plate_number', 'vehicle_type', 'vehicle_description', 'title_deed_no',
+                'zone_no', 'street_no', 'building_no', 'tenant_qid', 'photos_json',
+            ] as $field) {
+                if ($this->db->fieldExists($field, self::TABLE) && array_key_exists($field, $old)) {
+                    $newData[$field] = $old[$field];
+                }
+            }
+        }
+
         $this->db->transStart();
         try {
             $this->db->table(self::TABLE)->where('id', $id)->update([
@@ -900,7 +914,7 @@ class Leases extends BaseController
             $d['lease_contract_id'] = $leaseId;
         }
 
-        $this->persistParkingContractFields($unitId, $id, $d);
+        $d = $this->persistParkingContractFields($unitId, $id, $d);
 
         $wantPdf = $this->request->getPost('pdf') || $this->request->getGet('pdf');
         $sigB64  = (new ContractSignatureService($this->db))->signatureDataUri($contract['tenant_signature_path'] ?? '');

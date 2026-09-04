@@ -64,8 +64,9 @@ trait ParkingContractTrait
 
     /**
      * @param array<string, mixed> $d
+     * @return array<string, mixed>
      */
-    protected function persistParkingContractFields(int $unitId, ?int $leaseId, array $d): void
+    protected function persistParkingContractFields(int $unitId, ?int $leaseId, array $d): array
     {
         if ($this->db->fieldExists('plate_number', 'units') && ! empty($d['plate_number'])) {
             $this->db->table('units')->where('id', $unitId)->update([
@@ -132,7 +133,11 @@ trait ParkingContractTrait
                     ]);
                 }
             }
+
+            $d = $this->syncParkingContractPhotos($leaseId, $d);
         }
+
+        return $d;
     }
 
     /**
@@ -202,5 +207,44 @@ trait ParkingContractTrait
             ->get()->getRowArray();
 
         return (int) ($existing['id'] ?? 0);
+    }
+
+    /**
+     * Merge optional contract photos from the request and persist to lease_contracts.photos_json.
+     *
+     * @param array<string, mixed> $d
+     * @return array<string, mixed>
+     */
+    protected function syncParkingContractPhotos(int $leaseId, array $d): array
+    {
+        if ($leaseId < 1 || ! $this->db->fieldExists('photos_json', 'lease_contracts')) {
+            return $d;
+        }
+
+        $row = $this->db->table('lease_contracts')
+            ->select('photos_json')
+            ->where('id', $leaseId)
+            ->get()->getRowArray();
+
+        $existing = \App\Services\ParkingContractPhotoService::pathsFromJson($row['photos_json'] ?? null);
+        $remove   = array_map('strval', (array) $this->request->getPost('remove_photos'));
+        $kept     = array_values(array_filter(
+            $existing,
+            static fn (string $path): bool => ! in_array($path, $remove, true)
+        ));
+
+        $uploads = \App\Services\ParkingContractPhotoService::storeUploads(
+            $this->request->getFileMultiple('contract_photos') ?? []
+        );
+        $final   = \App\Services\ParkingContractPhotoService::mergePhotos($kept, $uploads);
+
+        $this->db->table('lease_contracts')->where('id', $leaseId)->update([
+            'photos_json' => \App\Services\ParkingContractPhotoService::encodePhotos($final),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
+
+        $d['contract_photos'] = $final;
+
+        return $d;
     }
 }
