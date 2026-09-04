@@ -39,7 +39,12 @@
     background: transparent;
     margin: 0 0 4px;
   }
-  .tenant-signature-anchor.is-signing .fm-signature-canvas { height: 58px !important; background: #fff; }
+  .tenant-signature-anchor.is-signing .fm-signature-canvas {
+    height: 72px !important;
+    background: #fff;
+    touch-action: none;
+    cursor: crosshair;
+  }
   .tenant-signature-anchor.is-signing .tenant-signature-line { position: relative; margin-top: 4px; }
   .tenant-signature-anchor.is-signing .sign-pad-clear { position: absolute; top: 6px; right: 8px; font-size: 9px; background: rgba(255,255,255,.9); border: none; color: #666; cursor: pointer; text-decoration: underline; padding: 2px 4px; }
   .signature-label { font-size: 10px; color: #666; }

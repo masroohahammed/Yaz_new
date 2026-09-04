@@ -710,6 +710,11 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('og:description', $signView);
         $this->assertStringContainsString('_tenant_signature_slot', file_get_contents($this->root . '/app/Views/leases/partials/standard_contract_document.php'));
 
+        $sigPad = file_get_contents($this->root . '/public/assets/js/signature-pad.js');
+        $this->assertStringContainsString('pointerdown', $sigPad);
+        $this->assertStringContainsString('requestAnimationFrame', $sigPad);
+        $this->assertStringContainsString('fitCanvas', $sigPad);
+
         $controller = file_get_contents($this->root . '/app/Controllers/PublicContractSign.php');
         $this->assertStringContainsString('LeaseContractDocumentService', $controller);
 
