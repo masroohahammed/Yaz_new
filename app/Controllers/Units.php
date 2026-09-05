@@ -251,7 +251,7 @@ class Units extends BaseController
                 ->limit(5)
                 ->get()->getResultArray();
             foreach ($leaseContracts as $lc) {
-                if (in_array($lc['status'] ?? '', ['active', 'draft'], true)) {
+                if (in_array($lc['status'] ?? '', ['active', 'draft', 'expired'], true)) {
                     $activeLeaseContract = $lc;
                     break;
                 }

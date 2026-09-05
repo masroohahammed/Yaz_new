@@ -137,7 +137,7 @@ $maintenanceCreateUrl = $isFm
           <thead><tr><th>Unit</th><th>Type</th><?php if (!empty($hasParkingUnits)): ?><th>Plate No.</th><?php endif; ?><th>Status</th><th>Tenant</th><th>Contract End</th><th>Rent</th><th></th></tr></thead>
           <tbody>
           <?php foreach($facilityUnits as $u):
-            $expiring = $u['contract_end'] && strtotime($u['contract_end']) < strtotime('+30 days') && $u['status']==='occupied';
+            $expiring = $u['contract_end'] && strtotime($u['contract_end']) >= time() && strtotime($u['contract_end']) < strtotime('+30 days') && $u['status']==='occupied';
             $isParking = strtolower((string)($u['unit_type'] ?? '')) === 'parking';
           ?>
           <tr class="<?= $expiring?'sla-warn':'' ?>">

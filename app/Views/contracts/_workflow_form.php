@@ -12,10 +12,19 @@
   <div class="form-check mb-3"><input type="checkbox" name="refund_deposit" value="1" class="form-check-input" id="refundDep"><label for="refundDep" class="form-check-label small">Refund security deposit (creates refund payment)</label></div>
   <button type="submit" class="btn btn-sm btn-danger">Terminate Contract</button>
   <?php elseif ($type === 'renew'): ?>
+  <?php
+    helper('fm');
+    $renewDefaults = fm_renewal_date_defaults($contract['start_date'] ?? '', $contract['end_date'] ?? '');
+  ?>
+  <p class="small text-muted mb-3">
+    Previous period ended <strong><?= esc($contract['end_date'] ?? '—') ?></strong>.
+    Suggested next period starts after expiry (or tomorrow if already expired). All dates are editable.
+  </p>
   <div class="row g-2">
-    <div class="col-md-4"><label class="form-label small">New start *</label><input type="date" name="new_start_date" class="form-control form-control-sm" required value="<?= esc($contract['end_date'] ?? '') ?>"></div>
-    <div class="col-md-4"><label class="form-label small">New end *</label><input type="date" name="new_end_date" class="form-control form-control-sm" required></div>
-    <div class="col-md-4"><label class="form-label small">New rent</label><input type="number" step="0.01" name="new_rent" class="form-control form-control-sm" value="<?= esc($contract['rent_amount'] ?? '') ?>"></div>
+    <div class="col-md-3"><label class="form-label small">Contract date</label><input type="date" name="contract_date" class="form-control form-control-sm" value="<?= esc($renewDefaults['contract_date']) ?>"></div>
+    <div class="col-md-3"><label class="form-label small">New start *</label><input type="date" name="new_start_date" class="form-control form-control-sm" required value="<?= esc($renewDefaults['start_date']) ?>"></div>
+    <div class="col-md-3"><label class="form-label small">New end *</label><input type="date" name="new_end_date" class="form-control form-control-sm" required value="<?= esc($renewDefaults['end_date']) ?>"></div>
+    <div class="col-md-3"><label class="form-label small">New rent</label><input type="number" step="0.01" name="new_rent" class="form-control form-control-sm" value="<?= esc($contract['rent_amount'] ?? '') ?>"></div>
   </div>
   <button type="submit" class="btn btn-sm btn-fm-primary mt-3">Renew Contract</button>
   <?php elseif ($type === 'amendment'): ?>

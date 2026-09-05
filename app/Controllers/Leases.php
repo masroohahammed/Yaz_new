@@ -367,6 +367,9 @@ class Leases extends BaseController
             'created_by'             => $this->currentUser()['id'] ?: null,
             'created_at'             => date('Y-m-d H:i:s'),
         ];
+        if ($this->db->fieldExists('signed_date', self::TABLE)) {
+            $newData['signed_date'] = $this->request->getPost('contract_date') ?: date('Y-m-d');
+        }
 
         if ($this->isParkingContractRow($old)) {
             if ($this->db->fieldExists('contract_kind', self::TABLE)) {

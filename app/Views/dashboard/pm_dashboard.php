@@ -171,7 +171,7 @@
               <td class="small text-muted"><?= esc($c['facility_name'] ?? '—') ?></td>
               <td class="small">
                 <?= !empty($c['end_date']) ? date('d M Y', strtotime($c['end_date'])) : '—' ?>
-                <?php if ($daysLeft !== null && $daysLeft <= 60): ?>
+                <?php if ($daysLeft !== null && $daysLeft > 0 && $daysLeft <= 60): ?>
                   <br><span class="x-small text-danger"><?= (int) $daysLeft ?>d left</span>
                 <?php endif; ?>
               </td>

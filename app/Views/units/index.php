@@ -67,7 +67,7 @@ $canViewUnit = $rbac->can($role, 'units.view');
       <thead><tr><th>Unit</th><th>Type</th><?php if (!empty($hasParkingUnits)): ?><th>Plate No.</th><?php endif; ?><th>Status</th><th>Tenant</th><th>Contract End</th><th>Rent</th><th></th></tr></thead>
       <tbody>
       <?php foreach($units as $u):
-        $expiring = $u['contract_end'] && strtotime($u['contract_end']) < strtotime('+30 days') && $u['status']==='occupied';
+        $expiring = $u['contract_end'] && strtotime($u['contract_end']) >= time() && strtotime($u['contract_end']) < strtotime('+30 days') && $u['status']==='occupied';
         $isParking = strtolower((string)($u['unit_type'] ?? '')) === 'parking';
       ?>
       <tr class="<?= $expiring?'sla-warn':'' ?>">
@@ -109,7 +109,7 @@ $canViewUnit = $rbac->can($role, 'units.view');
 <div class="row g-3">
 <?php foreach($units as $u):
   $statusColor = ['occupied'=>'success','vacant'=>'teal','maintenance'=>'orange'][$u['status']] ?? 'secondary';
-  $expiring = $u['contract_end'] && strtotime($u['contract_end']) < strtotime('+30 days') && $u['status']==='occupied';
+  $expiring = $u['contract_end'] && strtotime($u['contract_end']) >= time() && strtotime($u['contract_end']) < strtotime('+30 days') && $u['status']==='occupied';
   $isParking = strtolower((string)($u['unit_type'] ?? '')) === 'parking';
 ?>
 <div class="col-md-4 col-lg-3">

@@ -13,8 +13,11 @@
 
 <?php if (!empty($renewMode)): ?>
 <div class="alert alert-info small mb-3">
-  Renew mode — update dates and rent, then <strong>Save</strong> or <strong>Generate signing link</strong>.
-  The previous agreement is archived automatically under this unit’s <strong>Documents</strong> tab when you save or print a renewal.
+  <strong>Renew mode</strong> — previous agreement ended <strong><?= esc($activeLease['end_date'] ?? ($d['previous_end_date'] ?? '—')) ?></strong>.
+  Suggested period: <strong><?= esc($d['start_date'] ?? '') ?></strong> to <strong><?= esc($d['end_date'] ?? '') ?></strong>
+  (contract date <strong><?= esc($d['contract_date'] ?? date('Y-m-d')) ?></strong>).
+  Update dates or rent, then <strong>Save</strong> or <strong>Generate signing link</strong>.
+  The previous agreement is archived under this unit’s <strong>Documents</strong> tab when you save or print.
 </div>
 <?php endif; ?>
 
