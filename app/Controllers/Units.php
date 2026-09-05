@@ -483,16 +483,45 @@ class Units extends BaseController
             return redirect()->to(base_url('units/view/' . $id))->with('error', 'Not a parking unit.');
         }
 
-        $isRenew = (bool) ($this->request->getPost('renew') ?? $this->request->getGet('renew'));
-        $saved   = $this->saveParkingContractData($id, $isRenew);
-        $leaseId = (int) ($saved['lease_id'] ?? 0);
-        $d       = $saved['d'];
-
         $wantPdf = $this->request->getPost('pdf') || $this->request->getGet('pdf');
+        $leaseId = (int) ($this->request->getPost('lease_contract_id')
+            ?? $this->request->getGet('contract_id')
+            ?? $this->request->getGet('lease_contract_id')
+            ?? 0);
+        $d       = [];
         $sigB64  = '';
-        if ($leaseId > 0) {
+
+        if ($this->request->is('get') && ! $this->request->getPost()) {
+            if ($leaseId < 1) {
+                return redirect()->to(fm_unit_parking_contract_url($id))
+                    ->with('error', 'Save the parking contract first, then use Preview & Print.');
+            }
+
+            $svc = new ParkingContractService($this->db);
+            $d   = $svc->buildDefaults($id, $leaseId);
             $leaseRow = $this->db->table('lease_contracts')->where('id', $leaseId)->get()->getRowArray();
-            $sigB64   = (new ContractSignatureService($this->db))->signatureDataUri($leaseRow['tenant_signature_path'] ?? '');
+            $sigB64   = (new ContractSignatureService($this->db))
+                ->signatureDataUri($leaseRow['tenant_signature_path'] ?? '');
+
+            return $this->renderParkingContractDocument($d, (bool) $wantPdf, $sigB64);
+        }
+
+        try {
+            $isRenew = (bool) ($this->request->getPost('renew') ?? $this->request->getGet('renew'));
+            $saved   = $this->saveParkingContractData($id, $isRenew);
+            $leaseId = (int) ($saved['lease_id'] ?? 0);
+            $d       = $saved['d'];
+
+            if ($leaseId > 0) {
+                $leaseRow = $this->db->table('lease_contracts')->where('id', $leaseId)->get()->getRowArray();
+                $sigB64   = (new ContractSignatureService($this->db))
+                    ->signatureDataUri($leaseRow['tenant_signature_path'] ?? '');
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Parking contract print save failed: ' . $e->getMessage());
+
+            return redirect()->to(fm_unit_parking_contract_url($id, $leaseId > 0 ? $leaseId : null))
+                ->with('error', 'Could not save contract before print: ' . $e->getMessage());
         }
 
         return $this->renderParkingContractDocument($d, (bool) $wantPdf, $sigB64);

@@ -32,6 +32,7 @@ class RemediationCheck extends Controller
         ['path' => 'database/patches/2026-09-02-lease-contract-signature.sql', 'label' => 'Signature SQL patch'],
         ['path' => 'database/patches/2026-09-04-user-facilities-autoincrement.sql', 'label' => 'User facilities SQL patch'],
         ['path' => 'database/patches/2026-09-05-units-contracts-autoincrement.sql', 'label' => 'Units/contracts SQL patch'],
+        ['path' => 'database/patches/2026-09-05-lease-tenants-documents-autoincrement.sql', 'label' => 'Lease/tenant/document SQL patch'],
         ['path' => 'database/patches/2026-09-04-parking-contract-photos.sql', 'label' => 'Parking photos SQL patch'],
         ['path' => 'database/patches/fm-erp-complete.sql', 'label' => 'Complete SQL bundle'],
     ];

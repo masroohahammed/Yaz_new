@@ -932,6 +932,7 @@ final class RemediationInventoryTest extends TestCase
 
         $complete = file_get_contents($this->root . '/database/patches/fm-erp-complete.sql');
         $this->assertStringContainsString('-- 18) units / contracts AUTO_INCREMENT', $complete);
+        $this->assertStringContainsString('-- 19) lease_contracts / tenants / documents AUTO_INCREMENT', $complete);
     }
 
     public function testContractRenewalDateDefaultsAndExpiryDisplay(): void
@@ -1025,5 +1026,23 @@ final class RemediationInventoryTest extends TestCase
 
         $base = file_get_contents($this->root . '/app/Controllers/BaseController.php');
         $this->assertStringContainsString("fm_company_email()", $base);
+    }
+
+    public function testParkingContractPrintUsesSafeInsertsAndCsrfExcept(): void
+    {
+        $trait = file_get_contents($this->root . '/app/Controllers/Traits/ParkingContractTrait.php');
+        $this->assertStringContainsString('parkingInsertRow', $trait);
+        $this->assertStringContainsString("parkingInsertRow('lease_contracts'", $trait);
+        $this->assertStringContainsString("parkingInsertRow('tenants'", $trait);
+
+        $filters = file_get_contents($this->root . '/app/Config/Filters.php');
+        $this->assertStringContainsString('parking-contract/print', $filters);
+
+        $patch = file_get_contents($this->root . '/database/patches/2026-09-05-lease-tenants-documents-autoincrement.sql');
+        $this->assertStringContainsString('lease_contracts', $patch);
+        $this->assertStringContainsString('AUTO_INCREMENT', $patch);
+
+        $units = file_get_contents($this->root . '/app/Controllers/Units.php');
+        $this->assertStringContainsString("request->is('get')", $units);
     }
 }

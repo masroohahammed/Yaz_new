@@ -39,7 +39,12 @@ class Filters extends BaseConfig
 
     public array $globals = [
         'before' => [
-            'csrf' => ['except' => ['api/v1/*', 'api/legacy/*']],
+            'csrf' => ['except' => [
+                'api/v1/*',
+                'api/legacy/*',
+                'units/*/parking-contract/print',
+                'properties/units/*/parking-contract/print',
+            ]],
         ],
         'after' => ENVIRONMENT === 'production' ? [] : [
             'toolbar',

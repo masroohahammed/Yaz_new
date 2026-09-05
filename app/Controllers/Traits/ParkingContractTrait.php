@@ -8,6 +8,17 @@ use App\Services\UnitLeaseSyncService;
 trait ParkingContractTrait
 {
     /**
+     * @param array<string, mixed> $row
+     */
+    protected function parkingInsertRow(string $table, array $row): int
+    {
+        \App\Database\AutoIncrementRepair::ensure($this->db, $table);
+        helper('fm');
+
+        return fm_insert_row_id($this->db, $table, $row);
+    }
+
+    /**
      * @param array<string, mixed> $d
      */
     protected function renderParkingContractDocument(array $d, bool $wantPdf = false, string $tenantSignatureB64 = ''): \CodeIgniter\HTTP\Response|string
@@ -327,10 +338,8 @@ trait ParkingContractTrait
 
         $row['created_by'] = function_exists('fm_session_user_id') ? fm_session_user_id() : null;
         $row['created_at'] = date('Y-m-d H:i:s');
-        $this->db->table('lease_contracts')->insert($row);
-        $newId = (int) $this->db->insertID();
 
-        return $newId > 0 ? $newId : 0;
+        return $this->parkingInsertRow('lease_contracts', $row);
     }
 
     protected function resolveParkingTenantId(
@@ -403,9 +412,7 @@ trait ParkingContractTrait
             $insert['qid_no'] = $qid;
         }
 
-        $this->db->table('tenants')->insert($insert);
-
-        return (int) $this->db->insertID();
+        return $this->parkingInsertRow('tenants', $insert);
     }
 
     /**
@@ -557,8 +564,7 @@ trait ParkingContractTrait
             $newRow['tenant_signed_at']      = null;
         }
 
-        $this->db->table('lease_contracts')->insert($newRow);
-        $newId = (int) $this->db->insertID();
+        $newId = $this->parkingInsertRow('lease_contracts', $newRow);
 
         return $newId > 0 ? $newId : $oldLeaseId;
     }
@@ -655,7 +661,7 @@ trait ParkingContractTrait
             $row['facility_id'] = (int) ($unit['facility_id'] ?? 0) ?: null;
         }
 
-        $this->db->table('documents')->insert($row);
+        $this->parkingInsertRow('documents', $row);
     }
 
     /**

@@ -1,8 +1,8 @@
 {
   "release": "2026-09-05-fm-erp-full-update",
   "date": "2026-09-05",
-  "commit": "0273dc8",
-  "branch": "cursor/fm-erp-remediation-a002",
+  "commit": "",
+  "branch": "cursor/parking-print-fix-a002",
   "features": [
     "digital_signature_and_signing_links",
     "property_access_scoping",
@@ -20,7 +20,8 @@
     "contract_sign_bilingual_layout",
     "sidebar_company_branding",
     "payment_method_fawran",
-    "company_email_fixed_admin_alyazwa"
+    "company_email_fixed_admin_alyazwa",
+    "parking_contract_print_pk_fix"
   ],
   "verify_url": "remediation-check",
   "sql_patch": "database/patches/fm-erp-complete.sql"

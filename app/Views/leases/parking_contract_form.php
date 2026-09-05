@@ -244,6 +244,9 @@
       <button type="submit" formaction="<?= esc($signAction) ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-link-45deg me-1"></i>Save &amp; generate signing link</button>
       <button type="submit" class="btn btn-fm-primary btn-sm"><i class="bi bi-printer me-1"></i>Preview &amp; Print</button>
       <button type="submit" class="btn btn-fm-outline btn-sm" name="pdf" value="1"><i class="bi bi-file-earmark-pdf me-1"></i>Download PDF</button>
+      <?php if ($formLeaseId > 0): ?>
+      <a href="<?= esc($printUrl . '?contract_id=' . $formLeaseId) ?>" class="btn btn-fm-outline btn-sm" target="_blank"><i class="bi bi-eye me-1"></i>Reprint saved</a>
+      <?php endif; ?>
       <a href="<?= base_url('units/view/' . (int) ($unit['id'] ?? 0) . '#tab-documents') ?>" class="btn btn-fm-outline btn-sm ms-auto"><i class="bi bi-folder2-open me-1"></i>Unit documents</a>
     </div>
   </form>
