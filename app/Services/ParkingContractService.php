@@ -69,7 +69,7 @@ class ParkingContractService
             'landlord_name'         => $settings['company_name'] ?? 'AL YAZWA REAL ESTATE CO. W.L.L',
             'landlord_cr'           => $settings['company_cr'] ?? '159425',
             'landlord_phone'        => $settings['company_phone'] ?? '66555953',
-            'landlord_email'        => $settings['company_email'] ?? 'admin@alyazwa.com',
+            'landlord_email'        => fm_company_email(),
             'landlord_address'      => $settings['company_address'] ?? 'D-Ring Road Al Hilal, Doha, State of Qatar',
             'landlord_po_box'       => $settings['company_po_box'] ?? '200199',
             'tenant_name'           => $tenantName,

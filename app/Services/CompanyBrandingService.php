@@ -66,9 +66,6 @@ class CompanyBrandingService
             if (! empty($row['phone'])) {
                 $merged['company_phone'] = (string) $row['phone'];
             }
-            if (! empty($row['email'])) {
-                $merged['company_email'] = (string) $row['email'];
-            }
             if (! empty($row['contact_person'])) {
                 $merged['company_contact'] = (string) $row['contact_person'];
             }
@@ -80,6 +77,8 @@ class CompanyBrandingService
                 $merged['company_logo'] = $logoStored;
             }
         }
+
+        $merged['company_email'] = fm_company_email();
 
         $logoUrl = fm_logo_url($logoStored);
         $logoB64 = fm_logo_data_uri($logoStored);

@@ -882,8 +882,10 @@ final class RemediationInventoryTest extends TestCase
     public function testRemediationRestoreManifestAndVerifyEndpoint(): void
     {
         $build = file_get_contents($this->root . '/public/BUILD.json');
+        $this->assertStringContainsString('2026-09-05-fm-erp-full-update', $build);
         $this->assertStringContainsString('contract_sign_bilingual_layout', $build);
         $this->assertStringContainsString('unit_expiry_dates_display', $build);
+        $this->assertStringContainsString('payment_method_fawran', $build);
         $this->assertStringContainsString('digital_signature_and_signing_links', $build);
 
         $check = file_get_contents($this->root . '/app/Controllers/RemediationCheck.php');
@@ -986,5 +988,42 @@ final class RemediationInventoryTest extends TestCase
 
         $form = file_get_contents($this->root . '/app/Views/leases/form.php');
         $this->assertStringContainsString('vacant_only=1', $form);
+    }
+
+    public function testFawranPaymentMethodInSharedHelperAndForms(): void
+    {
+        require_once $this->root . '/app/Helpers/fm_helper.php';
+
+        $methods = fm_payment_methods('payment');
+        $this->assertArrayHasKey('fawran', $methods);
+        $this->assertSame('Fawran', $methods['fawran']);
+
+        foreach ([
+            'app/Views/payments/form.php',
+            'app/Views/finance/_record_payment_form.php',
+            'app/Views/collector/process_payment.php',
+            'app/Views/collector/collect.php',
+            'app/Views/leases/form.php',
+        ] as $rel) {
+            $src = file_get_contents($this->root . '/' . $rel);
+            $this->assertNotFalse($src);
+            $this->assertStringContainsString('fawran', $src, "Missing Fawran in {$rel}");
+        }
+    }
+
+    public function testCompanyEmailIsFixedToAdminAlyazwa(): void
+    {
+        require_once $this->root . '/app/Helpers/fm_helper.php';
+        $this->assertSame('admin@alyazwa.com', fm_company_email());
+
+        $branding = file_get_contents($this->root . '/app/Services/CompanyBrandingService.php');
+        $this->assertStringContainsString("fm_company_email()", $branding);
+
+        $settingsView = file_get_contents($this->root . '/app/Views/settings/index.php');
+        $this->assertStringContainsString('fm_company_email()', $settingsView);
+        $this->assertStringContainsString('readonly', $settingsView);
+
+        $base = file_get_contents($this->root . '/app/Controllers/BaseController.php');
+        $this->assertStringContainsString("fm_company_email()", $base);
     }
 }

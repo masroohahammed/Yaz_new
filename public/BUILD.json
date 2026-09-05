@@ -1,8 +1,8 @@
 {
-  "release": "2026-09-05-contract-sign-bilingual",
+  "release": "2026-09-05-fm-erp-full-update",
   "date": "2026-09-05",
-  "commit": "c4ab348",
-  "branch": "cursor/contract-sign-bilingual-a002",
+  "commit": "",
+  "branch": "cursor/fm-erp-remediation-a002",
   "features": [
     "digital_signature_and_signing_links",
     "property_access_scoping",
@@ -18,7 +18,9 @@
     "contract_renewal_future_dates",
     "unit_expiry_dates_display",
     "contract_sign_bilingual_layout",
-    "sidebar_company_branding"
+    "sidebar_company_branding",
+    "payment_method_fawran",
+    "company_email_fixed_admin_alyazwa"
   ],
   "verify_url": "remediation-check",
   "sql_patch": "database/patches/fm-erp-complete.sql"

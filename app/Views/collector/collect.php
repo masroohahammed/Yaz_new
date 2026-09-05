@@ -103,6 +103,10 @@
                         <label class="btn btn-outline-info btn-lg flex-fill" for="pm_transfer">
                             <i class="bi bi-arrow-left-right me-1"></i>Transfer
                         </label>
+                        <input type="radio" class="btn-check" name="payment_method" id="pm_fawran" value="fawran">
+                        <label class="btn btn-outline-warning btn-lg flex-fill" for="pm_fawran">
+                            <i class="bi bi-phone me-1"></i>Fawran
+                        </label>
                     </div>
                 </div>
 

@@ -74,8 +74,8 @@
       <label class="form-label small">Payment method</label>
       <select name="method" class="form-select form-select-sm">
         <option value="">Any</option>
-        <?php foreach (['cash','bank','card','cheque','online'] as $m): ?>
-        <option value="<?= $m ?>" <?= $payMethod === $m ? 'selected' : '' ?>><?= ucfirst($m) ?></option>
+        <?php helper('fm'); foreach (fm_payment_methods('filter') as $m => $mLabel): ?>
+        <option value="<?= esc($m) ?>" <?= $payMethod === $m ? 'selected' : '' ?>><?= esc($mLabel) ?></option>
         <?php endforeach; ?>
       </select>
     </div>

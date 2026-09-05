@@ -26,11 +26,9 @@ if ($invoiceId < 1): ?>
   <div class="col-6">
     <label class="form-label small mb-1">Method</label>
     <select name="payment_method" class="form-select" required>
-      <option value="bank">Bank</option>
-      <option value="cash">Cash</option>
-      <option value="card">Card</option>
-      <option value="cheque">Cheque</option>
-      <option value="online">Online</option>
+      <?php helper('fm'); foreach (fm_payment_methods('finance') as $m => $mLabel): ?>
+      <option value="<?= esc($m) ?>"><?= esc($mLabel) ?></option>
+      <?php endforeach; ?>
     </select>
   </div>
   <div class="col-6">

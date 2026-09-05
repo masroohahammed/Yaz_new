@@ -23,6 +23,7 @@ class RemediationCheck extends Controller
         ['path' => 'app/Services/UserFacilityService.php', 'label' => 'User facility scoping service'],
         ['path' => 'app/Services/PropertyAssignmentService.php', 'label' => 'Property staff assignment service'],
         ['path' => 'app/Services/ParkingContractPhotoService.php', 'label' => 'Parking contract photos service'],
+        ['path' => 'app/Services/ContractRenewalService.php', 'label' => 'Contract renewal date service'],
         ['path' => 'app/Services/UnitExpiryService.php', 'label' => 'Unit expiry display service'],
         ['path' => 'app/Views/partials/_unit_contract_expiry.php', 'label' => 'Unit contract expiry partial'],
         ['path' => 'public/assets/css/contract-signature.css', 'label' => 'Contract signature + bilingual CSS'],
@@ -66,8 +67,10 @@ class RemediationCheck extends Controller
         $helperFile = $root . '/app/Helpers/fm_helper.php';
         $helperSrc  = is_file($helperFile) ? (string) file_get_contents($helperFile) : '';
         $kpiOk      = str_contains($helperSrc, 'fm_can_view_kpis');
+        $paymentOk  = str_contains($helperSrc, 'fm_payment_methods')
+            && str_contains($helperSrc, 'fm_company_email');
 
-        $complete = $missing === [] && $routesOk && $kpiOk;
+        $complete = $missing === [] && $routesOk && $kpiOk && $paymentOk;
 
         return $this->response
             ->setStatusCode($complete ? 200 : 503)

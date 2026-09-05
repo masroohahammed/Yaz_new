@@ -1,4 +1,5 @@
 <?= $this->extend('layouts/main') ?>
+<?php helper('fm'); ?>
 <?= $this->section('content') ?>
 
 <div class="page-header">
@@ -50,7 +51,9 @@
         </div>
         <div class="col-md-6">
           <label class="form-label">Email</label>
-          <input type="email" name="company_email" class="form-control" value="<?= esc($settings['company_email'] ?? '') ?>" placeholder="accounts@company.com">
+          <input type="email" class="form-control" value="<?= esc(fm_company_email()) ?>" readonly>
+          <input type="hidden" name="company_email" value="<?= esc(fm_company_email()) ?>">
+          <div class="form-text">Company contact email is fixed for all documents and notifications.</div>
         </div>
       </div>
       <div class="row g-2 mb-3">

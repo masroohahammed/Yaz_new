@@ -148,7 +148,7 @@
       <div class="col-md-3">
         <label class="form-label small fw-semibold">Payment method</label>
         <select name="payment_terms" class="form-select form-select-sm">
-          <?php foreach (['cash' => 'Cash', 'cheque' => 'Cheque', 'bank_transfer' => 'Bank Transfer', 'card' => 'Card'] as $v => $l): ?>
+          <?php helper('fm'); foreach (fm_payment_methods('lease') as $v => $l): ?>
           <option value="<?= $v ?>" <?= ($d['payment_terms'] ?? '') === $v ? 'selected' : '' ?>><?= $l ?></option>
           <?php endforeach; ?>
         </select>

@@ -15,7 +15,7 @@
       <?php foreach ($facilities as $f): ?><option value="<?= $f['id'] ?>"><?= esc($f['name']) ?></option><?php endforeach; ?>
     </select></div>
   <div class="col-md-4"><label class="form-label small">Method</label>
-    <select name="payment_method" class="form-select form-select-sm"><option value="cash">Cash</option><option value="cheque">Cheque</option><option value="transfer">Transfer</option></select></div>
+    <select name="payment_method" class="form-select form-select-sm"><?php helper('fm'); foreach (fm_payment_methods('utility') as $m => $mLabel): ?><option value="<?= esc($m) ?>"><?= esc($mLabel) ?></option><?php endforeach; ?></select></div>
   <div class="col-12"><label class="form-label small">Description</label><textarea name="description" class="form-control form-control-sm" rows="2"></textarea></div>
   <div class="col-12"><button type="submit" class="btn btn-fm-primary btn-sm">Post Entry</button></div>
 </div>
