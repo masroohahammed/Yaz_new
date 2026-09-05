@@ -25,6 +25,7 @@ class RemediationCheck extends Controller
         ['path' => 'app/Services/ParkingContractPhotoService.php', 'label' => 'Parking contract photos service'],
         ['path' => 'app/Services/UnitExpiryService.php', 'label' => 'Unit expiry display service'],
         ['path' => 'app/Views/partials/_unit_contract_expiry.php', 'label' => 'Unit contract expiry partial'],
+        ['path' => 'public/assets/css/contract-signature.css', 'label' => 'Contract signature + bilingual CSS'],
         ['path' => 'app/Services/UnitTenancyService.php', 'label' => 'Unit tenancy guard service'],
         ['path' => 'app/Helpers/fm_helper.php', 'label' => 'FM helper (fm_can_view_kpis)'],
         ['path' => 'database/patches/2026-09-02-lease-contract-signature.sql', 'label' => 'Signature SQL patch'],
