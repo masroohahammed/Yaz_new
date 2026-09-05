@@ -7,6 +7,7 @@ use App\Services\ContractSignatureService;
 use App\Services\EntityQrService;
 use App\Services\ParkingContractService;
 use App\Services\UnitLeaseSyncService;
+use App\Services\UnitTenancyService;
 
 class Units extends BaseController
 {
@@ -22,6 +23,8 @@ class Units extends BaseController
         $q = $this->db->table('units')->where('facility_id',$facilityId);
         if ($statusFilter) $q->where('status',$statusFilter);
         $units = $q->orderBy('unit_number','ASC')->get()->getResultArray();
+        $units = (new \App\Services\UnitExpiryService($this->db))->enrichUnits($units);
+        $expiringCount = count(array_filter($units, static fn ($u) => isset($u['expiry_days']) && (int) $u['expiry_days'] <= 30));
 
         $hasParkingUnits = (bool) array_filter(
             $units,
@@ -41,6 +44,7 @@ class Units extends BaseController
             'facility'     => $facility,
             'units'        => $units,
             'kpi'          => $kpi,
+            'expiringCount'=> $expiringCount,
             'statusFilter' => $statusFilter,
             'viewMode'     => $viewMode,
             'hasParkingUnits'=> $hasParkingUnits,
@@ -77,6 +81,7 @@ class Units extends BaseController
         }
 
         $units = $q->orderBy('f.name', 'ASC')->orderBy('u.unit_number', 'ASC')->limit(500)->get()->getResultArray();
+        $units = (new \App\Services\UnitExpiryService($this->db))->enrichUnits($units);
 
         $kpi = ['total' => count($units), 'occupied' => 0, 'vacant' => 0, 'maintenance' => 0];
         foreach ($units as $u) {
@@ -113,6 +118,22 @@ class Units extends BaseController
         ];
         if (!$this->validate($rules)) return redirect()->back()->withInput()->with('errors',$this->validator->getErrors());
 
+        $unitNumber = trim((string) $this->request->getPost('unit_number'));
+        $tenancySvc = new UnitTenancyService($this->db);
+        if ($tenancySvc->unitNumberTaken($facilityId, $unitNumber)) {
+            return redirect()->back()->withInput()->with('error', 'Unit number "' . esc($unitNumber) . '" already exists in this property.');
+        }
+
+        $status = (string) $this->request->getPost('status');
+        $tenancyInput = [
+            'tenant_name'    => $this->request->getPost('tenant_name'),
+            'contract_start' => $this->request->getPost('contract_start'),
+            'contract_end'   => $this->request->getPost('contract_end'),
+        ];
+        if ($tenancySvc->requestAssignsTenancy($tenancyInput) && $status !== 'vacant') {
+            return redirect()->back()->withInput()->with('error', $tenancySvc->vacantOnlyMessage());
+        }
+
         $contractEnd = $this->request->getPost('contract_end') ?: null;
 
         $insert = [
@@ -141,8 +162,7 @@ class Units extends BaseController
             'created_by'       => session()->get('user_id'),
         ];
         $insert = $this->withPlateNumber($insert, $this->request->getPost('unit_type'), $this->request->getPost('plate_number'));
-        $this->db->table('units')->insert($insert);
-        $unitId = $this->db->insertID();
+        $unitId  = $tenancySvc->insertUnit($insert);
         (new EntityQrService($this->db))->ensureToken('unit', (int) $unitId);
 
         // Handle contract attachment upload
@@ -161,20 +181,21 @@ class Units extends BaseController
         // Auto-create contract record if tenant present
         if (!empty($this->request->getPost('tenant_name')) && !empty($this->request->getPost('contract_start')) && $contractEnd) {
             $conNum = $this->generateNumber('CON','contracts','contract_number');
-            $this->db->table('contracts')->insert([
+            $tenancySvc->insertLegacyContract([
                 'contract_number' => $conNum,
                 'facility_id'     => $facilityId,
                 'unit_id'         => $unitId,
                 'client_name'     => esc($this->request->getPost('tenant_name')),
                 'client_email'    => esc($this->request->getPost('tenant_email')  ?? ''),
                 'client_mobile'   => esc($this->request->getPost('tenant_mobile') ?? ''),
-                'contract_type'   => 'tenancy',
+                'contract_type'   => 'other',
                 'start_date'      => $this->request->getPost('contract_start'),
                 'end_date'        => $contractEnd,
                 'value'           => $this->request->getPost('rent_amount') ?: 0,
                 'status'          => 'active',
                 'created_by'      => session()->get('user_id'),
             ]);
+            $tenancySvc->markUnitOccupied($unitId);
         }
 
         $this->logActivity('create','units',$unitId);
@@ -218,9 +239,9 @@ class Units extends BaseController
             ->where('uc.unit_id',$id)
             ->orderBy('uc.created_at','DESC')->get()->getResultArray();
 
-        $daysToExpiry = null;
-        if ($unit['contract_end']) {
-            $daysToExpiry = (int)ceil((strtotime($unit['contract_end']) - time()) / 86400);
+        $daysToExpiry = $unit['expiry_days'] ?? null;
+        if ($daysToExpiry === null && ! empty($unit['effective_contract_end'])) {
+            $daysToExpiry = (new \App\Services\ContractRenewalService())->daysUntilExpiry($unit['effective_contract_end']);
         }
 
         $leaseContracts = [];
@@ -234,7 +255,7 @@ class Units extends BaseController
                 ->limit(5)
                 ->get()->getResultArray();
             foreach ($leaseContracts as $lc) {
-                if (in_array($lc['status'] ?? '', ['active', 'draft'], true)) {
+                if (in_array($lc['status'] ?? '', ['active', 'draft', 'expired'], true)) {
                     $activeLeaseContract = $lc;
                     break;
                 }
@@ -485,6 +506,7 @@ class Units extends BaseController
             ->join('facilities f','f.id=u.facility_id','left')
             ->where('u.id',$id)->get()->getRowArray();
         if (!$unit) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        $unit = (new \App\Services\UnitExpiryService($this->db))->enrichUnits([$unit])[0];
         return view('units/edit', $this->viewData(['title'=>'Edit Unit '.$unit['unit_number'],'unit'=>$unit]));
     }
 
@@ -493,6 +515,21 @@ class Units extends BaseController
         $this->requirePermission('units.edit');
         $unit = $this->db->table('units')->where('id',$id)->get()->getRowArray();
         if (!$unit) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+
+        $tenancySvc = new UnitTenancyService($this->db);
+        $unitNumber = trim((string) $this->request->getPost('unit_number'));
+        if ($tenancySvc->unitNumberTaken((int) $unit['facility_id'], $unitNumber, $id)) {
+            return redirect()->back()->withInput()->with('error', 'Unit number "' . esc($unitNumber) . '" already exists in this property.');
+        }
+
+        $tenancyInput = [
+            'tenant_name'    => $this->request->getPost('tenant_name'),
+            'contract_start' => $this->request->getPost('contract_start'),
+            'contract_end'   => $this->request->getPost('contract_end'),
+        ];
+        if (! $tenancySvc->canAssignTenancy($unit, $tenancyInput)) {
+            return redirect()->back()->withInput()->with('error', $tenancySvc->vacantOnlyMessage());
+        }
 
         $update = [
             'unit_number'      => esc($this->request->getPost('unit_number')),

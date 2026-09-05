@@ -109,19 +109,159 @@
   margin-top: 8px;
 }
 
+/* Bilingual contract — English left, Arabic right (table layout for screen, print, PDF) */
+.contract-bilingual,
+.bilingual {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.contract-bilingual-row,
+.bilingual-row {
+  display: table-row;
+}
+
+.contract-bilingual .col-en,
+.bilingual .col-en,
+.contract-signatures .col-en,
+.signatures .col-en {
+  display: table-cell;
+  width: 50%;
+  vertical-align: top;
+  padding: 0 7px 8px 0;
+  font-family: 'DM Sans', Arial, sans-serif;
+  font-size: 10.5px;
+  direction: ltr;
+  text-align: left;
+}
+
+.contract-bilingual .col-ar,
+.bilingual .col-ar,
+.contract-signatures .col-ar,
+.signatures .col-ar {
+  display: table-cell;
+  width: 50%;
+  vertical-align: top;
+  padding: 0 0 8px 7px;
+  font-family: 'Cairo', 'Traditional Arabic', sans-serif;
+  font-size: 10.5px;
+  direction: rtl;
+  text-align: right;
+}
+
+.contract-signatures,
+.signatures {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.contract-sig-row,
+.sig-row {
+  display: table-row;
+}
+
+.doc-title-en {
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  margin: 8px 0 4px;
+  text-align: center;
+}
+
+.doc-title-ar {
+  font-weight: 700;
+  font-size: 12px;
+  margin: 8px 0 4px;
+  text-align: center;
+}
+
+.contract-bilingual .block,
+.bilingual .block {
+  margin-bottom: 8px;
+}
+
+.clause-title {
+  font-weight: 700;
+  margin: 10px 0 4px;
+  display: block;
+}
+
+.contract-bilingual .highlight,
+.bilingual .highlight {
+  font-weight: 700;
+}
+
+ol.en {
+  margin: 4px 0 0;
+  padding-left: 14px;
+}
+
+ol.ar {
+  margin: 4px 0 0;
+  padding-right: 14px;
+}
+
+ol.en li,
+ol.ar li {
+  margin-bottom: 3px;
+}
+
+.landlord-line {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 6px 0 10px;
+  color: #333;
+}
+
+.sig-line {
+  border-top: 1px solid #333;
+  margin-top: 36px;
+  padding-top: 4px;
+  font-size: 9.5px;
+}
+
+.contract-photos-wrap {
+  text-align: center;
+  padding: 8px 0 12px;
+}
+
+.contract-photos-wrap img {
+  max-height: 140px;
+  max-width: 31%;
+  object-fit: contain;
+  border: 1px solid #ccc;
+  margin: 0 4px;
+  padding: 4px;
+  background: #fff;
+}
+
 /* Public sign page — full-width signing area on web and mobile */
 .sign-body .signature-block {
-  grid-template-columns: 1fr;
-  gap: 28px;
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: 36px;
 }
 
-.sign-body .signature-party:has(.tenant-signature-anchor.is-signing) {
-  width: 100%;
+.sign-body .signature-block .signature-party {
+  display: table-cell;
+  width: 50%;
+  vertical-align: top;
+  padding: 0 8px;
 }
 
-.sign-body .signatures .col-en:has(.tenant-signature-anchor.is-signing) {
-  grid-column: 1 / -1;
-  width: 100%;
+.sign-body .signatures .col-en:has(.tenant-signature-anchor.is-signing),
+.sign-body .signatures .col-en:has(.parking-tenant-sign-box .tenant-signature-anchor.is-signing) {
+  width: 50%;
 }
 
 @media (max-width: 768px) {
@@ -144,5 +284,25 @@
     border: none;
     padding: 0;
     min-height: var(--contract-sig-min-height);
+  }
+
+  .bilingual,
+  .signatures,
+  .sign-body .signature-block {
+    display: table !important;
+    width: 100% !important;
+  }
+
+  .bilingual-row,
+  .sig-row,
+  .sign-body .signature-block .signature-party {
+    display: table-row !important;
+  }
+
+  .col-en,
+  .col-ar,
+  .sign-body .signature-block .signature-party {
+    display: table-cell !important;
+    width: 50% !important;
   }
 }

@@ -44,6 +44,7 @@ if (! empty($companyLogoUrl)) {
         ? (string) $companyLogoUrl
         : base_url(ltrim((string) $companyLogoUrl, '/'));
 }
+$pdfFilename = preg_replace('/[^A-Za-z0-9_-]/', '_', $contractNo !== '' ? $contractNo : ('Contract_' . (int) ($contract['id'] ?? 0))) . '.pdf';
 ?>
 <!DOCTYPE html>
 <html lang="en" prefix="og: https://ogp.me/ns#">
@@ -110,7 +111,6 @@ if (! empty($companyLogoUrl)) {
   .sign-toolbar-actions a.secondary, .sign-toolbar-actions button.secondary {
     background: #fff; color: <?= $primary ?>; border: 1px solid #cfd8e3;
   }
-  .sign-toolbar-actions button.submit-btn { background: #198754; }
   .sign-body { padding: 72px 12px 24px; }
   .sign-body.has-submit-bar { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   .sign-submit-bar {
@@ -140,58 +140,55 @@ if (! empty($companyLogoUrl)) {
   .flash-success { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
   .flash-error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
   .flash-info { background: #cff4fc; color: #055160; border: 1px solid #b6effb; }
-  /* Standard lease styles */
+  .pdf-status {
+    position: fixed; inset: 0; z-index: 200; background: rgba(255,255,255,.92);
+    display: none; align-items: center; justify-content: center; flex-direction: column;
+  }
+  .pdf-status.is-active { display: flex; }
   h1.contract-title { font-size: 16px; text-align: center; margin: 14px 0 4px; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
   .contract-sub { text-align: center; font-size: 11px; color: #666; margin-bottom: 18px; }
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; margin-bottom: 18px; }
   .info-row { display: flex; gap: 6px; font-size: 11px; padding: 4px 0; border-bottom: 1px dotted #ddd; }
   .info-row label { font-weight: 700; min-width: 120px; color: #555; }
   .section-title { font-size: 12px; font-weight: 700; background: #faf7f8; padding: 6px 10px; margin: 16px 0 8px; border-left: 3px solid <?= $primary ?>; }
-  .content-en { margin-bottom: 20px; line-height: 1.75; font-size: 11px; }
-  .content-ar { direction: rtl; text-align: right; line-height: 1.75; font-size: 11px; font-family: 'Cairo', Arial, sans-serif; margin-bottom: 20px; }
-  .divider { border: none; border-top: 1px dashed #bbb; margin: 18px 0; }
-  .signature-block { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 36px; }
-  .signature-party { text-align: center; font-size: 11px; }
+  .content-en { margin-bottom: 0; line-height: 1.75; font-size: 11px; }
+  .content-ar { direction: rtl; text-align: right; line-height: 1.75; font-size: 11px; font-family: 'Cairo', Arial, sans-serif; margin-bottom: 0; }
   .signature-line { border-top: 1px solid #333; margin: 36px 0 6px; }
+  .signature-party { text-align: center; font-size: 11px; }
   .signature-img { max-height: 64px; max-width: 100%; margin: 0 auto 6px; display: block; }
   .signature-label { font-size: 10px; color: #666; }
-  /* Parking lease styles */
-  .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; align-items: start; }
-  .col-en { font-family: 'DM Sans', Arial, sans-serif; font-size: 10.5px; direction: ltr; text-align: left; }
-  .col-ar { font-family: 'Cairo', 'Traditional Arabic', sans-serif; font-size: 10.5px; direction: rtl; text-align: right; }
-  .doc-title-en { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .3px; margin: 8px 0 4px; text-align: center; }
-  .doc-title-ar { font-weight: 700; font-size: 12px; margin: 8px 0 4px; text-align: center; }
-  .block { margin-bottom: 8px; }
-  .clause-title { font-weight: 700; margin: 10px 0 4px; display: block; }
-  .highlight { font-weight: 700; }
-  ol.en { margin: 4px 0 0; padding-left: 14px; }
-  ol.ar { margin: 4px 0 0; padding-right: 14px; }
-  ol.en li, ol.ar li { margin-bottom: 3px; }
-  .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
-  .sig-line { border-top: 1px solid #333; margin-top: 36px; padding-top: 4px; font-size: 9.5px; }
-  .sig-img { max-height: 56px; max-width: 100%; display: block; margin: 0 auto 4px; }
-  .landlord-line { text-align: center; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; margin: 6px 0 10px; color: #333; }
   .signed-banner {
     max-width: 210mm; margin: 0 auto 12px; padding: 10px 14px; border-radius: 8px;
     background: #d1e7dd; color: #0f5132; font-size: 12px; text-align: center;
   }
   @media print {
     body { background: #fff; }
-    .sign-toolbar, .sign-submit-bar, .flash-wrap, .signed-banner, .sign-pad-clear { display: none !important; }
+    .sign-toolbar, .sign-submit-bar, .flash-wrap, .signed-banner, .sign-pad-clear, .pdf-status { display: none !important; }
     .sign-body, .sign-body.has-submit-bar { padding: 0; }
-    .page { box-shadow: none; border-radius: 0; padding: 10mm; }
+    .page { box-shadow: none; border-radius: 0; padding: 10mm; max-width: none; }
     @page { size: A4 portrait; margin: 8mm; }
   }
   @media (max-width: 768px) {
-    .info-grid, .bilingual, .signatures { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
     .sign-toolbar { position: static; }
     .sign-body { padding: 12px 12px 24px; }
     .sign-body.has-submit-bar { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
-    .page { padding: 10mm 10mm; }
+    .page { padding: 8mm 6mm; }
+    .bilingual .col-en, .bilingual .col-ar,
+    .signatures .col-en, .signatures .col-ar {
+      font-size: 9px;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
   }
 </style>
 </head>
 <body>
+
+<div id="pdfStatus" class="pdf-status">
+  <div style="font-size:16px;font-weight:600;margin-bottom:8px">Creating PDF…</div>
+  <div style="font-size:13px;color:#666">English left · Arabic right</div>
+</div>
 
 <div class="sign-toolbar no-print">
   <div class="sign-toolbar-title"><i class="bi bi-file-earmark-text me-1"></i><?= $docTitle ?></div>
@@ -199,6 +196,7 @@ if (! empty($companyLogoUrl)) {
     <?php if (! $loggedIn): ?>
       <a href="<?= esc($loginUrl) ?>" class="secondary"><i class="bi bi-box-arrow-in-right"></i>Sign in</a>
     <?php endif; ?>
+    <button type="button" class="secondary" id="downloadContractPdf"><i class="bi bi-file-earmark-pdf"></i>PDF</button>
     <button type="button" class="secondary" onclick="window.print()"><i class="bi bi-printer"></i>Print</button>
   </div>
 </div>
@@ -220,7 +218,7 @@ if (! empty($companyLogoUrl)) {
     <div class="signed-banner no-print">
       <i class="bi bi-check-circle-fill me-1"></i>
       Contract signed<?= ! empty($signedAt) ? ' · ' . esc(date('d M Y H:i', strtotime((string) $signedAt))) : '' ?>.
-      You may print or close this page.
+      You may print, download PDF, or close this page.
     </div>
   <?php endif; ?>
 
@@ -229,7 +227,7 @@ if (! empty($companyLogoUrl)) {
       <?= csrf_field() ?>
   <?php endif; ?>
 
-  <div class="page">
+  <div class="page" id="contractSignSnapshot">
     <?php if (! empty($isParking)): ?>
       <?= $this->include('leases/partials/parking_contract_document', [
           'signMode' => ! empty($signMode),
@@ -254,11 +252,66 @@ if (! empty($companyLogoUrl)) {
     <button type="submit" form="tenant-sign-form" class="submit-btn-main">
       <i class="bi bi-pen-fill"></i>Submit Signature
     </button>
-    <div class="sign-submit-hint">Sign on the line in the tenant block above, then submit</div>
+    <div class="sign-submit-hint">Sign on the tenant line (English / Arabic columns), then submit</div>
   </div>
 </div>
 <?php endif; ?>
 
 <script src="<?= base_url('assets/js/signature-pad.js') ?>" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSRenI4km2k5z4WboRn0cNq0Y8WoW902Z1aNX/Y+0P3jFtkj9l7j8ig==" crossorigin="anonymous"></script>
+<script>
+(function () {
+  var pageEl = document.getElementById('contractSignSnapshot');
+  var statusEl = document.getElementById('pdfStatus');
+  var filename = <?= json_encode($pdfFilename, JSON_UNESCAPED_UNICODE) ?>;
+
+  function runPdf() {
+    if (!pageEl || typeof html2pdf !== 'function') {
+      if (statusEl) statusEl.classList.remove('is-active');
+      return Promise.reject(new Error('PDF unavailable'));
+    }
+    if (statusEl) statusEl.classList.add('is-active');
+    var toolbar = document.querySelector('.sign-toolbar');
+    var submitBar = document.querySelector('.sign-submit-bar');
+    if (toolbar) toolbar.style.display = 'none';
+    if (submitBar) submitBar.style.display = 'none';
+
+    var opt = {
+      margin: [8, 10, 14, 10],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        letterRendering: true,
+        scrollX: 0,
+        scrollY: 0,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] }
+    };
+
+    return html2pdf().set(opt).from(pageEl).save().finally(function () {
+      if (toolbar) toolbar.style.display = '';
+      if (submitBar) submitBar.style.display = '';
+      if (statusEl) statusEl.classList.remove('is-active');
+    });
+  }
+
+  var btn = document.getElementById('downloadContractPdf');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var start = function () { runPdf().catch(function () { alert('Could not create PDF. Try Print instead.'); }); };
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () { setTimeout(start, 300); });
+      } else {
+        setTimeout(start, 600);
+      }
+    });
+  }
+})();
+</script>
 </body>
 </html>

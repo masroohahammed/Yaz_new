@@ -33,6 +33,9 @@ $canViewUnit = $rbac->can($role, 'units.view');
   <div class="col-6 col-md-3"><div class="kpi-card kpi-green"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-person-check"></i></div><div><div class="kpi-label">Occupied</div><div class="kpi-value"><?= $kpi['occupied'] ?></div><div class="kpi-sub"><?= $kpi['occupancy_pct'] ?>% rate</div></div></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-teal"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-house"></i></div><div><div class="kpi-label">Vacant</div><div class="kpi-value"><?= $kpi['vacant'] ?></div></div></div></div></div>
   <div class="col-6 col-md-3"><div class="kpi-card kpi-orange"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-tools"></i></div><div><div class="kpi-label">Maintenance</div><div class="kpi-value"><?= $kpi['maintenance'] ?></div></div></div></div></div>
+  <?php if (!empty($expiringCount)): ?>
+  <div class="col-6 col-md-3"><div class="kpi-card kpi-red"><div class="d-flex align-items-center gap-3"><div class="kpi-icon"><i class="bi bi-calendar-x"></i></div><div><div class="kpi-label">Expiring / Expired</div><div class="kpi-value"><?= (int) $expiringCount ?></div><div class="kpi-sub">Within 30 days</div></div></div></div></div>
+  <?php endif; ?>
 </div>
 <?php endif; ?>
 
@@ -64,13 +67,15 @@ $canViewUnit = $rbac->can($role, 'units.view');
   <div class="fm-card-body p-0">
     <div class="table-responsive">
     <table class="table table-registry table-sm mb-0">
-      <thead><tr><th>Unit</th><th>Type</th><?php if (!empty($hasParkingUnits)): ?><th>Plate No.</th><?php endif; ?><th>Status</th><th>Tenant</th><th>Contract End</th><th>Rent</th><th></th></tr></thead>
+      <thead><tr><th>Unit</th><th>Type</th><?php if (!empty($hasParkingUnits)): ?><th>Plate No.</th><?php endif; ?><th>Status</th><th>Tenant</th><th>Contract Period</th><th>Rent</th><th></th></tr></thead>
       <tbody>
       <?php foreach($units as $u):
-        $expiring = $u['contract_end'] && strtotime($u['contract_end']) < strtotime('+30 days') && $u['status']==='occupied';
+        $expiryDays = $u['expiry_days'] ?? null;
+        $rowWarn = $expiryDays !== null && (int) $expiryDays <= 30 && (int) $expiryDays > 0;
+        $rowExpired = $expiryDays !== null && (int) $expiryDays < 0;
         $isParking = strtolower((string)($u['unit_type'] ?? '')) === 'parking';
       ?>
-      <tr class="<?= $expiring?'sla-warn':'' ?>">
+      <tr class="<?= $rowExpired || ($rowWarn && (int)$expiryDays <= 7) ? 'sla-warn' : '' ?>">
         <td>
           <?php if ($canViewUnit): ?>
           <a href="<?= fm_unit_view_url((int) $u['id']) ?>" class="fw-semibold text-primary">Unit <?= esc($u['unit_number']) ?></a>
@@ -85,7 +90,13 @@ $canViewUnit = $rbac->can($role, 'units.view');
         <?php endif; ?>
         <td><span class="fm-badge badge-status-<?= esc($u['status']) ?>"><?= ucfirst($u['status']) ?></span></td>
         <td class="small"><?= esc($u['tenant_name'] ?? '—') ?></td>
-        <td class="small <?= $expiring?'text-danger fw-bold':'' ?>"><?= $u['contract_end'] ? date('d M Y', strtotime($u['contract_end'])) : '—' ?></td>
+        <td class="small">
+          <?= view('partials/_unit_contract_expiry', [
+            'startDate'  => $u['effective_contract_start'] ?? null,
+            'endDate'    => $u['effective_contract_end'] ?? null,
+            'expiryDays' => $expiryDays,
+          ]) ?>
+        </td>
         <td class="small"><?= $u['rent_amount'] ? $currency.' '.number_format($u['rent_amount'],0) : '—' ?></td>
         <td>
           <?php if ($canViewUnit): ?>
@@ -109,11 +120,14 @@ $canViewUnit = $rbac->can($role, 'units.view');
 <div class="row g-3">
 <?php foreach($units as $u):
   $statusColor = ['occupied'=>'success','vacant'=>'teal','maintenance'=>'orange'][$u['status']] ?? 'secondary';
-  $expiring = $u['contract_end'] && strtotime($u['contract_end']) < strtotime('+30 days') && $u['status']==='occupied';
+  $expiryDays = $u['expiry_days'] ?? null;
+  $expiring = $expiryDays !== null && (int) $expiryDays <= 30 && (int) $expiryDays > 0;
+  $expired = $expiryDays !== null && (int) $expiryDays < 0;
+  $endDate = $u['effective_contract_end'] ?? $u['contract_end'] ?? null;
   $isParking = strtolower((string)($u['unit_type'] ?? '')) === 'parking';
 ?>
 <div class="col-md-4 col-lg-3">
-  <div class="fm-card h-100 <?= $expiring?'border border-warning':'' ?>">
+  <div class="fm-card h-100 <?= $expired ? 'border border-danger' : ($expiring ? 'border border-warning' : '') ?>">
     <div class="fm-card-body">
       <!-- Unit Header -->
       <div class="d-flex justify-content-between align-items-start mb-2">
@@ -132,11 +146,10 @@ $canViewUnit = $rbac->can($role, 'units.view');
         <div class="x-small text-muted mb-1">TENANT</div>
         <div class="small fw-semibold"><i class="bi bi-person me-1 text-primary"></i><?= esc($u['tenant_name']) ?></div>
         <?php if($u['tenant_mobile']): ?><div class="x-small text-muted"><i class="bi bi-telephone me-1"></i><?= esc($u['tenant_mobile']) ?></div><?php endif; ?>
-        <?php if($u['contract_end']): ?>
-        <?php $days = (int)ceil((strtotime($u['contract_end'])-time())/86400); ?>
-        <div class="x-small <?= $days<30?'text-danger fw-bold':($days<60?'text-warning':'text-muted') ?>">
-          <i class="bi bi-calendar me-1"></i>Exp: <?= date('d M Y',strtotime($u['contract_end'])) ?>
-          <?= $days<30?"(⚠️ $days days)":'' ?>
+        <?php if($endDate): ?>
+        <div class="x-small <?= $expired ? 'text-danger fw-bold' : ($expiring ? 'text-warning fw-semibold' : 'text-muted') ?>">
+          <i class="bi bi-calendar me-1"></i>End: <?= date('d M Y', strtotime($endDate)) ?>
+          <?php if ($expired): ?>(Expired <?= abs((int) $expiryDays) ?>d ago)<?php elseif ($expiring): ?>(<?= (int) $expiryDays ?>d left)<?php endif; ?>
         </div>
         <?php endif; ?>
       </div>
@@ -149,7 +162,9 @@ $canViewUnit = $rbac->can($role, 'units.view');
       <div class="small mb-2"><span class="text-muted">Rent:</span> <strong><?= $currency ?> <?= number_format($u['rent_amount'],0) ?>/mo</strong></div>
       <?php endif; ?>
 
-      <?php if($expiring): ?>
+      <?php if($expired): ?>
+      <div class="alert alert-danger py-1 px-2 mb-2" style="font-size:.72rem"><i class="bi bi-exclamation-octagon me-1"></i>Contract expired</div>
+      <?php elseif($expiring): ?>
       <div class="alert alert-warning py-1 px-2 mb-2" style="font-size:.72rem"><i class="bi bi-exclamation-triangle me-1"></i>Contract expiring soon</div>
       <?php endif; ?>
 

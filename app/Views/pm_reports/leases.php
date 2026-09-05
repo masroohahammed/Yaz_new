@@ -24,7 +24,7 @@
     <tbody>
     <?php foreach ($leases as $c):
       $days = (int) ceil((strtotime($c['end_date']) - time()) / 86400);
-      $expiring = $days <= 60 && ($c['status'] ?? '') === 'active';
+      $expiring = $days > 0 && $days <= 60 && ($c['status'] ?? '') === 'active';
       $rent = (float) ($c['monthly_rent'] ?? $c['rent_amount'] ?? $c['value'] ?? 0);
     ?>
     <tr class="<?= $expiring && $days <= 7 ? 'sla-warn' : '' ?>">

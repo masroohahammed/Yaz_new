@@ -197,6 +197,8 @@ class Facilities extends BaseController
             ->where('deleted_at', null)
             ->orderBy('unit_number', 'ASC')
             ->get()->getResultArray();
+        $facilityUnits = (new \App\Services\UnitExpiryService($this->db))->enrichUnits($facilityUnits);
+        $expiringUnitCount = count(array_filter($facilityUnits, static fn ($u) => isset($u['expiry_days']) && (int) $u['expiry_days'] <= 30));
 
         $units = $facilityUnits;
         $occupied = count(array_filter($facilityUnits, static fn ($u) => ($u['status'] ?? '') === 'occupied'));
@@ -289,6 +291,7 @@ class Facilities extends BaseController
             'openWO'        => $openWO,
             'hasParkingUnits' => $hasParkingUnits,
             'inspectionReports' => $inspectionReports,
+            'expiringUnitCount' => $expiringUnitCount,
             'scanUrl'           => $scanUrl,
             'qrImageUrl'        => $qrImageUrl,
         ]));

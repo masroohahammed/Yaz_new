@@ -331,3 +331,22 @@ WHERE upa.id = 0;
 
 ALTER TABLE `user_property_assignments`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+-- 18) units / contracts AUTO_INCREMENT (fixes add unit duplicate PK '0')
+UPDATE `units` u
+JOIN (SELECT COALESCE(MAX(id), 0) AS mx FROM `units`) t
+SET u.id = t.mx + 1
+WHERE u.id = 0
+LIMIT 1;
+
+ALTER TABLE `units`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+UPDATE `contracts` c
+JOIN (SELECT COALESCE(MAX(id), 0) AS mx FROM `contracts`) t
+SET c.id = t.mx + 1
+WHERE c.id = 0
+LIMIT 1;
+
+ALTER TABLE `contracts`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;

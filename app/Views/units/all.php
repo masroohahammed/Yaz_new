@@ -44,7 +44,7 @@
 <div class="fm-card">
   <div class="table-responsive">
     <table class="fm-table table-sm mb-0">
-      <thead><tr><th>Unit</th><th>Property</th><th>Type</th><th>Tenant</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Unit</th><th>Property</th><th>Type</th><th>Tenant</th><th>Status</th><th>Contract Period</th><th></th></tr></thead>
       <tbody>
       <?php foreach ($units as $u): ?>
         <tr>
@@ -53,11 +53,18 @@
           <td class="small"><?= esc($u['unit_type'] ?? '') ?></td>
           <td class="small"><?= esc($u['tenant_name'] ?? '—') ?></td>
           <td><span class="fm-badge badge-status-<?= esc($u['status'] ?? '') ?>"><?= esc($u['status'] ?? '') ?></span></td>
+          <td class="small">
+            <?= view('partials/_unit_contract_expiry', [
+              'startDate'  => $u['effective_contract_start'] ?? null,
+              'endDate'    => $u['effective_contract_end'] ?? null,
+              'expiryDays' => $u['expiry_days'] ?? null,
+            ]) ?>
+          </td>
           <td class="text-end"><a href="<?= base_url('units/view/' . (int) $u['id']) ?>" class="btn btn-sm btn-fm-outline">View</a></td>
         </tr>
       <?php endforeach; ?>
       <?php if (empty($units)): ?>
-        <tr><td colspan="6" class="text-muted text-center py-4">No units found.</td></tr>
+        <tr><td colspan="7" class="text-muted text-center py-4">No units found.</td></tr>
       <?php endif; ?>
       </tbody>
     </table>

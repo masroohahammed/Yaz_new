@@ -380,6 +380,23 @@ if (! function_exists('fm_is_parking_unit')) {
     }
 }
 
+if (! function_exists('fm_contract_days_until')) {
+    function fm_contract_days_until(?string $endDate): ?int
+    {
+        return (new \App\Services\ContractRenewalService())->daysUntilExpiry($endDate);
+    }
+}
+
+if (! function_exists('fm_renewal_date_defaults')) {
+    /**
+     * @return array{start_date: string, end_date: string, contract_date: string, duration_months: int}
+     */
+    function fm_renewal_date_defaults(?string $oldStart, ?string $oldEnd, int $fallbackMonths = 4): array
+    {
+        return (new \App\Services\ContractRenewalService())->renewalPeriodDefaults($oldStart, $oldEnd, $fallbackMonths);
+    }
+}
+
 if (! function_exists('fm_unit_parking_contract_url')) {
     function fm_unit_parking_contract_url(int $unitId, ?int $leaseContractId = null): string
     {
@@ -400,11 +417,13 @@ if (! function_exists('fm_unit_renew_url')) {
     function fm_unit_renew_url(array $unit, ?array $activeLease = null): string
     {
         if (fm_is_parking_unit($unit)) {
-            return fm_unit_parking_contract_url((int) ($unit['id'] ?? 0), $activeLease ? (int) ($activeLease['id'] ?? 0) : null);
+            $url = fm_unit_parking_contract_url((int) ($unit['id'] ?? 0), $activeLease ? (int) ($activeLease['id'] ?? 0) : null);
+
+            return $url . (str_contains($url, '?') ? '&' : '?') . 'renew=1';
         }
 
         if ($activeLease && ! empty($activeLease['id'])) {
-            return base_url('contracts/' . (int) $activeLease['id']);
+            return base_url('contracts/' . (int) $activeLease['id'] . '/renew');
         }
 
         return base_url('contracts/create?unit_id=' . (int) ($unit['id'] ?? 0));

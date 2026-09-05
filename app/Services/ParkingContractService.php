@@ -158,41 +158,22 @@ class ParkingContractService
             return $defaults;
         }
 
-        $oldStart = trim((string) ($lease['start_date'] ?? ''));
-        $oldEnd   = trim((string) ($lease['end_date'] ?? ''));
-        if ($oldEnd === '') {
-            return $defaults;
-        }
+        $renewSvc = new ContractRenewalService();
+        $period   = $renewSvc->renewalPeriodDefaults(
+            (string) ($lease['start_date'] ?? ''),
+            (string) ($lease['end_date'] ?? ''),
+            max(1, (int) ($defaults['duration_months'] ?? 4))
+        );
 
-        $oldEndTs = strtotime($oldEnd);
-        if ($oldEndTs === false) {
-            return $defaults;
-        }
-
-        $newStartTs = strtotime('+1 day', $oldEndTs);
-        $todayTs    = strtotime(date('Y-m-d'));
-        if ($newStartTs === false || $newStartTs <= $todayTs) {
-            $newStartTs = strtotime('+1 day', $todayTs ?: time());
-        }
-
-        $months = $this->durationMonths($oldStart, $oldEnd);
-        if ($months < 1) {
-            $months = max(1, (int) ($defaults['duration_months'] ?? 4));
-        }
-
-        $newStart = date('Y-m-d', $newStartTs);
-        $newEndTs = strtotime('+' . $months . ' months', $newStartTs);
-        $newEnd   = $newEndTs ? date('Y-m-d', $newEndTs) : date('Y-m-d', strtotime('+4 months', $newStartTs));
-
-        $defaults['start_date']    = $newStart;
-        $defaults['end_date']      = $newEnd;
-        $defaults['contract_date'] = date('Y-m-d');
-        $defaults['duration_months'] = $this->durationMonths($newStart, $newEnd);
-        $defaults['duration_ar']   = $this->arabicDurationMonths((int) $defaults['duration_months']);
-        $defaults['duration_en']   = $this->englishDurationMonths((int) $defaults['duration_months']);
-        $defaults['cheque_count']  = (int) $defaults['duration_months'];
+        $defaults['start_date']      = $period['start_date'];
+        $defaults['end_date']        = $period['end_date'];
+        $defaults['contract_date']   = $period['contract_date'];
+        $defaults['duration_months'] = $period['duration_months'];
+        $defaults['duration_ar']     = $this->arabicDurationMonths((int) $defaults['duration_months']);
+        $defaults['duration_en']     = $this->englishDurationMonths((int) $defaults['duration_months']);
+        $defaults['cheque_count']    = (int) $defaults['duration_months'];
         $defaults['cheque_count_words_en'] = $this->numberWordsEnglish((int) $defaults['cheque_count']);
-        $defaults['rent_words_en'] = $this->rentWordsEnglish((float) ($defaults['rent_amount'] ?? 0));
+        $defaults['rent_words_en']   = $this->rentWordsEnglish((float) ($defaults['rent_amount'] ?? 0));
 
         return $defaults;
     }
@@ -248,16 +229,7 @@ class ParkingContractService
 
     public function durationMonths(string $start, string $end): int
     {
-        if (! $start || ! $end) {
-            return 0;
-        }
-        $s = strtotime($start);
-        $e = strtotime($end);
-        if (! $s || ! $e || $e < $s) {
-            return 0;
-        }
-
-        return max(1, (int) round(($e - $s) / (30.437 * 86400)));
+        return (new ContractRenewalService())->durationMonths($start, $end);
     }
 
     public function englishDayName(string $date): string
