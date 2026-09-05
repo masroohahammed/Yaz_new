@@ -34,6 +34,7 @@ class Settings extends BaseController
     public function update()
     {
         $this->requireRole('super_admin');
+        helper('fm');
 
         $fields = [
             'company_name', 'company_tagline', 'company_address', 'company_phone', 'company_email',
@@ -53,6 +54,9 @@ class Settings extends BaseController
             $val = $this->request->getPost($k);
             if ($k === 'vat_enabled') {
                 $val = $val ? '1' : '0';
+            }
+            if ($k === 'company_email') {
+                $val = fm_company_email();
             }
             if ($val !== null) {
                 $this->_saveSetting($k, esc($val));

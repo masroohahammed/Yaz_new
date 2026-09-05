@@ -1,8 +1,8 @@
 {
-  "release": "2026-09-04-remediation",
-  "date": "2026-09-04",
-  "commit": "5717006",
-  "branch": "cursor/fm-erp-remediation-a002",
+  "release": "2026-09-05-payment-fawran-email",
+  "date": "2026-09-05",
+  "commit": "",
+  "branch": "cursor/payment-fawran-email-a002",
   "features": [
     "digital_signature_and_signing_links",
     "property_access_scoping",
@@ -11,7 +11,16 @@
     "parking_contract_save_and_sign_link",
     "parking_contract_renew_archive",
     "user_facilities_autoincrement_fix",
-    "sidebar_company_branding"
+    "units_contracts_autoincrement_fix",
+    "unit_number_duplicate_guard",
+    "vacant_only_tenancy_guard",
+    "contract_expiry_display_fix",
+    "contract_renewal_future_dates",
+    "unit_expiry_dates_display",
+    "contract_sign_bilingual_layout",
+    "sidebar_company_branding",
+    "payment_method_fawran",
+    "company_email_fixed_admin_alyazwa"
   ],
   "verify_url": "remediation-check",
   "sql_patch": "database/patches/fm-erp-complete.sql"

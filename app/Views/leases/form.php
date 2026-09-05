@@ -20,7 +20,7 @@ $preUnit = $preUnit ?? null;
     <div class="col-md-3"><label class="form-label">Signed date</label><input type="date" name="signed_date" class="form-control" value="<?= esc(old('signed_date',$contract['signed_date']??'')) ?>"></div>
     <div class="col-md-3"><label class="form-label">Security deposit</label><input type="number" step="0.01" name="security_deposit" class="form-control" value="<?= esc(old('security_deposit',$contract['security_deposit']??'')) ?>"></div>
     <div class="col-md-3"><label class="form-label">Payment frequency</label><select name="payment_frequency" class="form-select"><?php foreach (['monthly','quarterly','yearly'] as $pf): ?><option value="<?= $pf ?>" <?= old('payment_frequency',$contract['payment_frequency']??'monthly')===$pf?'selected':'' ?>><?= ucfirst($pf) ?></option><?php endforeach; ?></select></div>
-    <div class="col-md-3"><label class="form-label">Payment method</label><select name="payment_type" class="form-select"><?php foreach (['cash','cheque','bank_transfer','card'] as $pt): ?><option value="<?= $pt ?>" <?= old('payment_type',$contract['payment_type']??'cash')===$pt?'selected':'' ?>><?= ucfirst(str_replace('_',' ',$pt)) ?></option><?php endforeach; ?></select></div>
+    <div class="col-md-3"><label class="form-label">Payment method</label><select name="payment_type" class="form-select"><?php helper('fm'); foreach (fm_payment_methods('lease') as $pt => $ptLabel): ?><option value="<?= $pt ?>" <?= old('payment_type',$contract['payment_type']??'cash')===$pt?'selected':'' ?>><?= esc($ptLabel) ?></option><?php endforeach; ?></select></div>
   </div>
 
   <div id="parkingFields" class="mt-4 pt-3 border-top" style="display:none">

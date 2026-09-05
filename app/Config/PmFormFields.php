@@ -29,6 +29,9 @@ class PmFormFields
   /** @return array<string, list<array<string, mixed>>> */
   private static function map(): array
   {
+    helper('fm');
+    $paymentMethods = fm_payment_methods('payment');
+
     return [
       'landlords' => [
         self::sec('Identity', [
@@ -128,9 +131,7 @@ class PmFormFields
           self::fk('facility_id', 'Property', 'facilities', 'name'),
           self::fk('unit_id', 'Unit', 'units', 'unit_number'),
           self::f('payment_type', 'Payment Type', 'select', true, ['rent' => 'Rent', 'deposit' => 'Deposit', 'other' => 'Other']),
-          self::f('payment_method', 'Method', 'select', true, [
-            'cash' => 'Cash', 'cheque' => 'Cheque', 'transfer' => 'Transfer', 'card' => 'Card',
-          ]),
+          self::f('payment_method', 'Method', 'select', true, $paymentMethods),
           self::f('amount', 'Amount', 'number', true),
           self::f('status', 'Status', 'select', true, [
             'pending' => 'Pending', 'paid' => 'Paid', 'partial' => 'Partial',

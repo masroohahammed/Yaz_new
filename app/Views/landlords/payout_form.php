@@ -4,7 +4,8 @@
 $l = $landlord;
 $p = $payout ?? [];
 $isMarkPaid = ! empty($isMarkPaid);
-$payMethods = ['cash' => 'Cash', 'cheque' => 'Cheque', 'transfer' => 'Transfer', 'card' => 'Card'];
+helper('fm');
+$payMethods = fm_payment_methods('landlord');
 $commissionPct = (float) ($commissionPct ?? 0);
 ?>
 

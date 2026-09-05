@@ -35,7 +35,73 @@ if (! function_exists('fm_setting')) {
             }
         }
 
+        if ($key === 'company_email') {
+            return fm_company_email();
+        }
+
         return (string) ($cache[$key] ?? $default);
+    }
+}
+
+if (! function_exists('fm_company_email')) {
+    function fm_company_email(): string
+    {
+        return 'admin@alyazwa.com';
+    }
+}
+
+if (! function_exists('fm_payment_methods')) {
+    /**
+     * @return array<string, string> value => label
+     */
+    function fm_payment_methods(string $context = 'lease'): array
+    {
+        $labels = [
+            'cash'          => 'Cash',
+            'cheque'        => 'Cheque',
+            'bank_transfer' => 'Bank Transfer',
+            'transfer'      => 'Transfer',
+            'bank'          => 'Bank',
+            'card'          => 'Card',
+            'online'        => 'Online',
+            'fawran'        => 'Fawran',
+        ];
+
+        $sets = [
+            'lease'     => ['cash', 'cheque', 'bank_transfer', 'card', 'fawran'],
+            'payment'   => ['cash', 'cheque', 'bank_transfer', 'card', 'fawran'],
+            'finance'   => ['bank', 'cash', 'card', 'cheque', 'online', 'fawran'],
+            'collector' => ['cash', 'cheque', 'transfer', 'fawran'],
+            'contract'  => ['cheque', 'cash', 'transfer', 'fawran'],
+            'landlord'  => ['cash', 'cheque', 'transfer', 'card', 'fawran'],
+            'utility'   => ['cash', 'cheque', 'transfer', 'fawran'],
+            'filter'    => ['cash', 'bank', 'card', 'cheque', 'online', 'fawran'],
+        ];
+
+        $keys = $sets[$context] ?? $sets['lease'];
+        $out  = [];
+        foreach ($keys as $k) {
+            $out[$k] = $labels[$k] ?? ucfirst(str_replace('_', ' ', $k));
+        }
+
+        return $out;
+    }
+}
+
+if (! function_exists('fm_payment_method_label')) {
+    function fm_payment_method_label(string $value): string
+    {
+        static $labels = null;
+        if ($labels === null) {
+            $labels = [];
+            foreach (['lease', 'finance', 'collector', 'contract', 'landlord', 'utility'] as $ctx) {
+                $labels += fm_payment_methods($ctx);
+            }
+        }
+
+        $value = strtolower(trim($value));
+
+        return $labels[$value] ?? ucfirst(str_replace('_', ' ', $value));
     }
 }
 

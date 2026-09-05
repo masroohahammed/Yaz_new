@@ -43,7 +43,9 @@
         <input type="number" step="0.01" name="collected_amount" class="form-control form-control-sm" required value="<?= esc($invoices[0]['amount']) ?>"></div>
       <div class="mb-2"><label class="form-label small">Method *</label>
         <select name="payment_method" class="form-select form-select-sm" required id="payMethod">
-          <option value="cash">Cash</option><option value="cheque">Cheque</option><option value="transfer">Transfer</option>
+          <?php helper('fm'); foreach (fm_payment_methods('collector') as $m => $mLabel): ?>
+          <option value="<?= esc($m) ?>"><?= esc($mLabel) ?></option>
+          <?php endforeach; ?>
         </select></div>
       <div class="mb-2"><label class="form-label small">Notes</label><input type="text" name="notes" class="form-control form-control-sm"></div>
       <button type="submit" class="btn btn-fm-primary btn-sm">Confirm Collection</button>

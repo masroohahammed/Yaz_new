@@ -96,8 +96,8 @@ $formUrl = $isEdit ? base_url('contracts/update/' . $c['id']) : base_url('contra
         <div class="col-md-3">
           <label class="form-label small">Payment type</label>
           <select name="payment_type" class="form-select form-select-sm">
-            <?php foreach (['cheque','cash','transfer'] as $pt): ?>
-            <option value="<?= $pt ?>" <?= ($c['payment_type'] ?? 'cheque') === $pt ? 'selected' : '' ?>><?= ucfirst($pt) ?></option>
+            <?php helper('fm'); foreach (fm_payment_methods('contract') as $pt => $ptLabel): ?>
+            <option value="<?= $pt ?>" <?= ($c['payment_type'] ?? 'cheque') === $pt ? 'selected' : '' ?>><?= esc($ptLabel) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
@@ -174,8 +174,8 @@ $formUrl = $isEdit ? base_url('contracts/update/' . $c['id']) : base_url('contra
       <h6>Deposit</h6>
       <select name="deposit_payment_method" id="depositMethod" class="form-select form-select-sm mb-2">
         <option value="">—</option>
-        <?php foreach (['cash','cheque','transfer'] as $dm): ?>
-        <option value="<?= $dm ?>" <?= ($c['deposit_payment_method'] ?? '') === $dm ? 'selected' : '' ?>><?= ucfirst($dm) ?></option>
+        <?php helper('fm'); foreach (fm_payment_methods('contract') as $dm => $dmLabel): ?>
+        <option value="<?= $dm ?>" <?= ($c['deposit_payment_method'] ?? '') === $dm ? 'selected' : '' ?>><?= esc($dmLabel) ?></option>
         <?php endforeach; ?>
       </select>
       <input type="text" name="deposit_cheque_no" id="depositChequeNo" class="form-control form-control-sm" placeholder="Cheque number" value="<?= esc($c['deposit_cheque_no'] ?? '') ?>">

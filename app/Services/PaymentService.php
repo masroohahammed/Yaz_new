@@ -53,10 +53,12 @@ class PaymentService
             throw new \RuntimeException('Run enterprise migration to enable payment ledger.');
         }
 
+        helper('fm');
+
         $this->db->table('invoice_payments')->insert([
             'invoice_id'     => $invoiceId,
             'amount'         => round($amount, 2),
-            'payment_method' => in_array($method, ['cash', 'bank', 'card', 'cheque', 'online'], true) ? $method : 'bank',
+            'payment_method' => in_array($method, array_keys(fm_payment_methods('finance')), true) ? $method : 'bank',
             'reference_no'   => $referenceNo,
             'notes'          => $notes,
             'paid_at'        => date('Y-m-d H:i:s'),

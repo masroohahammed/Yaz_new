@@ -1055,7 +1055,8 @@ class Finance extends BaseController
         }
 
         $method = (string) ($this->request->getPost('payment_method') ?? 'bank');
-        if (! in_array($method, ['cash', 'bank', 'card', 'cheque', 'online'], true)) {
+        helper('fm');
+        if (! in_array($method, array_keys(fm_payment_methods('finance')), true)) {
             $method = 'bank';
         }
 

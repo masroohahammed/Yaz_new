@@ -82,7 +82,10 @@ abstract class BaseController extends Controller
                 }
             }
         }
-        $this->settings = self::$_settingsCache;
+        helper('fm');
+        $this->settings                      = self::$_settingsCache;
+        $this->settings['company_email']     = fm_company_email();
+        self::$_settingsCache['company_email'] = fm_company_email();
 
         $this->enforceWorkspaceAccess();
     }

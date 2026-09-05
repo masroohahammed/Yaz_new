@@ -76,7 +76,7 @@
                     <td><?= esc($p['tenant_name'] ?? '—') ?></td>
                     <td><?= esc($p['facility_name'] ?? '—') ?></td>
                     <td>
-                        <?php $micons = ['cash' => 'bi-cash', 'cheque' => 'bi-bank', 'transfer' => 'bi-arrow-left-right']; ?>
+                        <?php $micons = ['cash' => 'bi-cash', 'cheque' => 'bi-bank', 'transfer' => 'bi-arrow-left-right', 'fawran' => 'bi-phone']; ?>
                         <i class="bi <?= $micons[$p['payment_method']] ?? 'bi-credit-card' ?> me-1"></i>
                         <?= esc(ucfirst($p['payment_method'] ?? '—')) ?>
                     </td>
