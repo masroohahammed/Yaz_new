@@ -717,6 +717,8 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('function archiveParkingContractDocument', $trait);
         $this->assertStringContainsString('function persistParkingFormSnapshot', $trait);
         $this->assertStringContainsString('function upsertParkingLeaseFromForm', $trait);
+        $this->assertStringContainsString('parkingContractPdfFilename', $trait);
+        $this->assertStringContainsString('autoSnapshotPdf', $trait);
         $this->assertStringContainsString('function resolveParkingTenantId', $trait);
         $this->assertStringContainsString("'doc_type'    => 'parking_contract'", $trait);
 
