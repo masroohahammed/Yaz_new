@@ -21,7 +21,10 @@
     "sidebar_company_branding",
     "payment_method_fawran",
     "company_email_fixed_admin_alyazwa",
-    "parking_contract_print_pk_fix"
+    "parking_contract_print_pk_fix",
+    "rbac_sidebar_menu_filter",
+    "rbac_create_cta_helpers",
+    "roles_settings_redesign"
   ],
   "verify_url": "remediation-check",
   "sql_patch": "database/patches/fm-erp-complete.sql"
