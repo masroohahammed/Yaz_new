@@ -1,7 +1,7 @@
 {
   "release": "2026-09-05-unit-tenancy",
   "date": "2026-09-05",
-  "commit": "b7e18d3",
+  "commit": "b1a6a99",
   "branch": "cursor/unit-tenancy-fix-a002",
   "features": [
     "digital_signature_and_signing_links",
