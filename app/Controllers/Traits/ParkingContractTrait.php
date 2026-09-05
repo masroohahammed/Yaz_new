@@ -35,34 +35,25 @@ trait ParkingContractTrait
             'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
             'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
             'usePdf'             => true,
-            'forDompdf'          => $wantPdf,
+            'snapshotPdf'        => true,
+            'autoSnapshotPdf'    => $wantPdf,
+            'pdfFilename'        => $this->parkingContractPdfFilename($d, trim($tenantSignatureB64) !== ''),
             'pdfUrl'             => '',
             'tenantSignatureB64' => $tenantSignatureB64,
         ]);
 
-        if ($wantPdf && class_exists(\Dompdf\Dompdf::class)) {
-            $html = view('leases/parking_contract_print', $data);
-            $options = new \Dompdf\Options();
-            $options->set('isRemoteEnabled', true);
-            $options->set('isHtml5ParserEnabled', true);
-            $options->set('defaultFont', 'DejaVu Sans');
-            $options->set('chroot', [FCPATH, WRITEPATH]);
-
-            $dompdf = new \Dompdf\Dompdf($options);
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4', 'portrait');
-            $dompdf->render();
-            $signed   = trim($tenantSignatureB64) !== '';
-            $prefix   = $signed ? 'Signed_Parking_Contract_' : 'Parking_Contract_';
-            $filename = $prefix . preg_replace('/[^A-Za-z0-9_-]/', '_', (string) ($d['parking_unit_no'] ?? 'unit')) . '.pdf';
-
-            return $this->response
-                ->setHeader('Content-Type', 'application/pdf')
-                ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
-                ->setBody($dompdf->output());
-        }
-
         return view('leases/parking_contract_print', $data);
+    }
+
+    /**
+     * @param array<string, mixed> $d
+     */
+    protected function parkingContractPdfFilename(array $d, bool $signed = false): string
+    {
+        $prefix = $signed ? 'Signed_Parking_Contract_' : 'Parking_Contract_';
+        $slug   = preg_replace('/[^A-Za-z0-9_-]/', '_', (string) ($d['parking_unit_no'] ?? $d['contract_number'] ?? 'unit'));
+
+        return $prefix . $slug . '.pdf';
     }
 
     /** @param array<string, mixed> $unit */
@@ -629,28 +620,11 @@ trait ParkingContractTrait
         $relPath    = null;
 
         try {
-            if (class_exists(\Dompdf\Dompdf::class)) {
-                $html   = $this->renderParkingContractHtml($d, $tenantSignatureB64);
-                $options = new \Dompdf\Options();
-                $options->set('isRemoteEnabled', true);
-                $options->set('isHtml5ParserEnabled', true);
-                $options->set('defaultFont', 'DejaVu Sans');
-                $options->set('chroot', [FCPATH, WRITEPATH]);
-                $dompdf = new \Dompdf\Dompdf($options);
-                $dompdf->loadHtml($html);
-                $dompdf->setPaper('A4', 'portrait');
-                $dompdf->render();
-                $fileName = $baseName . '.pdf';
-                $fullPath = $dir . '/' . $fileName;
-                file_put_contents($fullPath, $dompdf->output());
-                $relPath = 'documents/' . $fileName;
-            } else {
-                $html     = $this->renderParkingContractHtml($d, $tenantSignatureB64);
-                $fileName = $baseName . '.html';
-                $fullPath = $dir . '/' . $fileName;
-                file_put_contents($fullPath, $html);
-                $relPath = 'documents/' . $fileName;
-            }
+            $html     = $this->renderParkingContractHtml($d, $tenantSignatureB64);
+            $fileName = $baseName . '.html';
+            $fullPath = $dir . '/' . $fileName;
+            file_put_contents($fullPath, $html);
+            $relPath = 'documents/' . $fileName;
         } catch (\Throwable $e) {
             log_message('error', 'Parking contract archive failed: ' . $e->getMessage());
 
@@ -709,7 +683,9 @@ trait ParkingContractTrait
             'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
             'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
             'usePdf'             => true,
-            'forDompdf'          => true,
+            'snapshotPdf'        => true,
+            'autoSnapshotPdf'    => false,
+            'pdfFilename'        => $this->parkingContractPdfFilename($d, trim($tenantSignatureB64) !== ''),
             'pdfUrl'             => '',
             'tenantSignatureB64' => $tenantSignatureB64,
         ]));

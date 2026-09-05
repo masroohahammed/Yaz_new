@@ -726,7 +726,9 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString("'parking_form'", $svc);
 
         $print = file_get_contents($this->root . '/app/Views/leases/parking_contract_print.php');
-        $this->assertStringContainsString('forDompdf', $print);
+        $this->assertStringContainsString('snapshotPdf', $print);
+        $this->assertStringContainsString('html2pdf', $print);
+        $this->assertStringContainsString('parkingContractSnapshot', $print);
         $this->assertStringContainsString('bilingual-row', file_get_contents($this->root . '/app/Views/leases/partials/parking_contract_document.php'));
         $this->assertFileExists($this->root . '/app/Views/leases/partials/_parking_tenant_sign_box.php');
 
