@@ -2,13 +2,16 @@
 <?= $this->section('content') ?>
 <?php
 $primaryColor = $settings['primary_color'] ?? '#76002b';
-$daysLeft     = $daysToExpiry ?? null;
-$expWarning   = $daysLeft !== null && $daysLeft <= 30 && $unit['status'] === 'occupied';
-$expCritical  = $daysLeft !== null && $daysLeft <= 7  && $unit['status'] === 'occupied';
+helper('fm');
+$daysLeft       = fm_contract_days_until($unit['effective_contract_end'] ?? $unit['contract_end'] ?? null);
+$daysUntil      = ($daysLeft !== null && $daysLeft > 0) ? $daysLeft : null;
+$daysExpiredAgo = ($daysLeft !== null && $daysLeft < 0) ? abs($daysLeft) : null;
+$isExpired      = $daysExpiredAgo !== null;
+$expWarning     = $daysUntil !== null && $daysUntil <= 30 && $unit['status'] === 'occupied';
+$expCritical    = $daysUntil !== null && $daysUntil <= 7 && $unit['status'] === 'occupied';
 $rbac         = new \App\Services\RbacService(\Config\Database::connect());
 $canEditUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), 'units.edit');
 $canViewUnit  = $rbac->can((string) (session()->get('user_role') ?? 'client'), 'units.view');
-helper('fm');
 $renewUrl = fm_unit_renew_url($unit, $activeLeaseContract ?? null);
 $parkingContractUrl = fm_unit_parking_contract_url((int) $unit['id'], isset($activeLeaseContract['id']) ? (int) $activeLeaseContract['id'] : null);
 ?>
@@ -44,16 +47,22 @@ $parkingContractUrl = fm_unit_parking_contract_url((int) $unit['id'], isset($act
 </div>
 
 <!-- Contract Expiry Banner -->
-<?php if($expCritical): ?>
+<?php if ($isExpired && $unit['status'] === 'occupied'): ?>
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+  <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+  <div><strong>Contract expired</strong> on <?= date('d M Y', strtotime($unit['contract_end'])) ?> (<?= $daysExpiredAgo ?> day<?= $daysExpiredAgo === 1 ? '' : 's' ?> ago). Renew to continue tenancy.</div>
+  <a href="<?= esc($renewUrl) ?>" class="btn btn-sm btn-danger ms-auto">Renew Now</a>
+</div>
+<?php elseif($expCritical): ?>
 <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
   <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-  <div><strong>Contract expiring in <?= $daysLeft ?> day<?= $daysLeft===1?'':'s' ?>!</strong> Immediate renewal action required.</div>
+  <div><strong>Contract expiring in <?= $daysUntil ?> day<?= $daysUntil===1?'':'s' ?>!</strong> Immediate renewal action required.</div>
   <a href="<?= esc($renewUrl) ?>" class="btn btn-sm btn-danger ms-auto">Renew Now</a>
 </div>
 <?php elseif($expWarning): ?>
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
   <i class="bi bi-clock-history fs-5"></i>
-  <div>Contract expires on <strong><?= date('d M Y',strtotime($unit['contract_end'])) ?></strong> (<?= $daysLeft ?> days remaining).</div>
+  <div>Contract expires on <strong><?= date('d M Y',strtotime($unit['contract_end'])) ?></strong> (<?= $daysUntil ?> days remaining).</div>
   <a href="<?= esc($renewUrl) ?>" class="btn btn-sm btn-warning ms-auto">Renew Contract</a>
 </div>
 <?php endif; ?>
@@ -125,7 +134,7 @@ $parkingContractUrl = fm_unit_parking_contract_url((int) $unit['id'], isset($act
       <?php if($unit['contract_end']): ?>
       <div class="small mb-1 <?= $expCritical?'text-danger fw-bold':($expWarning?'text-warning':'') ?>">
         <span class="text-muted">End:</span> <?= date('d M Y',strtotime($unit['contract_end'])) ?>
-        <?php if($daysLeft!==null && $daysLeft>0): ?><span class="badge bg-<?= $expCritical?'danger':($expWarning?'warning':'secondary') ?> ms-1"><?= $daysLeft ?>d</span><?php endif; ?>
+        <?php if($daysUntil !== null): ?><span class="badge bg-<?= $expCritical?'danger':($expWarning?'warning':'secondary') ?> ms-1"><?= $daysUntil ?>d</span><?php elseif($isExpired): ?><span class="badge bg-danger ms-1">Expired</span><?php endif; ?>
       </div>
       <?php endif; ?>
       <?php if($unit['rent_amount']): ?><div class="small mb-1"><span class="text-muted">Rent:</span> <strong><?= $currency ?> <?= number_format($unit['rent_amount'],0) ?>/mo</strong></div><?php endif; ?>

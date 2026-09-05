@@ -1,8 +1,8 @@
 {
-  "release": "2026-09-04-remediation",
-  "date": "2026-09-04",
-  "commit": "5717006",
-  "branch": "cursor/fm-erp-remediation-a002",
+  "release": "2026-09-05-contract-renewal",
+  "date": "2026-09-05",
+  "commit": "59f378a",
+  "branch": "cursor/contract-renew-dates-a002",
   "features": [
     "digital_signature_and_signing_links",
     "property_access_scoping",
@@ -11,6 +11,12 @@
     "parking_contract_save_and_sign_link",
     "parking_contract_renew_archive",
     "user_facilities_autoincrement_fix",
+    "units_contracts_autoincrement_fix",
+    "unit_number_duplicate_guard",
+    "vacant_only_tenancy_guard",
+    "contract_expiry_display_fix",
+    "contract_renewal_future_dates",
+    "unit_expiry_dates_display",
     "sidebar_company_branding"
   ],
   "verify_url": "remediation-check",

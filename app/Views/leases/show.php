@@ -4,6 +4,12 @@
 $statusColors = ['draft'=>'secondary','active'=>'success','expired'=>'warning','terminated'=>'danger','renewed'=>'info'];
 $statusColor  = $statusColors[$contract['status']] ?? 'secondary';
 $isParkingLease = strtolower((string)($contract['unit_type'] ?? '')) === 'parking' || ($contract['contract_kind'] ?? '') === 'parking';
+helper('fm');
+$renewDefaults = fm_renewal_date_defaults($contract['start_date'] ?? '', $contract['end_date'] ?? '');
+$daysUntilExpiry = fm_contract_days_until($contract['end_date'] ?? null);
+$daysRemaining = ($daysUntilExpiry !== null && $daysUntilExpiry > 0) ? $daysUntilExpiry : null;
+$daysExpiredAgo = ($daysUntilExpiry !== null && $daysUntilExpiry < 0) ? abs($daysUntilExpiry) : null;
+$canRenew = in_array($contract['status'], ['active', 'draft', 'expired'], true);
 ?>
 <div class="page-header">
   <div>
@@ -17,12 +23,15 @@ $isParkingLease = strtolower((string)($contract['unit_type'] ?? '')) === 'parkin
     <a href="<?= base_url('contracts/'.$contract['id'].'/print') ?>" class="btn btn-fm-outline btn-sm" target="_blank"><i class="bi bi-printer me-1"></i>Print</a>
     <?php endif; ?>
     <a href="<?= base_url('contracts/'.$contract['id'].'/edit') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
-    <?php if (in_array($contract['status'], ['active','draft'])): ?>
+    <?php if ($canRenew): ?>
     <?php if ($isParkingLease): ?>
-    <a href="<?= base_url('contracts/'.$contract['id'].'/parking-print') ?>" class="btn btn-sm btn-success"><i class="bi bi-arrow-repeat me-1"></i>Renew</a>
+    <a href="<?= base_url('contracts/'.$contract['id'].'/parking-print?renew=1') ?>" class="btn btn-sm btn-success"><i class="bi bi-arrow-repeat me-1"></i>Renew</a>
     <?php else: ?>
-    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#renewModal"><i class="bi bi-arrow-repeat me-1"></i>Renew</button>
+    <a href="<?= base_url('contracts/'.$contract['id'].'/renew') ?>" class="btn btn-sm btn-success"><i class="bi bi-arrow-repeat me-1"></i>Renew</a>
+    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#renewModal"><i class="bi bi-arrow-repeat me-1"></i>Quick Renew</button>
     <?php endif; ?>
+    <?php endif; ?>
+    <?php if (in_array($contract['status'], ['active', 'draft'], true)): ?>
     <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#amendModal"><i class="bi bi-pencil-square me-1"></i>Amend</button>
     <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#terminateModal"><i class="bi bi-x-circle me-1"></i>Terminate</button>
     <?php endif; ?>
@@ -48,6 +57,24 @@ $isParkingLease = strtolower((string)($contract['unit_type'] ?? '')) === 'parkin
 <div class="alert alert-warning">
   <div class="small fw-semibold mb-1"><?= esc(session()->getFlashdata('error') ?? 'Run this SQL in phpMyAdmin:') ?></div>
   <pre class="small mb-0" style="white-space:pre-wrap"><?= esc($signSql) ?></pre>
+</div>
+<?php endif; ?>
+
+<?php if ($daysExpiredAgo !== null && in_array($contract['status'], ['active', 'expired'], true)): ?>
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+  <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+  <div>Contract expired on <strong><?= date('d M Y', strtotime($contract['end_date'])) ?></strong> (<?= $daysExpiredAgo ?> day<?= $daysExpiredAgo === 1 ? '' : 's' ?> ago). Use Renew to create the next period.</div>
+  <?php if ($canRenew): ?>
+  <a href="<?= $isParkingLease ? base_url('contracts/'.$contract['id'].'/parking-print?renew=1') : base_url('contracts/'.$contract['id'].'/renew') ?>" class="btn btn-sm btn-danger ms-auto">Renew</a>
+  <?php endif; ?>
+</div>
+<?php elseif ($daysRemaining !== null && $daysRemaining <= 30 && $contract['status'] === 'active'): ?>
+<div class="alert alert-<?= $daysRemaining <= 7 ? 'danger' : 'warning' ?> d-flex align-items-center gap-2 mb-3">
+  <i class="bi bi-clock-history fs-5"></i>
+  <div>Contract expires on <strong><?= date('d M Y', strtotime($contract['end_date'])) ?></strong> (<?= $daysRemaining ?> day<?= $daysRemaining === 1 ? '' : 's' ?> remaining).</div>
+  <?php if ($canRenew): ?>
+  <a href="<?= $isParkingLease ? base_url('contracts/'.$contract['id'].'/parking-print?renew=1') : base_url('contracts/'.$contract['id'].'/renew') ?>" class="btn btn-sm btn-<?= $daysRemaining <= 7 ? 'danger' : 'warning' ?> ms-auto">Renew</a>
+  <?php endif; ?>
 </div>
 <?php endif; ?>
 
@@ -164,8 +191,10 @@ $isParkingLease = strtolower((string)($contract['unit_type'] ?? '')) === 'parkin
   <div class="modal-header"><h5 class="modal-title">Renew Contract</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
   <form method="post" action="<?= base_url('contracts/'.$contract['id'].'/renew') ?>"><?= csrf_field() ?>
   <div class="modal-body">
-    <div class="mb-3"><label class="form-label">New Start Date <span class="text-danger">*</span></label><input type="date" name="new_start_date" class="form-control" required value="<?= esc(date('Y-m-d', strtotime($contract['end_date'].' +1 day'))) ?>"></div>
-    <div class="mb-3"><label class="form-label">New End Date <span class="text-danger">*</span></label><input type="date" name="new_end_date" class="form-control" required value="<?= esc(date('Y-m-d', strtotime($contract['end_date'].' +1 year'))) ?>"></div>
+    <p class="small text-muted">Previous period ended <strong><?= esc($contract['end_date']) ?></strong>. Suggested next period below — you can change any date.</p>
+    <div class="mb-3"><label class="form-label">Contract date</label><input type="date" name="contract_date" class="form-control" value="<?= esc($renewDefaults['contract_date']) ?>"></div>
+    <div class="mb-3"><label class="form-label">New Start Date <span class="text-danger">*</span></label><input type="date" name="new_start_date" class="form-control" required value="<?= esc($renewDefaults['start_date']) ?>"></div>
+    <div class="mb-3"><label class="form-label">New End Date <span class="text-danger">*</span></label><input type="date" name="new_end_date" class="form-control" required value="<?= esc($renewDefaults['end_date']) ?>"></div>
     <div class="mb-3"><label class="form-label">New Rent (leave blank to keep current)</label><input type="number" step="0.01" name="new_rent" class="form-control" placeholder="<?= esc($contract['rent_amount']) ?>"></div>
     <div class="mb-3"><label class="form-label">Payment Frequency</label>
       <select name="payment_frequency" class="form-select">

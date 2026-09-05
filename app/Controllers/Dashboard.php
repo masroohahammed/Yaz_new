@@ -97,15 +97,23 @@ class Dashboard extends BaseController
             ->countAllResults();
 
         $expiringContracts = [];
+        $unitExpiryAlerts  = [];
+        $expiredUnitCount  = 0;
+        $facilityIds       = $this->companyScope()->facilityIds();
+        if ($facilityIds !== []) {
+            $unitExpiryAlerts = (new \App\Services\UnitExpiryService($this->db))->expiryAlerts($facilityIds, 60, true);
+            $expiredUnitCount = count(array_filter($unitExpiryAlerts, static fn ($u) => isset($u['expiry_days']) && (int) $u['expiry_days'] < 0));
+            $expiringSoon    += count(array_filter($unitExpiryAlerts, static fn ($u) => isset($u['expiry_days']) && (int) $u['expiry_days'] >= 0 && (int) $u['expiry_days'] <= 60));
+        }
         if ($this->db->tableExists('lease_contracts')) {
             $expiringQ = $this->db->table('lease_contracts lc')
-                ->select('lc.id, lc.contract_number, lc.contract_kind, t.full_name AS client_name, lc.end_date, f.name AS facility_name, u.unit_type')
+                ->select('lc.id, lc.contract_number, lc.contract_kind, t.full_name AS client_name, lc.end_date, lc.status, f.name AS facility_name, u.unit_number, u.unit_type')
                 ->join('tenants t', 't.id=lc.tenant_id', 'left')
                 ->join('facilities f', 'f.id=lc.facility_id', 'left')
                 ->join('units u', 'u.id=lc.unit_id', 'left')
-                ->where('lc.status', 'active')
+                ->whereIn('lc.status', ['active', 'expired'])
                 ->where('lc.end_date <=', date('Y-m-d', strtotime('+90 days')))
-                ->where('lc.end_date >=', date('Y-m-d'));
+                ->where('lc.end_date >=', date('Y-m-d', strtotime('-90 days')));
             if ($this->db->fieldExists('deleted_at', 'lease_contracts')) {
                 $expiringQ->where('lc.deleted_at', null);
             }
@@ -157,6 +165,8 @@ class Dashboard extends BaseController
             'overdueCount'      => $overdue['overdue_count'],
             'openMaintenance'   => $openMaintenance,
             'expiringContracts' => $expiringContracts,
+            'unitExpiryAlerts'  => $unitExpiryAlerts,
+            'expiredUnitCount'  => $expiredUnitCount,
             'overdueInvoices'   => $overdueInvoices,
             'recentMaintenance' => $recentMaintenance,
             'facilityStats'     => $facilityRows,
@@ -275,13 +285,35 @@ class Dashboard extends BaseController
             ->whereNotIn('w.status',['completed','closed','cancelled'])
             ->limit(5)->get()->getResultArray();
 
-        $expiringContracts = $this->db->table('contracts c')
-            ->select('c.id, c.contract_number, c.client_name, c.end_date, f.name AS facility_name')
-            ->join('facilities f','f.id=c.facility_id','left')
-            ->where('c.status','active')
-            ->where('c.end_date <=', date('Y-m-d', strtotime('+30 days')))
-            ->where('c.end_date >=', date('Y-m-d'))
-            ->orderBy('c.end_date','ASC')->limit(5)->get()->getResultArray();
+        $expiringContracts = [];
+        $unitExpiryAlerts  = [];
+        $facilityIds       = $this->companyScope()->facilityIds();
+        if ($facilityIds !== []) {
+            $unitExpiryAlerts = (new \App\Services\UnitExpiryService($this->db))->expiryAlerts($facilityIds, 30, true);
+        }
+        if ($this->db->tableExists('lease_contracts')) {
+            $expQ = $this->db->table('lease_contracts lc')
+                ->select('lc.id, lc.contract_number, t.full_name AS client_name, lc.end_date, f.name AS facility_name, u.unit_number')
+                ->join('tenants t', 't.id = lc.tenant_id', 'left')
+                ->join('facilities f', 'f.id = lc.facility_id', 'left')
+                ->join('units u', 'u.id = lc.unit_id', 'left')
+                ->whereIn('lc.status', ['active', 'expired'])
+                ->where('lc.end_date <=', date('Y-m-d', strtotime('+30 days')))
+                ->where('lc.end_date >=', date('Y-m-d', strtotime('-30 days')));
+            if ($this->db->fieldExists('deleted_at', 'lease_contracts')) {
+                $expQ->where('lc.deleted_at', null);
+            }
+            $this->scopeCompany($expQ, 'lc.company_id');
+            $expiringContracts = $expQ->orderBy('lc.end_date', 'ASC')->limit(8)->get()->getResultArray();
+        } else {
+            $expiringContracts = $this->db->table('contracts c')
+                ->select('c.id, c.contract_number, c.client_name, c.end_date, f.name AS facility_name')
+                ->join('facilities f', 'f.id=c.facility_id', 'left')
+                ->where('c.status', 'active')
+                ->where('c.end_date <=', date('Y-m-d', strtotime('+30 days')))
+                ->where('c.end_date >=', date('Y-m-d', strtotime('-30 days')))
+                ->orderBy('c.end_date', 'ASC')->limit(8)->get()->getResultArray();
+        }
 
         // Pending approvals
         $pendingApprovals = $this->db->table('work_orders w')
@@ -337,6 +369,7 @@ class Dashboard extends BaseController
             'recentWOs'         => $recentWO,
             'slaAlerts'         => $slaAlerts,
             'expiringContracts' => $expiringContracts,
+            'unitExpiryAlerts'  => $unitExpiryAlerts,
             'pendingApprovals'  => $pendingApprovals,
             'techPerf'          => $techPerf,
         ]));

@@ -104,6 +104,11 @@ $maintenanceCreateUrl = $isFm
             <div class="col-4 text-center"><div class="small fw-bold text-warning"><?= ($totalUnits - $occupied) ?></div><div class="x-small text-muted">Vacant</div></div>
             <div class="col-4 text-center"><div class="small fw-bold"><?= $totalUnits ?></div><div class="x-small text-muted">Total</div></div>
           </div>
+          <?php if (!empty($expiringUnitCount)): ?>
+          <div class="alert alert-warning py-2 px-3 mt-2 mb-0 small">
+            <i class="bi bi-calendar-x me-1"></i><strong><?= (int) $expiringUnitCount ?></strong> occupied unit(s) expiring or expired — see the <a href="#tab-units" data-bs-toggle="tab">Units</a> tab.
+          </div>
+          <?php endif; ?>
           <?php else: ?>
           <p class="small text-muted mb-2">No units configured yet.</p>
           <?php endif; ?>
@@ -117,7 +122,11 @@ $maintenanceCreateUrl = $isFm
   <div class="tab-pane fade" id="tab-units">
     <div class="fm-card cc-card">
       <div class="card-header-fm">
-        <h5><i class="bi bi-grid me-2"></i>Units</h5>
+        <h5><i class="bi bi-grid me-2"></i>Units
+          <?php if (!empty($expiringUnitCount)): ?>
+          <span class="badge bg-danger ms-1"><?= (int) $expiringUnitCount ?> expiring/expired</span>
+          <?php endif; ?>
+        </h5>
         <?php if ($canAddUnit): ?>
         <a href="#" data-bs-toggle="modal" data-bs-target="#unitAddModal" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus me-1"></i>Add Unit</a>
         <?php endif; ?>
@@ -134,13 +143,15 @@ $maintenanceCreateUrl = $isFm
         <?php else: ?>
         <div class="table-responsive">
         <table class="table table-registry table-sm mb-0">
-          <thead><tr><th>Unit</th><th>Type</th><?php if (!empty($hasParkingUnits)): ?><th>Plate No.</th><?php endif; ?><th>Status</th><th>Tenant</th><th>Contract End</th><th>Rent</th><th></th></tr></thead>
+          <thead><tr><th>Unit</th><th>Type</th><?php if (!empty($hasParkingUnits)): ?><th>Plate No.</th><?php endif; ?><th>Status</th><th>Tenant</th><th>Contract Period</th><th>Rent</th><th></th></tr></thead>
           <tbody>
           <?php foreach($facilityUnits as $u):
-            $expiring = $u['contract_end'] && strtotime($u['contract_end']) < strtotime('+30 days') && $u['status']==='occupied';
+            $expiryDays = $u['expiry_days'] ?? null;
+            $rowWarn = $expiryDays !== null && (int) $expiryDays <= 30 && (int) $expiryDays > 0;
+            $rowExpired = $expiryDays !== null && (int) $expiryDays < 0;
             $isParking = strtolower((string)($u['unit_type'] ?? '')) === 'parking';
           ?>
-          <tr class="<?= $expiring?'sla-warn':'' ?>">
+          <tr class="<?= $rowExpired || ($rowWarn && (int)$expiryDays <= 7) ? 'sla-warn' : '' ?>">
             <td>
               <?php if ($canViewUnit): ?>
               <a href="<?= fm_unit_view_url((int) $u['id']) ?>" class="fw-semibold text-primary">Unit <?= esc($u['unit_number']) ?></a>
@@ -158,9 +169,12 @@ $maintenanceCreateUrl = $isFm
               <?= esc($u['tenant_name']??'—') ?>
               <?php if($u['tenant_mobile']): ?><br><span class="x-small text-muted"><?= esc($u['tenant_mobile']) ?></span><?php endif; ?>
             </td>
-            <td class="small <?= $expiring?'text-danger fw-bold':'' ?>">
-              <?= $u['contract_end'] ? date('d M Y',strtotime($u['contract_end'])) : '—' ?>
-              <?= $expiring?'<br><span class="x-small">⚠️ Expiring</span>':'' ?>
+            <td class="small">
+              <?= view('partials/_unit_contract_expiry', [
+                'startDate'  => $u['effective_contract_start'] ?? null,
+                'endDate'    => $u['effective_contract_end'] ?? null,
+                'expiryDays' => $expiryDays,
+              ]) ?>
             </td>
             <td class="small"><?= $u['rent_amount'] ? $currency.' '.number_format($u['rent_amount'],0) : '—' ?></td>
             <td>
@@ -279,8 +293,13 @@ $maintenanceCreateUrl = $isFm
         <table class="table table-registry table-sm mb-0">
           <thead><tr><th>Contract #</th><th>Client / Tenant</th><th>Type</th><th>Period</th><th>Value</th><th>Status</th></tr></thead>
           <tbody>
-          <?php foreach($contracts??[] as $c): $expiring = strtotime($c['end_date']) < strtotime('+60 days') && $c['status']==='active'; ?>
-          <tr class="<?= $expiring?'sla-warn':'' ?>">
+          <?php foreach($contracts??[] as $c):
+            helper('fm');
+            $days = ! empty($c['end_date']) ? fm_contract_days_until($c['end_date']) : null;
+            $expiring = $days !== null && $days > 0 && $days <= 60 && $c['status']==='active';
+            $expired = $days !== null && $days < 0;
+          ?>
+          <tr class="<?= $expired || ($expiring && $days <= 7) ? 'sla-warn' : '' ?>">
             <td class="fw-semibold small"><?= esc($c['contract_number']) ?></td>
             <td>
               <div class="small"><?= esc($c['client_name']) ?></div>
@@ -290,8 +309,10 @@ $maintenanceCreateUrl = $isFm
             <td class="small"><?= ucfirst(str_replace('_',' ',$c['contract_type'])) ?></td>
             <td class="small">
               <?= date('d M Y',strtotime($c['start_date'])) ?> →
-              <span class="<?= strtotime($c['end_date'])<time()?'text-danger':($expiring?'text-warning':'') ?>"><?= date('d M Y',strtotime($c['end_date'])) ?></span>
-              <?= $expiring?'⚠️':'' ?>
+              <?= view('partials/_unit_contract_expiry', [
+                'endDate'    => $c['end_date'] ?? null,
+                'expiryDays' => $days,
+              ]) ?>
             </td>
             <td class="small fw-semibold"><?= $currency ?> <?= number_format($c['value'],0) ?></td>
             <td><span class="fm-badge badge-status-<?= esc($c['status']) ?>"><?= ucfirst($c['status']) ?></span></td>

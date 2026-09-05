@@ -725,6 +725,8 @@ final class RemediationInventoryTest extends TestCase
         $svc = file_get_contents($this->root . '/app/Services/ParkingContractService.php');
         $this->assertStringContainsString('mergeSavedParkingForm', $svc);
         $this->assertStringContainsString('applyRenewalDates', $svc);
+        $this->assertStringContainsString('ContractRenewalService', $svc);
+        $this->assertFileExists($this->root . '/app/Services/ContractRenewalService.php');
         $this->assertStringContainsString("'parking_form'", $svc);
 
         $print = file_get_contents($this->root . '/app/Views/leases/parking_contract_print.php');
@@ -875,12 +877,13 @@ final class RemediationInventoryTest extends TestCase
     public function testRemediationRestoreManifestAndVerifyEndpoint(): void
     {
         $build = file_get_contents($this->root . '/public/BUILD.json');
-        $this->assertStringContainsString('2026-09-04-remediation', $build);
+        $this->assertStringContainsString('2026-09-05-contract-renewal', $build);
+        $this->assertStringContainsString('unit_expiry_dates_display', $build);
         $this->assertStringContainsString('digital_signature_and_signing_links', $build);
 
         $check = file_get_contents($this->root . '/app/Controllers/RemediationCheck.php');
         $this->assertStringContainsString('PublicContractSign.php', $check);
-        $this->assertStringContainsString('_lease_signature_panel.php', $check);
+        $this->assertStringContainsString('UnitTenancyService.php', $check);
 
         $routes = file_get_contents($this->root . '/app/Config/Routes.php');
         $this->assertStringContainsString('remediation-check', $routes);
@@ -911,5 +914,72 @@ final class RemediationInventoryTest extends TestCase
         $panel = file_get_contents($this->root . '/app/Views/partials/_lease_signature_panel.php');
         $this->assertStringContainsString('signatureReady', $panel);
         $this->assertStringContainsString('Generate signing link', $panel);
+    }
+
+    public function testUnitsContractsAutoIncrementPatchExists(): void
+    {
+        $patch = file_get_contents($this->root . '/database/patches/2026-09-05-units-contracts-autoincrement.sql');
+        $this->assertStringContainsString('AUTO_INCREMENT', $patch);
+        $this->assertStringContainsString('units', $patch);
+        $this->assertStringContainsString('contracts', $patch);
+
+        $complete = file_get_contents($this->root . '/database/patches/fm-erp-complete.sql');
+        $this->assertStringContainsString('-- 18) units / contracts AUTO_INCREMENT', $complete);
+    }
+
+    public function testContractRenewalDateDefaultsAndExpiryDisplay(): void
+    {
+        $this->assertFileExists($this->root . '/app/Services/ContractRenewalService.php');
+
+        $helper = file_get_contents($this->root . '/app/Helpers/fm_helper.php');
+        $this->assertStringContainsString('fm_renewal_date_defaults', $helper);
+        $this->assertStringContainsString('fm_contract_days_until', $helper);
+
+        $show = file_get_contents($this->root . '/app/Views/leases/show.php');
+        $this->assertStringContainsString('fm_renewal_date_defaults', $show);
+        $this->assertStringContainsString('contract_date', $show);
+
+        $workflow = file_get_contents($this->root . '/app/Views/contracts/_workflow_form.php');
+        $this->assertStringContainsString('fm_renewal_date_defaults', $workflow);
+
+        $unitView = file_get_contents($this->root . '/app/Views/units/view.php');
+        $this->assertStringContainsString('fm_contract_days_until', $unitView);
+        $this->assertStringContainsString('Contract expired', $unitView);
+
+        $this->assertFileExists($this->root . '/app/Services/UnitExpiryService.php');
+        $this->assertFileExists($this->root . '/app/Views/partials/_unit_contract_expiry.php');
+        $facView = file_get_contents($this->root . '/app/Views/facilities/view.php');
+        $this->assertStringContainsString('_unit_contract_expiry', $facView);
+        $pmDash = file_get_contents($this->root . '/app/Views/dashboard/pm_dashboard.php');
+        $this->assertStringContainsString('unitExpiryAlerts', $pmDash);
+
+        $renewSvc = new \App\Services\ContractRenewalService();
+        $defaults = $renewSvc->renewalPeriodDefaults('2024-01-01', '2024-12-31', 12);
+        $this->assertSame(date('Y-m-d'), $defaults['contract_date']);
+        $this->assertGreaterThan(strtotime('today'), strtotime($defaults['start_date']));
+    }
+
+    public function testUnitTenancyServiceGuardsDuplicateAndVacantOnly(): void
+    {
+        $this->assertFileExists($this->root . '/app/Services/UnitTenancyService.php');
+
+        $svc = file_get_contents($this->root . '/app/Services/UnitTenancyService.php');
+        $this->assertStringContainsString('unitNumberTaken', $svc);
+        $this->assertStringContainsString('unitIsVacant', $svc);
+        $this->assertStringContainsString('fm_insert_row_id', $svc);
+        $this->assertStringContainsString('vacantUnitsForFacility', $svc);
+
+        $units = file_get_contents($this->root . '/app/Controllers/Units.php');
+        $this->assertStringContainsString('UnitTenancyService', $units);
+        $this->assertStringContainsString('unitNumberTaken', $units);
+        $this->assertStringContainsString('insertUnit', $units);
+
+        $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
+        $this->assertStringContainsString('vacantOnlyMessage', $leases);
+        $this->assertStringContainsString('vacant_only', $leases);
+        $this->assertStringContainsString('markUnitOccupied', $leases);
+
+        $form = file_get_contents($this->root . '/app/Views/leases/form.php');
+        $this->assertStringContainsString('vacant_only=1', $form);
     }
 }

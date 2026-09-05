@@ -20,7 +20,7 @@
   <table class="fm-table">
     <thead><tr><th>Contract #</th><th>Client / Tenant</th><th>Facility</th><th>Unit</th><th>Contact</th><th>Period</th><th>Value</th><th>Status</th></tr></thead>
     <tbody>
-    <?php foreach($contracts as $c): $days=(int)ceil((strtotime($c['end_date'])-time())/86400); $expiring=$days<=60&&$c['status']==='active'; ?>
+    <?php foreach($contracts as $c): $days=(int)ceil((strtotime($c['end_date'])-time())/86400); $expiring=$days>0&&$days<=60&&$c['status']==='active'; ?>
     <tr class="<?= $expiring&&$days<=7?'sla-warn':'' ?>">
       <td class="fw-semibold small"><?= esc($c['contract_number']) ?></td>
       <td><div class="small fw-semibold"><?= esc($c['client_name']) ?></div><?php if(!empty($c['client_mobile'])): ?><div class="x-small text-muted"><?= esc($c['client_mobile']) ?></div><?php endif; ?></td>

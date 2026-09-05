@@ -256,25 +256,60 @@ $profitPct      = $totalRevenue > 0 ? round($netProfit/$totalRevenue*100,1) : 0;
   <div class="col-lg-5">
     <div class="fm-card">
       <div class="card-header-fm">
-        <h5><i class="bi bi-clock-history me-2 text-warning"></i>Expiring Contracts (30d)</h5>
+        <h5><i class="bi bi-clock-history me-2 text-warning"></i>Contract expiry alerts (30d)</h5>
         <a href="<?= base_url('reports/contracts?expiring=1') ?>" class="small text-primary">View all</a>
       </div>
       <div class="fm-card-body p-0">
         <?php if(empty($expiringContracts)): ?>
         <p class="text-center py-3 text-success small"><i class="bi bi-check-circle me-1"></i>No contracts expiring in 30 days</p>
         <?php else: ?>
-        <?php foreach($expiringContracts as $c): $days=(int)ceil((strtotime($c['end_date'])-time())/86400); ?>
+        <?php foreach($expiringContracts as $c):
+          helper('fm');
+          $days = ! empty($c['end_date']) ? fm_contract_days_until($c['end_date']) : null;
+          $contractUrl = base_url('contracts/' . (int) ($c['id'] ?? 0));
+        ?>
         <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom border-light">
           <div class="flex-grow-1">
-            <div class="small fw-semibold"><a href="<?= base_url('finance/contracts/view/'.$c['id']) ?>" class="text-primary"><?= esc($c['contract_number']) ?></a></div>
-            <div class="x-small text-muted"><?= esc($c['client_name']) ?> · <?= esc($c['facility_name']??'') ?></div>
+            <div class="small fw-semibold"><a href="<?= esc($contractUrl) ?>" class="text-primary"><?= esc($c['contract_number']) ?></a></div>
+            <div class="x-small text-muted"><?= esc($c['client_name']) ?> · <?= esc($c['facility_name']??'') ?><?php if (!empty($c['unit_number'])): ?> · Unit <?= esc($c['unit_number']) ?><?php endif; ?></div>
+            <?php if (!empty($c['end_date'])): ?>
+            <div class="x-small"><?= date('d M Y', strtotime($c['end_date'])) ?></div>
+            <?php endif; ?>
           </div>
+          <?php if ($days !== null && $days < 0): ?>
+          <span class="badge bg-danger">Expired <?= abs($days) ?>d</span>
+          <?php elseif ($days !== null && $days <= 30): ?>
           <span class="fm-badge badge-status-<?= $days<=7?'overdue':($days<=30?'pending':'active') ?>"><?= $days ?>d left</span>
+          <?php endif; ?>
         </div>
         <?php endforeach; ?>
         <?php endif; ?>
       </div>
     </div>
+    <?php if (!empty($unitExpiryAlerts)): ?>
+    <div class="fm-card mt-3">
+      <div class="card-header-fm">
+        <h5><i class="bi bi-grid me-2"></i>Unit expiry alerts</h5>
+        <a href="<?= base_url('units/all') ?>" class="small text-primary">All units</a>
+      </div>
+      <div class="fm-card-body p-0">
+        <?php foreach (array_slice($unitExpiryAlerts, 0, 5) as $u): ?>
+        <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom border-light">
+          <div class="flex-grow-1">
+            <div class="small fw-semibold"><a href="<?= base_url('units/view/' . (int) $u['id']) ?>" class="text-primary">Unit <?= esc($u['unit_number'] ?? '') ?></a></div>
+            <div class="x-small text-muted"><?= esc($u['facility_name'] ?? '') ?> · <?= esc($u['tenant_name'] ?? '—') ?></div>
+          </div>
+          <div class="small text-end">
+            <?= view('partials/_unit_contract_expiry', [
+              'endDate'    => $u['effective_contract_end'] ?? null,
+              'expiryDays' => $u['expiry_days'] ?? null,
+            ]) ?>
+          </div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
   </div>
 </div>
 
