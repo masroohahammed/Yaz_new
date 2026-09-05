@@ -1,7 +1,7 @@
 {
   "release": "2026-09-05-payment-fawran-email",
   "date": "2026-09-05",
-  "commit": "",
+  "commit": "4b5c034",
   "branch": "cursor/payment-fawran-email-a002",
   "features": [
     "digital_signature_and_signing_links",
