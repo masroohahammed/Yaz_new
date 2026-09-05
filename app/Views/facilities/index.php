@@ -2,6 +2,7 @@
 <?= $this->section('content') ?>
 <?php
 helper('fm');
+$canEditFacility = fm_can('facilities.edit');
 $propertyBase = fm_workspace_prefix();
 ?>
 
