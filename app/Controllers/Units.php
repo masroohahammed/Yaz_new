@@ -23,6 +23,8 @@ class Units extends BaseController
         $q = $this->db->table('units')->where('facility_id',$facilityId);
         if ($statusFilter) $q->where('status',$statusFilter);
         $units = $q->orderBy('unit_number','ASC')->get()->getResultArray();
+        $units = (new \App\Services\UnitExpiryService($this->db))->enrichUnits($units);
+        $expiringCount = count(array_filter($units, static fn ($u) => isset($u['expiry_days']) && (int) $u['expiry_days'] <= 30));
 
         $hasParkingUnits = (bool) array_filter(
             $units,
@@ -42,6 +44,7 @@ class Units extends BaseController
             'facility'     => $facility,
             'units'        => $units,
             'kpi'          => $kpi,
+            'expiringCount'=> $expiringCount,
             'statusFilter' => $statusFilter,
             'viewMode'     => $viewMode,
             'hasParkingUnits'=> $hasParkingUnits,
@@ -78,6 +81,7 @@ class Units extends BaseController
         }
 
         $units = $q->orderBy('f.name', 'ASC')->orderBy('u.unit_number', 'ASC')->limit(500)->get()->getResultArray();
+        $units = (new \App\Services\UnitExpiryService($this->db))->enrichUnits($units);
 
         $kpi = ['total' => count($units), 'occupied' => 0, 'vacant' => 0, 'maintenance' => 0];
         foreach ($units as $u) {
@@ -235,9 +239,9 @@ class Units extends BaseController
             ->where('uc.unit_id',$id)
             ->orderBy('uc.created_at','DESC')->get()->getResultArray();
 
-        $daysToExpiry = null;
-        if ($unit['contract_end']) {
-            $daysToExpiry = (int)ceil((strtotime($unit['contract_end']) - time()) / 86400);
+        $daysToExpiry = $unit['expiry_days'] ?? null;
+        if ($daysToExpiry === null && ! empty($unit['effective_contract_end'])) {
+            $daysToExpiry = (new \App\Services\ContractRenewalService())->daysUntilExpiry($unit['effective_contract_end']);
         }
 
         $leaseContracts = [];
@@ -502,6 +506,7 @@ class Units extends BaseController
             ->join('facilities f','f.id=u.facility_id','left')
             ->where('u.id',$id)->get()->getRowArray();
         if (!$unit) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        $unit = (new \App\Services\UnitExpiryService($this->db))->enrichUnits([$unit])[0];
         return view('units/edit', $this->viewData(['title'=>'Edit Unit '.$unit['unit_number'],'unit'=>$unit]));
     }
 

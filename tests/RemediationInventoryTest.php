@@ -946,6 +946,13 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('fm_contract_days_until', $unitView);
         $this->assertStringContainsString('Contract expired', $unitView);
 
+        $this->assertFileExists($this->root . '/app/Services/UnitExpiryService.php');
+        $this->assertFileExists($this->root . '/app/Views/partials/_unit_contract_expiry.php');
+        $facView = file_get_contents($this->root . '/app/Views/facilities/view.php');
+        $this->assertStringContainsString('_unit_contract_expiry', $facView);
+        $pmDash = file_get_contents($this->root . '/app/Views/dashboard/pm_dashboard.php');
+        $this->assertStringContainsString('unitExpiryAlerts', $pmDash);
+
         $renewSvc = new \App\Services\ContractRenewalService();
         $defaults = $renewSvc->renewalPeriodDefaults('2024-01-01', '2024-12-31', 12);
         $this->assertSame(date('Y-m-d'), $defaults['contract_date']);

@@ -1,7 +1,7 @@
 {
   "release": "2026-09-05-contract-renewal",
   "date": "2026-09-05",
-  "commit": "df7f2f4",
+  "commit": "59f378a",
   "branch": "cursor/contract-renew-dates-a002",
   "features": [
     "digital_signature_and_signing_links",
@@ -16,6 +16,7 @@
     "vacant_only_tenancy_guard",
     "contract_expiry_display_fix",
     "contract_renewal_future_dates",
+    "unit_expiry_dates_display",
     "sidebar_company_branding"
   ],
   "verify_url": "remediation-check",

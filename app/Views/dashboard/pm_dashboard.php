@@ -50,7 +50,7 @@
           <div>
             <div class="kpi-label">Active Contracts</div>
             <div class="kpi-value"><?= (int) $activeContracts ?></div>
-            <?php if ($expiringSoon > 0): ?><div class="kpi-sub text-warning"><?= (int) $expiringSoon ?> expiring</div><?php endif; ?>
+            <?php if ($expiringSoon > 0): ?><div class="kpi-sub text-warning"><?= (int) $expiringSoon ?> expiring<?php if (!empty($expiredUnitCount)): ?> · <span class="text-danger"><?= (int) $expiredUnitCount ?> expired</span><?php endif; ?></div><?php elseif (!empty($expiredUnitCount)): ?><div class="kpi-sub text-danger"><?= (int) $expiredUnitCount ?> expired</div><?php endif; ?>
           </div>
         </div>
       </div>
@@ -154,32 +154,37 @@
   <div class="col-lg-6">
     <div class="fm-card">
       <div class="card-header-fm">
-        <h5><i class="bi bi-calendar-event me-2"></i>Upcoming expiries</h5>
+        <h5><i class="bi bi-calendar-event me-2"></i>Contract expiry alerts</h5>
         <a href="<?= base_url('reports/pm/leases?expiring=1') ?>" class="btn btn-fm-outline btn-sm">View all</a>
       </div>
       <div class="fm-card-body p-0">
         <table class="fm-table">
-          <thead><tr><th>Contract</th><th>Client</th><th>Property</th><th>Ends</th><th></th></tr></thead>
+          <thead><tr><th>Contract</th><th>Client</th><th>Property / Unit</th><th>Expiry</th><th></th></tr></thead>
           <tbody>
           <?php foreach ($expiringContracts as $c):
-            $daysLeft = ! empty($c['end_date']) ? (int) ceil((strtotime($c['end_date']) - time()) / 86400) : null;
+            helper('fm');
+            $daysLeft = ! empty($c['end_date']) ? fm_contract_days_until($c['end_date']) : null;
             $contractUrl = base_url('contracts/' . (int) ($c['id'] ?? 0));
+            $isExpired = $daysLeft !== null && $daysLeft < 0;
           ?>
-            <tr class="fm-clickable-row" role="link" tabindex="0" data-href="<?= esc($contractUrl) ?>" style="cursor:pointer">
+            <tr class="fm-clickable-row <?= $isExpired ? 'sla-warn' : '' ?>" role="link" tabindex="0" data-href="<?= esc($contractUrl) ?>" style="cursor:pointer">
               <td class="small fw-semibold"><a href="<?= esc($contractUrl) ?>" class="text-primary text-decoration-none"><?= esc($c['contract_number']) ?></a></td>
               <td class="small"><?= esc($c['client_name']) ?></td>
-              <td class="small text-muted"><?= esc($c['facility_name'] ?? '—') ?></td>
+              <td class="small text-muted">
+                <?= esc($c['facility_name'] ?? '—') ?>
+                <?php if (!empty($c['unit_number'])): ?><br>Unit <?= esc($c['unit_number']) ?><?php endif; ?>
+              </td>
               <td class="small">
-                <?= !empty($c['end_date']) ? date('d M Y', strtotime($c['end_date'])) : '—' ?>
-                <?php if ($daysLeft !== null && $daysLeft > 0 && $daysLeft <= 60): ?>
-                  <br><span class="x-small text-danger"><?= (int) $daysLeft ?>d left</span>
-                <?php endif; ?>
+                <?= view('partials/_unit_contract_expiry', [
+                  'endDate'    => $c['end_date'] ?? null,
+                  'expiryDays' => $daysLeft,
+                ]) ?>
               </td>
               <td class="text-end"><a href="<?= esc($contractUrl) ?>" class="btn btn-sm btn-fm-outline">Open</a></td>
             </tr>
           <?php endforeach; ?>
           <?php if (empty($expiringContracts)): ?>
-            <tr><td colspan="5" class="text-muted text-center py-4 small">No contracts expiring soon.</td></tr>
+            <tr><td colspan="5" class="text-muted text-center py-4 small">No contract expiry alerts in the next 90 days.</td></tr>
           <?php endif; ?>
           </tbody>
         </table>
@@ -215,6 +220,40 @@
     </div>
   </div>
 </div>
+
+<?php if (!empty($unitExpiryAlerts)): ?>
+<div class="fm-card mt-3">
+  <div class="card-header-fm">
+    <h5><i class="bi bi-grid me-2"></i>Unit contract expiry (by property)</h5>
+    <a href="<?= base_url('units/all') ?>" class="btn btn-fm-outline btn-sm">All units</a>
+  </div>
+  <div class="fm-card-body p-0">
+    <table class="fm-table">
+      <thead><tr><th>Unit</th><th>Property</th><th>Tenant</th><th>Contract period</th><th></th></tr></thead>
+      <tbody>
+      <?php foreach (array_slice($unitExpiryAlerts, 0, 15) as $u):
+        $unitUrl = base_url('units/view/' . (int) ($u['id'] ?? 0));
+        $propUrl = fm_property_url((int) ($u['facility_id'] ?? 0), '#tab-units');
+      ?>
+        <tr class="fm-clickable-row" role="link" tabindex="0" data-href="<?= esc($unitUrl) ?>" style="cursor:pointer">
+          <td class="small fw-semibold">Unit <?= esc($u['unit_number'] ?? '') ?></td>
+          <td class="small"><a href="<?= esc($propUrl) ?>" class="text-decoration-none" onclick="event.stopPropagation()"><?= esc($u['facility_name'] ?? '—') ?></a></td>
+          <td class="small"><?= esc($u['tenant_name'] ?? '—') ?></td>
+          <td class="small">
+            <?= view('partials/_unit_contract_expiry', [
+              'startDate'  => $u['effective_contract_start'] ?? null,
+              'endDate'    => $u['effective_contract_end'] ?? null,
+              'expiryDays' => $u['expiry_days'] ?? null,
+            ]) ?>
+          </td>
+          <td class="text-end"><a href="<?= esc($unitUrl) ?>" class="btn btn-sm btn-fm-outline">Open</a></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+</div>
+<?php endif; ?>
 
 <div class="fm-card mt-3">
   <div class="card-header-fm">
