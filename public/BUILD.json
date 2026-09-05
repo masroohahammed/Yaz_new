@@ -1,8 +1,8 @@
 {
   "release": "2026-09-05-fm-erp-full-update",
   "date": "2026-09-05",
-  "commit": "",
-  "branch": "cursor/parking-print-fix-a002",
+  "commit": "0b8d772",
+  "branch": "cursor/fm-erp-remediation-a002",
   "features": [
     "digital_signature_and_signing_links",
     "property_access_scoping",
