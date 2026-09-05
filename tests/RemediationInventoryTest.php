@@ -882,7 +882,7 @@ final class RemediationInventoryTest extends TestCase
     public function testRemediationRestoreManifestAndVerifyEndpoint(): void
     {
         $build = file_get_contents($this->root . '/public/BUILD.json');
-        $this->assertStringContainsString('2026-09-05-contract-renewal', $build);
+        $this->assertStringContainsString('contract_sign_bilingual_layout', $build);
         $this->assertStringContainsString('unit_expiry_dates_display', $build);
         $this->assertStringContainsString('digital_signature_and_signing_links', $build);
 
