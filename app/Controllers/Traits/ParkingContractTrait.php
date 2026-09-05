@@ -35,13 +35,20 @@ trait ParkingContractTrait
             'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
             'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
             'usePdf'             => true,
+            'forDompdf'          => $wantPdf,
             'pdfUrl'             => '',
             'tenantSignatureB64' => $tenantSignatureB64,
         ]);
 
         if ($wantPdf && class_exists(\Dompdf\Dompdf::class)) {
             $html = view('leases/parking_contract_print', $data);
-            $dompdf = new \Dompdf\Dompdf();
+            $options = new \Dompdf\Options();
+            $options->set('isRemoteEnabled', true);
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('defaultFont', 'DejaVu Sans');
+            $options->set('chroot', [FCPATH, WRITEPATH]);
+
+            $dompdf = new \Dompdf\Dompdf($options);
             $dompdf->loadHtml($html);
             $dompdf->setPaper('A4', 'portrait');
             $dompdf->render();
@@ -622,7 +629,12 @@ trait ParkingContractTrait
         try {
             if (class_exists(\Dompdf\Dompdf::class)) {
                 $html   = $this->renderParkingContractHtml($d, $tenantSignatureB64);
-                $dompdf = new \Dompdf\Dompdf();
+                $options = new \Dompdf\Options();
+                $options->set('isRemoteEnabled', true);
+                $options->set('isHtml5ParserEnabled', true);
+                $options->set('defaultFont', 'DejaVu Sans');
+                $options->set('chroot', [FCPATH, WRITEPATH]);
+                $dompdf = new \Dompdf\Dompdf($options);
                 $dompdf->loadHtml($html);
                 $dompdf->setPaper('A4', 'portrait');
                 $dompdf->render();
@@ -695,6 +707,7 @@ trait ParkingContractTrait
             'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
             'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
             'usePdf'             => true,
+            'forDompdf'          => true,
             'pdfUrl'             => '',
             'tenantSignatureB64' => $tenantSignatureB64,
         ]));

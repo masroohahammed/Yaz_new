@@ -30,6 +30,7 @@ $usePdfEmbed  = ! empty($usePdf);
 <?php endif; ?>
 
 <div class="bilingual">
+  <div class="bilingual-row">
   <div class="col-en">
     <div class="doc-title-en">Parking Space Lease Agreement</div>
     <div class="doc-title-en" style="font-size:10px;font-weight:600;margin-bottom:8px">
@@ -46,7 +47,9 @@ $usePdfEmbed  = ! empty($usePdf);
       تم إبرام هذا العقد بين كل من:
     </div>
   </div>
+  </div>
 
+  <div class="bilingual-row">
   <div class="col-en block">
     This Agreement has been entered into by and between:<br><br>
     <strong>First Party / Owner and Lessor:</strong><br>
@@ -64,7 +67,9 @@ $usePdfEmbed  = ! empty($usePdf);
     هاتف <span class="highlight"><?= esc($d['landlord_phone'] ?? '') ?></span> · ص ب <span class="highlight"><?= esc($d['landlord_po_box'] ?? '') ?></span> · <?= esc($d['landlord_email'] ?? '') ?><br>
     <em>الطرف الأول / المالك والمؤجر</em>
   </div>
+  </div>
 
+  <div class="bilingual-row">
   <div class="col-en block">
     <strong>Second Party / Lessee:</strong><br>
     <span class="highlight"><?= esc($d['tenant_name'] ?? '') ?></span>, ID <span class="highlight"><?= esc($d['tenant_qid'] ?? '') ?></span><br>
@@ -75,7 +80,9 @@ $usePdfEmbed  = ! empty($usePdf);
     هاتف <span class="highlight"><?= esc($d['tenant_phone'] ?? '') ?></span> ص ب <span class="highlight"><?= $tenantPo ?></span><br>
     <em>الطرف الثاني / المستأجر</em>
   </div>
+  </div>
 
+  <div class="bilingual-row">
   <div class="col-en block">
     <span class="clause-title">Subject Matter</span>
     Lessor owns parking spaces under Title Deed (<span class="highlight"><?= esc($d['title_deed_no'] ?? '') ?></span>),
@@ -91,7 +98,9 @@ $usePdfEmbed  = ! empty($usePdf);
     منطقة (<span class="highlight"><?= esc($d['zone_no'] ?? '') ?></span>) شارع (<span class="highlight"><?= esc($d['street_no'] ?? '') ?></span>).
     يرغب المستأجر باستئجار الموقف (<span class="highlight"><?= $unitNo ?></span>) لـ<span class="highlight"><?= $vehicleAr ?></span> لوحة (<span class="highlight"><?= $plate ?></span>).
   </div>
+  </div>
 
+  <div class="bilingual-row">
   <div class="col-en block">
     <span class="clause-title">Article One: Term and Rent</span>
     Term: <span class="highlight"><?= esc($d['duration_en'] ?? '') ?></span>,
@@ -108,7 +117,9 @@ $usePdfEmbed  = ! empty($usePdf);
     <span class="highlight"><?= (int) ($d['cheque_count'] ?? 0) ?></span> شيكاً لحساب
     <span class="highlight"><?= esc($d['collector_company'] ?? '') ?></span> <?= esc($d['collector_account'] ?? '') ?>.
   </div>
+  </div>
 
+  <div class="bilingual-row">
   <div class="col-en block">
     <span class="clause-title">Article Two: Lessor Obligations</span>
     Hand over Parking No. (<span class="highlight"><?= $unitNo ?></span>) for vehicle Reg. <span class="highlight"><?= $plate ?></span>.
@@ -117,7 +128,9 @@ $usePdfEmbed  = ! empty($usePdf);
     <span class="clause-title">البند الثاني: التزامات المالك</span>
     تسليم الموقف (<span class="highlight"><?= $unitNo ?></span>) للمركبة (<span class="highlight"><?= $plate ?></span>).
   </div>
+  </div>
 
+  <div class="bilingual-row">
   <div class="col-en block">
     <span class="clause-title">Article Three: Lessee Obligations</span>
     <ol class="en">
@@ -138,7 +151,9 @@ $usePdfEmbed  = ! empty($usePdf);
       <li>إعادة الموقف بالحالة الأصلية.</li>
     </ol>
   </div>
+  </div>
 
+  <div class="bilingual-row">
   <div class="col-en block">
     <span class="clause-title">Article Four: General Terms</span>
     Late payment or breach terminates the Agreement; Lessor may remove the vehicle without legal proceedings.
@@ -149,8 +164,10 @@ $usePdfEmbed  = ! empty($usePdf);
     التأخر أو المخالفة يلغي العقد تلقائياً ويحق للمالك إخلاء المركبة.
     يخضع لقوانين قطر وتختص المحاكم القطرية. أُبرم من نسختين أصليتين.
   </div>
+  </div>
 
   <?php if ($contractPhotos !== []): ?>
+  <div class="bilingual-row">
   <div class="col-en block">
     <span class="clause-title">Photos</span>
     Vehicle / parking photos attached to this agreement.
@@ -159,7 +176,8 @@ $usePdfEmbed  = ! empty($usePdf);
     <span class="clause-title">الصور</span>
     صور المركبة / الموقف المرفقة بهذا العقد.
   </div>
-  <div class="contract-photos-grid" style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:8px 0 12px">
+  </div>
+  <div class="contract-photos-wrap">
     <?php foreach ($contractPhotos as $photoPath): ?>
     <?php
       $photoSrc = \App\Services\ParkingContractPhotoService::photoSrc((string) $photoPath, $usePdfEmbed);
@@ -167,41 +185,43 @@ $usePdfEmbed  = ! empty($usePdf);
           continue;
       }
     ?>
-    <img src="<?= esc($photoSrc) ?>" alt="Parking contract photo" style="max-height:140px;max-width:31%;object-fit:contain;border:1px solid #ccc;border-radius:4px;padding:4px;background:#fff">
+    <img src="<?= esc($photoSrc) ?>" alt="Parking contract photo">
     <?php endforeach; ?>
   </div>
   <?php endif; ?>
 </div>
 
 <div class="signatures">
-  <div class="col-en" style="font-size:10px">
+  <div class="sig-row">
+  <div class="col-en">
     <strong>First Party / Owner</strong><br><?= esc($d['rep_company_en'] ?? '') ?><br><?= esc($d['rep_name_en'] ?? '') ?>
     <div class="sig-line">Signature: ______________________</div>
   </div>
-  <div class="col-ar" style="font-size:10px;direction:rtl;text-align:right;font-family:'Cairo',sans-serif">
+  <div class="col-ar">
     <strong>الطرف الأول / المالك</strong><br><?= esc($d['rep_company_ar'] ?? '') ?><br><?= esc($d['rep_name_ar'] ?? '') ?>
     <div class="sig-line">التوقيع:</div>
   </div>
-  <div class="col-en" style="font-size:10px">
+  </div>
+  <div class="sig-row">
+  <div class="col-en">
     <strong>Second Party / Lessee</strong><br><?= esc(strtoupper((string) ($d['tenant_name'] ?? ''))) ?><br>ID: <?= esc($d['tenant_qid'] ?? '') ?>
-    <?= $this->include('leases/partials/_tenant_signature_slot', [
-        'signMode' => $signMode,
-        'alreadySigned' => $alreadySigned,
+    <?= $this->include('leases/partials/_parking_tenant_sign_box', [
+        'signMode'           => $signMode,
+        'alreadySigned'      => $alreadySigned || $tenantSig !== '',
         'tenantSignatureB64' => $tenantSignatureB64 ?? '',
     ]) ?>
-    <?php if ($signMode && ! $alreadySigned): ?>
+    <?php if ($signMode && ! $alreadySigned && $tenantSig === ''): ?>
       <div class="signature-hint">Draw your signature on the line / وقع على الخط</div>
     <?php endif; ?>
   </div>
-  <div class="col-ar" style="font-size:10px;direction:rtl;text-align:right;font-family:'Cairo',sans-serif">
+  <div class="col-ar">
     <strong>الطرف الثاني / المستأجر</strong><br><?= esc($d['tenant_name'] ?? '') ?><br>رقم: <?= esc($d['tenant_qid'] ?? '') ?>
-    <?php if ($tenantSig !== ''): ?>
-      <img src="<?= esc($tenantSig) ?>" alt="Tenant signature" class="tenant-signature-image" style="position:static;transform:none;margin:8px auto 0;display:block">
-    <?php elseif ($signMode && ! $alreadySigned): ?>
-      <div class="sig-line" style="margin-top:12px;font-size:9px;border:none;padding-top:8px">← التوقيع</div>
-    <?php else: ?>
-      <div class="sig-line">التوقيع:</div>
-    <?php endif; ?>
+    <?= $this->include('leases/partials/_parking_tenant_sign_box', [
+        'signMode'           => false,
+        'alreadySigned'      => $tenantSig !== '',
+        'tenantSignatureB64' => $tenantSignatureB64 ?? '',
+    ]) ?>
+  </div>
   </div>
 </div>
 

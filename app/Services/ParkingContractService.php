@@ -146,6 +146,58 @@ class ParkingContractService
     }
 
     /**
+     * Pre-fill the renewal form with the next contract period (future start/end dates).
+     *
+     * @param array<string, mixed>      $defaults
+     * @param array<string, mixed>|null $lease
+     * @return array<string, mixed>
+     */
+    public function applyRenewalDates(array $defaults, ?array $lease): array
+    {
+        if (! $lease) {
+            return $defaults;
+        }
+
+        $oldStart = trim((string) ($lease['start_date'] ?? ''));
+        $oldEnd   = trim((string) ($lease['end_date'] ?? ''));
+        if ($oldEnd === '') {
+            return $defaults;
+        }
+
+        $oldEndTs = strtotime($oldEnd);
+        if ($oldEndTs === false) {
+            return $defaults;
+        }
+
+        $newStartTs = strtotime('+1 day', $oldEndTs);
+        $todayTs    = strtotime(date('Y-m-d'));
+        if ($newStartTs === false || $newStartTs <= $todayTs) {
+            $newStartTs = strtotime('+1 day', $todayTs ?: time());
+        }
+
+        $months = $this->durationMonths($oldStart, $oldEnd);
+        if ($months < 1) {
+            $months = max(1, (int) ($defaults['duration_months'] ?? 4));
+        }
+
+        $newStart = date('Y-m-d', $newStartTs);
+        $newEndTs = strtotime('+' . $months . ' months', $newStartTs);
+        $newEnd   = $newEndTs ? date('Y-m-d', $newEndTs) : date('Y-m-d', strtotime('+4 months', $newStartTs));
+
+        $defaults['start_date']    = $newStart;
+        $defaults['end_date']      = $newEnd;
+        $defaults['contract_date'] = date('Y-m-d');
+        $defaults['duration_months'] = $this->durationMonths($newStart, $newEnd);
+        $defaults['duration_ar']   = $this->arabicDurationMonths((int) $defaults['duration_months']);
+        $defaults['duration_en']   = $this->englishDurationMonths((int) $defaults['duration_months']);
+        $defaults['cheque_count']  = (int) $defaults['duration_months'];
+        $defaults['cheque_count_words_en'] = $this->numberWordsEnglish((int) $defaults['cheque_count']);
+        $defaults['rent_words_en'] = $this->rentWordsEnglish((float) ($defaults['rent_amount'] ?? 0));
+
+        return $defaults;
+    }
+
+    /**
      * @param array<string, mixed> $defaults
      * @return array<string, mixed>
      */

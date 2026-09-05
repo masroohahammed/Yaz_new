@@ -886,6 +886,13 @@ class Leases extends BaseController
         if ($this->request->getMethod() === 'GET' && ! $this->request->getGet('preview')) {
             helper('fm');
 
+            $renewMode = (bool) $this->request->getGet('renew');
+            $parkSvc   = new ParkingContractService($this->db);
+            $d         = $parkSvc->buildDefaults($unitId, $id);
+            if ($renewMode) {
+                $d = $parkSvc->applyRenewalDates($d, $contract);
+            }
+
             return view('leases/parking_contract_form', $this->viewData([
                 'title'    => 'Parking Contract — ' . $contract['contract_number'],
                 'unit'     => [
@@ -894,12 +901,12 @@ class Leases extends BaseController
                     'facility_name'=> $contract['facility_name'],
                     'unit_type'    => 'parking',
                 ],
-                'd'        => (new ParkingContractService($this->db))->buildDefaults($unitId, $id),
+                'd'        => $d,
                 'backUrl'  => base_url('contracts/' . $id),
                 'printUrl' => base_url('contracts/' . $id . '/parking-print'),
                 'saveUrl'     => base_url('units/' . $unitId . '/parking-contract/save'),
                 'signLinkUrl' => base_url('units/' . $unitId . '/parking-contract/generate-sign-link'),
-                'renewMode'=> (bool) $this->request->getGet('renew'),
+                'renewMode'=> $renewMode,
                 'activeLease' => $contract,
                 'signLink' => session()->getFlashdata('sign_link'),
             ]));

@@ -335,6 +335,11 @@ class Units extends BaseController
             $leaseId = (int) $d['lease_contract_id'];
         }
 
+        if ($renewMode && $leaseId > 0) {
+            $renewLease = $this->db->table('lease_contracts')->where('id', $leaseId)->get()->getRowArray();
+            $d          = $svc->applyRenewalDates($d, $renewLease ?: null);
+        }
+
         if ($leaseId < 1) {
             $leaseId = $this->ensureLeaseFromParkingData($id, $d);
             if ($leaseId > 0) {
