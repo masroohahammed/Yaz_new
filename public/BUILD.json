@@ -1,7 +1,7 @@
 {
   "release": "2026-09-05-fm-erp-full-update",
   "date": "2026-09-05",
-  "commit": "b4e1ed7",
+  "commit": "0273dc8",
   "branch": "cursor/fm-erp-remediation-a002",
   "features": [
     "digital_signature_and_signing_links",
