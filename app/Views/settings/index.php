@@ -10,7 +10,8 @@
   <div class="d-flex flex-wrap gap-2">
     <a href="<?= base_url('settings/users') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-people me-1"></i>Users</a>
     <a href="<?= base_url('settings/companies') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-buildings me-1"></i>Companies</a>
-    <a href="<?= base_url('settings/roles') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-shield-lock me-1"></i>Roles</a>
+    <a href="<?= base_url('settings/roles') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-shield-lock me-1"></i>Roles & Access</a>
+    <a href="<?= base_url('settings/permissions') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-grid-3x3-gap me-1"></i>Module matrix</a>
     <a href="<?= base_url('settings/workflow') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-diagram-3 me-1"></i>Workflow</a>
     <a href="<?= base_url('reports/activity-log') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-activity me-1"></i>Activity Log</a>
     <a href="<?= base_url('settings/finance-module') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-diagram-3 me-1"></i>Finance Modules</a>

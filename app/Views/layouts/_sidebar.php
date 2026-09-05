@@ -9,17 +9,20 @@ helper('fm');
 $role            = session()->get('user_role') ?? '';
 $workspace       = session()->get('workspace') ?? 'fm';
 $workspaceSvc    = new \App\Services\WorkspaceService(\Config\Database::connect());
-$menu            = $workspaceSvc->buildMenu((string) $role);
+    $menu            = $workspaceSvc->buildMenu((string) $role);
 
-// Admin system tools appended for super_admin
+// Admin system tools appended for super_admin (filtered by route permission for other roles)
 if ($role === 'super_admin') {
-    $menu[] = ['type' => 'heading', 'label' => 'System'];
-    $menu[] = ['key' => 'companies', 'label' => 'Companies', 'icon' => 'bi-building-gear', 'url' => 'companies'];
-    $menu[] = ['key' => 'users', 'label' => 'Users', 'icon' => 'bi-people-fill', 'url' => 'users'];
-    $menu[] = ['key' => 'settings_roles', 'label' => 'Roles & Permissions', 'icon' => 'bi-shield-lock', 'url' => 'settings/roles'];
-    $menu[] = ['key' => 'settings_workflow', 'label' => 'Workflow Config', 'icon' => 'bi-diagram-3', 'url' => 'settings/workflow'];
-    $menu[] = ['key' => 'settings_login_history', 'label' => 'Login History', 'icon' => 'bi-door-open', 'url' => 'settings/login-history'];
-    $menu[] = ['key' => 'settings', 'label' => 'Settings', 'icon' => 'bi-gear-fill', 'url' => 'settings'];
+    $adminItems = [
+        ['type' => 'heading', 'label' => 'System'],
+        ['key' => 'companies', 'label' => 'Companies', 'icon' => 'bi-building-gear', 'url' => 'companies'],
+        ['key' => 'users', 'label' => 'Users', 'icon' => 'bi-people-fill', 'url' => 'users'],
+        ['key' => 'settings_roles', 'label' => 'Roles & Permissions', 'icon' => 'bi-shield-lock', 'url' => 'settings/roles'],
+        ['key' => 'settings_workflow', 'label' => 'Workflow Config', 'icon' => 'bi-diagram-3', 'url' => 'settings/workflow'],
+        ['key' => 'settings_login_history', 'label' => 'Login History', 'icon' => 'bi-door-open', 'url' => 'settings/login-history'],
+        ['key' => 'settings', 'label' => 'Settings', 'icon' => 'bi-gear-fill', 'url' => 'settings'],
+    ];
+    $menu = array_merge($menu, $adminItems);
 }
 
 foreach ($menu as &$item) {

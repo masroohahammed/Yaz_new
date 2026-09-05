@@ -1045,4 +1045,21 @@ final class RemediationInventoryTest extends TestCase
         $units = file_get_contents($this->root . '/app/Controllers/Units.php');
         $this->assertStringContainsString("request->is('get')", $units);
     }
+
+    public function testSidebarAndCtaRespectRbacHelpers(): void
+    {
+        require_once $this->root . '/app/Helpers/fm_helper.php';
+
+        $this->assertStringContainsString('filterMenuForRole', file_get_contents($this->root . '/app/Services/RbacService.php'));
+        $this->assertStringContainsString('canCreateForRoute', file_get_contents($this->root . '/app/Services/RbacService.php'));
+        $this->assertStringContainsString('filterMenuForRole', file_get_contents($this->root . '/app/Services/WorkspaceService.php'));
+        $this->assertTrue(function_exists('fm_can'));
+        $this->assertTrue(function_exists('fm_can_create'));
+        $this->assertTrue(function_exists('fm_create_btn'));
+
+        $rolesView = file_get_contents($this->root . '/app/Views/settings/roles.php');
+        $this->assertStringContainsString('role-picker', $rolesView);
+        $this->assertStringContainsString('permissionGroups', $rolesView);
+        $this->assertStringContainsString('settings/permissions', $rolesView);
+    }
 }

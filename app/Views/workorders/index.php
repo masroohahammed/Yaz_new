@@ -1,12 +1,13 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php helper('fm'); ?>
 
 <div class="page-header">
   <div>
     <h1><i class="bi bi-tools me-2 text-primary"></i>Work Orders</h1>
     <p class="text-muted small mb-0">All maintenance and service work orders</p>
   </div>
-  <?php if (in_array(session()->get('user_role'), ['super_admin', 'facility_manager'])): ?>
+  <?php if (fm_can_create('workorders/create')): ?>
   <a href="<?= base_url('workorders/create') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New Work Order</a>
   <?php endif; ?>
 </div>

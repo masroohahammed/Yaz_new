@@ -1,7 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php helper('fm'); ?>
 <div class="page-header"><div><h1><i class="bi bi-briefcase me-2 text-primary"></i>Sales Deals</h1></div>
-<a href="<?= base_url('sales/create') ?>" class="btn btn-fm-primary btn-sm">New Deal</a></div>
+<?= fm_create_btn('sales/create', base_url('sales/create'), 'New Deal') ?></div>
 <?php if (!empty($migrationRequired)): ?><div class="alert alert-warning">Run migration for <code>sales_deals</code>.</div><?php else: ?>
 <form class="filters-inline form-card mb-3" method="get">
   <input type="text" name="search" class="form-control form-control-sm" value="<?= esc($filters['search']??'') ?>" placeholder="Search deals…">

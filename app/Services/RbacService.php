@@ -379,6 +379,20 @@ class RbacService
             'facilities.create' => ['module' => 'facilities', 'action' => 'create'],
             'facilities.edit'   => ['module' => 'facilities', 'action' => 'edit'],
             'tenants'           => ['module' => 'tenants', 'action' => 'view'],
+            'landlords'         => ['module' => 'landlords', 'action' => 'view'],
+            'cheques'           => ['module' => 'cheques', 'action' => 'view'],
+            'workorders'        => ['module' => 'workorders', 'action' => 'view'],
+            'helpdesk'          => ['module' => 'helpdesk', 'action' => 'view'],
+            'crm'               => ['module' => 'crm', 'action' => 'view'],
+            'sales'             => ['module' => 'sales', 'action' => 'view'],
+            'vendors'           => ['module' => 'vendors', 'action' => 'view'],
+            'inventory'         => ['module' => 'inventory', 'action' => 'view'],
+            'procurement'       => ['module' => 'procurement', 'action' => 'view'],
+            'assets'            => ['module' => 'assets', 'action' => 'view'],
+            'employees'         => ['module' => 'employees', 'action' => 'view'],
+            'employee.create'   => ['module' => 'employees', 'action' => 'create'],
+            'employee.edit'     => ['module' => 'employees', 'action' => 'edit'],
+            'employee.delete'   => ['module' => 'employees', 'action' => 'delete'],
         ];
 
         if (isset($exact[$permission])) {
@@ -423,12 +437,15 @@ class RbacService
         cache()->delete('system_settings');
     }
 
-    public function canAccessRoute(string $role, string $uri): bool
+    /**
+     * Permission string required for a route (view access).
+     */
+    public function permissionForRoute(string $uri): string
     {
         helper('fm');
         $uri = fm_normalize_route_path($uri);
 
-        $routePermission = match (true) {
+        return match (true) {
             $uri === '' || $uri === 'dashboard'              => 'dashboard',
             str_starts_with($uri, 'dashboard/kpi')          => 'dashboard.kpi',
             str_starts_with($uri, 'helpdesk')
@@ -603,8 +620,227 @@ class RbacService
             str_starts_with($uri, 'collector')              => 'collector',
             default                                         => 'dashboard',
         };
+    }
 
-        return $this->can($role, $routePermission);
+    public function canAccessRoute(string $role, string $uri): bool
+    {
+        return $this->can($role, $this->permissionForRoute($uri));
+    }
+
+    /**
+     * Whether the role may show create/add CTAs for a module route (e.g. tenants/create).
+     */
+    public function canCreateForRoute(string $role, string $uri): bool
+    {
+        if ($role === 'super_admin') {
+            return true;
+        }
+
+        helper('fm');
+        $uri = fm_normalize_route_path($uri);
+
+        $explicitCreate = match (true) {
+            preg_match('#^(properties|facilities)/create#', $uri) => 'facilities.create',
+            preg_match('#(^|/)units/create#', $uri)               => 'units.create',
+            default                                               => null,
+        };
+        if ($explicitCreate !== null) {
+            return $this->can($role, $explicitCreate);
+        }
+
+        $listUri = preg_replace('#/create(/.*)?$#', '', $uri) ?: $uri;
+        $perm    = $this->permissionForRoute($listUri);
+        $module  = $this->moduleForPermission($perm);
+
+        if ($module !== null) {
+            $row = $this->getModulePermissionRow($role, $module);
+            if ($row !== null) {
+                return (int) ($row['can_create'] ?? 0) === 1;
+            }
+        }
+
+        if (str_ends_with($perm, '.view')) {
+            return false;
+        }
+
+        return $this->can($role, $perm);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $menu
+     * @return list<array<string, mixed>>
+     */
+    public function filterMenuForRole(array $menu, string $role): array
+    {
+        if ($role === 'super_admin') {
+            return $menu;
+        }
+
+        $out             = [];
+        $pendingHeading  = null;
+
+        foreach ($menu as $item) {
+            if (($item['type'] ?? '') === 'heading') {
+                $pendingHeading = $item;
+                continue;
+            }
+
+            $url = ltrim((string) ($item['url'] ?? ''), '/');
+            if ($url === '' || str_starts_with($url, 'http')) {
+                if ($pendingHeading !== null) {
+                    $out[] = $pendingHeading;
+                    $pendingHeading = null;
+                }
+                $out[] = $item;
+                continue;
+            }
+
+            if (! $this->canAccessRoute($role, $url)) {
+                continue;
+            }
+
+            if ($pendingHeading !== null) {
+                $out[] = $pendingHeading;
+                $pendingHeading = null;
+            }
+            $out[] = $item;
+        }
+
+        return $out;
+    }
+
+    /** @return array<string, list<string>> */
+    public static function permissionGroups(): array
+    {
+        $all = self::PERMISSION_LABELS;
+
+        $groups = [
+            'Overview & Dashboard' => [
+                'dashboard', 'dashboard.kpi', 'ui.kpi', 'notifications', 'profile', 'portal', 'collector',
+            ],
+            'Property Management' => [
+                'facilities', 'facilities.create', 'facilities.edit', 'units.view', 'units.create', 'units.edit',
+                'tenants', 'landlords', 'leases', 'cheques', 'utilities', 'budgets', 'cost-management', 'offers', 'media',
+            ],
+            'Facility Operations' => [
+                'helpdesk', 'workorders', 'job-cards', 'assets', 'compliance', 'utility', 'estimations', 'costing',
+                'inventory', 'procurement', 'vendors', 'quotations',
+            ],
+            'Finance' => [
+                'finance', 'finance.invoices', 'finance.expenses', 'finance.petty_cash', 'finance.reimbursements',
+                'finance.contracts', 'finance.ledger', 'finance.payments', 'finance.coa', 'finance.gl',
+                'finance.ap', 'finance.amc', 'finance.budgets', 'finance.reports',
+            ],
+            'Reports & Analytics' => [
+                'reports', 'reports.finance', 'reports.kpi', 'reports.procurement', 'ai', 'crm', 'sales',
+            ],
+            'Human Resources' => [
+                'employees', 'employee.create', 'employee.edit', 'employee.delete', 'attendance', 'attendance.view',
+                'attendance.adjust', 'attendance.approve', 'hr.settings', 'hr.dashboard', 'hr.document_expiry',
+                'hr.contract_expiry', 'leave.view', 'leave.apply', 'leave.approve', 'payroll.process', 'payroll.approve',
+                'payroll.unlock', 'wps.generate', 'manpower.view', 'manpower.manage',
+            ],
+            'Administration' => [
+                'settings.users', 'settings.companies', 'settings.roles', 'settings.workflow',
+                'settings.activity', 'settings.login_history',
+            ],
+        ];
+
+        $assigned = [];
+        foreach ($groups as $label => $keys) {
+            $groups[$label] = array_values(array_filter($keys, static function (string $k) use ($all, &$assigned): bool {
+                if (! isset($all[$k]) || isset($assigned[$k])) {
+                    return false;
+                }
+                $assigned[$k] = true;
+
+                return true;
+            }));
+        }
+
+        $remaining = array_diff(array_keys($all), array_keys($assigned));
+        if ($remaining !== []) {
+            $groups['Other'] = array_values($remaining);
+        }
+
+        return array_filter($groups, static fn (array $keys): bool => $keys !== []);
+    }
+
+    /** @return array<string, mixed>|null */
+    private function getModulePermissionRow(string $role, string $module): ?array
+    {
+        if ($this->db === null || ! $this->db->tableExists('role_permissions') || ! $this->db->tableExists('roles')) {
+            return null;
+        }
+
+        $roleRow = $this->db->table('roles')->select('id')->where('name', $role)->get()->getRowArray();
+        if (! $roleRow) {
+            return null;
+        }
+
+        $row = $this->db->table('role_permissions')
+            ->where('role_id', (int) $roleRow['id'])
+            ->where('module', $module)
+            ->get()->getRowArray();
+
+        return $row ?: null;
+    }
+
+    private function moduleForPermission(string $permission): ?string
+    {
+        static $map = [
+            'dashboard'       => 'dashboard',
+            'helpdesk'        => 'helpdesk',
+            'workorders'      => 'workorders',
+            'job-cards'       => 'workorders',
+            'facilities'      => 'facilities',
+            'facilities.create' => 'facilities',
+            'facilities.edit' => 'facilities',
+            'units.view'      => 'units',
+            'units.create'    => 'units',
+            'units.edit'      => 'units',
+            'tenants'         => 'tenants',
+            'landlords'       => 'landlords',
+            'leases'          => 'leases',
+            'cheques'         => 'cheques',
+            'crm'             => 'crm',
+            'sales'           => 'sales',
+            'utilities'       => 'pm-utilities',
+            'budgets'         => 'budgets',
+            'cost-management' => 'cost-management',
+            'offers'          => 'offers',
+            'media'           => 'media',
+            'assets'          => 'assets',
+            'compliance'      => 'compliance',
+            'inventory'       => 'inventory',
+            'procurement'     => 'procurement',
+            'vendors'         => 'vendors',
+            'quotations'      => 'quotations',
+            'estimations'     => 'estimations',
+            'costing'         => 'costing',
+            'utility'         => 'utility',
+            'employees'       => 'employees',
+            'reports'         => 'reports',
+            'finance'         => 'finance',
+            'finance.invoices' => 'invoices',
+            'finance.expenses' => 'expenses',
+            'finance.payments' => 'payments',
+            'settings.users'  => 'settings',
+            'settings.roles'  => 'settings',
+        ];
+
+        if (isset($map[$permission])) {
+            return $map[$permission];
+        }
+
+        if (str_starts_with($permission, 'finance.')) {
+            return 'finance';
+        }
+        if (str_starts_with($permission, 'reports.')) {
+            return 'reports';
+        }
+
+        return null;
     }
 
     /** @return array<string, list<string>> */

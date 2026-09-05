@@ -1,8 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php helper('fm'); ?>
 <div class="page-header">
   <div><h1><i class="bi bi-person-badge me-2 text-primary"></i>Landlords</h1></div>
-  <?php if (empty($migrationRequired)): ?><a href="<?= base_url('landlords/create') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Landlord</a><?php endif; ?>
+  <?php if (empty($migrationRequired)): ?><?= fm_create_btn('landlords/create', base_url('landlords/create'), 'Add Landlord') ?><?php endif; ?>
 </div>
 <?php if (!empty($migrationRequired)): ?>
 <div class="alert alert-warning">The <code><?= esc($missingTable ?? 'landlords') ?></code> table is missing. Run migration <strong>2026-07-23-120000_PmErpModules</strong>.</div>

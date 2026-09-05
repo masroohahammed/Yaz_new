@@ -137,23 +137,24 @@ class WorkspaceService
         $financeMenu = config('FinanceMenu')->items;
 
         if ($workspace === 'portal') {
-            return config('PortalMenu')->items;
+            return (new RbacService($this->db))->filterMenuForRole(config('PortalMenu')->items, $role);
         }
 
         if ($workspace === 'collector') {
-            return config('CollectorMenu')->items;
+            return (new RbacService($this->db))->filterMenuForRole(config('CollectorMenu')->items, $role);
         }
 
         if ($workspace === 'both') {
             $core = $this->mergeMenus($pmMenu, $fmMenu);
 
-            return $this->mergeMenus($this->mergeMenus($core, $hrMenu), $financeMenu);
-        }
-        if ($workspace === 'pm') {
-            return $this->mergeMenus($pmMenu, $this->filterFinanceMenuForPm($financeMenu));
+            $menu = $this->mergeMenus($this->mergeMenus($core, $hrMenu), $financeMenu);
+        } elseif ($workspace === 'pm') {
+            $menu = $this->mergeMenus($pmMenu, $this->filterFinanceMenuForPm($financeMenu));
+        } else {
+            $menu = $this->mergeMenus($this->mergeMenus($fmMenu, $hrMenu), $financeMenu);
         }
 
-        return $this->mergeMenus($this->mergeMenus($fmMenu, $hrMenu), $financeMenu);
+        return (new RbacService($this->db))->filterMenuForRole($menu, $role);
     }
 
     /**

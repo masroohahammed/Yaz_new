@@ -131,11 +131,12 @@ class Settings extends BaseController
         $roles = $this->db->table('roles')->orderBy('id', 'ASC')->get()->getResultArray();
 
         return view('settings/roles', $this->viewData([
-            'title'       => 'Roles & Permissions',
-            'roles'       => $roles,
-            'permissions' => RbacService::allPermissionKeys(),
-            'labels'      => RbacService::PERMISSION_LABELS,
-            'permMap'     => $rbac->permissionsMap(),
+            'title'             => 'Roles & Permissions',
+            'roles'             => $roles,
+            'permissions'       => RbacService::allPermissionKeys(),
+            'labels'            => RbacService::PERMISSION_LABELS,
+            'permMap'           => $rbac->permissionsMap(),
+            'permissionGroups'  => RbacService::permissionGroups(),
         ]));
     }
 

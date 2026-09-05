@@ -2,19 +2,15 @@
 <?= $this->section('content') ?>
 <?php
 helper('fm');
-$rbac = new \App\Services\RbacService(\Config\Database::connect());
-$canCreateFacility = $rbac->can((string) (session()->get('user_role') ?? 'client'), 'facilities.create');
-$canEditFacility = $rbac->can((string) (session()->get('user_role') ?? 'client'), 'facilities.edit');
 $propertyBase = fm_workspace_prefix();
 ?>
 
+<?php helper('fm'); ?>
 <div class="page-header">
   <div>
     <h1><i class="bi bi-building me-2 text-primary"></i>Properties</h1>
   </div>
-  <?php if ($canCreateFacility): ?>
-  <a href="<?= base_url($propertyBase.'/create') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Property</a>
-  <?php endif; ?>
+  <?= fm_create_btn('properties/create', base_url($propertyBase . '/create'), 'Add Property') ?>
 </div>
 
 <!-- Filters -->

@@ -1,9 +1,10 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php helper('fm'); ?>
 <div class="page-header">
   <div><h1><i class="bi bi-people me-2 text-primary"></i>Tenants</h1></div>
   <?php if (empty($migrationRequired)): ?>
-  <a href="<?= base_url('tenants/create') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Tenant</a>
+  <?= fm_create_btn('tenants/create', base_url('tenants/create'), 'Add Tenant') ?>
   <?php endif; ?>
 </div>
 <?php if (!empty($migrationRequired)): ?>

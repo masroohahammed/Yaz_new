@@ -496,6 +496,61 @@ if (! function_exists('fm_unit_renew_url')) {
     }
 }
 
+if (! function_exists('fm_user_role')) {
+    function fm_user_role(): string
+    {
+        return (string) (session()->get('user_role') ?? 'client');
+    }
+}
+
+if (! function_exists('fm_rbac')) {
+    function fm_rbac(): \App\Services\RbacService
+    {
+        static $svc = null;
+        if ($svc === null) {
+            $svc = new \App\Services\RbacService(\Config\Database::connect());
+        }
+
+        return $svc;
+    }
+}
+
+if (! function_exists('fm_can')) {
+    function fm_can(string $permission): bool
+    {
+        return fm_rbac()->can(fm_user_role(), $permission);
+    }
+}
+
+if (! function_exists('fm_can_route')) {
+    function fm_can_route(string $path): bool
+    {
+        return fm_rbac()->canAccessRoute(fm_user_role(), ltrim($path, '/'));
+    }
+}
+
+if (! function_exists('fm_can_create')) {
+    function fm_can_create(string $routePath): bool
+    {
+        return fm_rbac()->canCreateForRoute(fm_user_role(), ltrim($routePath, '/'));
+    }
+}
+
+if (! function_exists('fm_create_btn')) {
+    /**
+     * Primary “Add / New” CTA — hidden when the role lacks create access.
+     */
+    function fm_create_btn(string $routePath, string $href, string $label, string $icon = 'bi-plus-lg'): string
+    {
+        if (! fm_can_create($routePath)) {
+            return '';
+        }
+
+        return '<a href="' . esc($href) . '" class="btn btn-fm-primary btn-sm">'
+            . '<i class="bi ' . esc($icon) . ' me-1"></i>' . esc($label) . '</a>';
+    }
+}
+
 if (! function_exists('fm_can_view_kpis')) {
     function fm_can_view_kpis(?string $role = null): bool
     {

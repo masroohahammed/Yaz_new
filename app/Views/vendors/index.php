@@ -1,6 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<div class="page-header"><div><h1><i class="bi bi-building me-2 text-primary"></i>Vendor Management</h1></div><a href="<?= base_url('vendors/create') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Vendor</a></div>
+<?php helper('fm'); ?>
+<div class="page-header"><div><h1><i class="bi bi-building me-2 text-primary"></i>Vendor Management</h1></div><?= fm_create_btn('vendors/create', base_url('vendors/create'), 'Add Vendor') ?></div>
 <div class="fm-card"><div class="fm-card-body p-0"><div class="table-responsive">
 <table class="fm-table"><thead><tr><th>Vendor</th><th>Category</th><th>Contact</th><th>Phone</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead><tbody>
 <?php foreach($vendors as $v): ?>

@@ -1,8 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php helper('fm'); ?>
 <div class="page-header">
   <div><h1><i class="bi bi-lightning-charge me-2 text-primary"></i>Utility Accounts</h1></div>
-  <a href="<?= base_url('utilities/create') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus me-1"></i>New Account</a>
+  <?= fm_create_btn('utilities/create', base_url('utilities/create'), 'New Account', 'bi-plus') ?>
 </div>
 
 <?php if (!empty($migrationRequired)): ?>

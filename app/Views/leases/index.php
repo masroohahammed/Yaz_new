@@ -1,9 +1,11 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php helper('fm'); ?>
 <div class="page-header">
   <div><h1><i class="bi bi-file-earmark-text me-2 text-primary"></i>Lease Contracts</h1></div>
   <?php if (empty($migrationRequired)): ?>
   <div class="d-flex gap-2 flex-wrap">
+    <?php if (fm_can('leases')): ?>
     <form method="post" action="<?= base_url('contracts/sync-units') ?>" class="d-inline">
       <?= csrf_field() ?>
       <button type="submit" class="btn btn-fm-outline btn-sm" data-confirm="Import and update all unit contracts (property + parking) into this lease list? Existing leases for the same unit will be updated, not duplicated.">
@@ -11,7 +13,8 @@
       </button>
     </form>
     <a href="<?= base_url('reports/pm/leases?expiring=1') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-calendar-event me-1"></i>Renew expiring</a>
-    <a href="<?= base_url('contracts/create') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New Contract</a>
+    <?php endif; ?>
+    <?= fm_create_btn('contracts/create', base_url('contracts/create'), 'New Contract') ?>
   </div>
   <?php endif; ?>
 </div>
