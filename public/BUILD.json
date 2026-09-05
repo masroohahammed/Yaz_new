@@ -1,7 +1,7 @@
 {
   "release": "2026-09-05-contract-renewal",
   "date": "2026-09-05",
-  "commit": "pending",
+  "commit": "df7f2f4",
   "branch": "cursor/contract-renew-dates-a002",
   "features": [
     "digital_signature_and_signing_links",
