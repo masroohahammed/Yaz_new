@@ -722,7 +722,13 @@ final class RemediationInventoryTest extends TestCase
 
         $svc = file_get_contents($this->root . '/app/Services/ParkingContractService.php');
         $this->assertStringContainsString('mergeSavedParkingForm', $svc);
+        $this->assertStringContainsString('applyRenewalDates', $svc);
         $this->assertStringContainsString("'parking_form'", $svc);
+
+        $print = file_get_contents($this->root . '/app/Views/leases/parking_contract_print.php');
+        $this->assertStringContainsString('forDompdf', $print);
+        $this->assertStringContainsString('bilingual-row', file_get_contents($this->root . '/app/Views/leases/partials/parking_contract_document.php'));
+        $this->assertFileExists($this->root . '/app/Views/leases/partials/_parking_tenant_sign_box.php');
 
         $form = file_get_contents($this->root . '/app/Views/leases/parking_contract_form.php');
         $this->assertStringContainsString('Save contract data', $form);

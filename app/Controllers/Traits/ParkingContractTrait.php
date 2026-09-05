@@ -52,7 +52,9 @@ trait ParkingContractTrait
             $dompdf->loadHtml($html);
             $dompdf->setPaper('A4', 'portrait');
             $dompdf->render();
-            $filename = 'Parking_Contract_' . preg_replace('/[^A-Za-z0-9_-]/', '_', (string) ($d['parking_unit_no'] ?? 'unit')) . '.pdf';
+            $signed   = trim($tenantSignatureB64) !== '';
+            $prefix   = $signed ? 'Signed_Parking_Contract_' : 'Parking_Contract_';
+            $filename = $prefix . preg_replace('/[^A-Za-z0-9_-]/', '_', (string) ($d['parking_unit_no'] ?? 'unit')) . '.pdf';
 
             return $this->response
                 ->setHeader('Content-Type', 'application/pdf')
