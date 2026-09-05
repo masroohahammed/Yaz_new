@@ -1,24 +1,35 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php helper('fm'); ?>
+<?php $propertyOnly = ! empty($propertyOnly); ?>
 <div class="page-header">
   <div>
     <h1><i class="bi bi-buildings me-2"></i>Property Management Dashboard</h1>
-    <div class="small text-muted"><?= date('l, d F Y') ?> · Occupancy &amp; leasing overview</div>
+    <div class="small text-muted"><?= date('l, d F Y') ?> · <?= $propertyOnly ? 'Property KPIs &amp; contract expiry' : 'Occupancy &amp; leasing overview' ?></div>
   </div>
   <div class="d-flex gap-2 flex-wrap">
+    <?php if (fm_can_route('properties')): ?>
     <a href="<?= base_url('properties') ?>" class="btn btn-fm-primary btn-sm"><i class="bi bi-building me-1"></i>Properties</a>
+    <?php endif; ?>
+    <?php if (fm_can_route('tenants')): ?>
     <a href="<?= base_url('tenants') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-people me-1"></i>Tenants</a>
+    <?php endif; ?>
+    <?php if (fm_can_route('contracts')): ?>
     <a href="<?= base_url('contracts') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-file-earmark-text me-1"></i>Contracts</a>
+    <?php endif; ?>
+    <?php if (! $propertyOnly && fm_can_route('finance/invoices')): ?>
     <a href="<?= base_url('finance/invoices') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-receipt me-1"></i>Invoices</a>
+    <?php endif; ?>
   </div>
 </div>
 
+<?php if (! $propertyOnly): ?>
 <?= view('partials/ai_alert_banner', ['aiFlags' => $aiFlags ?? []]) ?>
+<?php endif; ?>
 
-<?php helper('fm'); ?>
 <?php if (fm_can_view_kpis()): ?>
 <div class="row g-3 mb-3">
-  <div class="col-6 col-sm-6 col-md-3 col-lg-3">
+  <div class="col-6 col-sm-6 col-md-<?= $propertyOnly ? '4' : '3' ?> col-lg-<?= $propertyOnly ? '4' : '3' ?>">
     <a href="<?= base_url('properties') ?>" class="text-decoration-none d-block h-100">
       <div class="kpi-card kpi-blue h-100">
         <div class="d-flex align-items-center gap-3">
@@ -28,7 +39,7 @@
       </div>
     </a>
   </div>
-  <div class="col-6 col-sm-6 col-md-3 col-lg-3">
+  <div class="col-6 col-sm-6 col-md-<?= $propertyOnly ? '4' : '3' ?> col-lg-<?= $propertyOnly ? '4' : '3' ?>">
     <a href="<?= base_url('reports/pm/occupancy') ?>" class="text-decoration-none d-block h-100">
       <div class="kpi-card kpi-teal h-100">
         <div class="d-flex align-items-center gap-3">
@@ -42,7 +53,7 @@
       </div>
     </a>
   </div>
-  <div class="col-6 col-sm-6 col-md-3 col-lg-3">
+  <div class="col-6 col-sm-6 col-md-<?= $propertyOnly ? '4' : '3' ?> col-lg-<?= $propertyOnly ? '4' : '3' ?>">
     <a href="<?= base_url('contracts') ?>" class="text-decoration-none d-block h-100">
       <div class="kpi-card kpi-green h-100">
         <div class="d-flex align-items-center gap-3">
@@ -56,6 +67,7 @@
       </div>
     </a>
   </div>
+  <?php if (! $propertyOnly): ?>
   <div class="col-6 col-sm-6 col-md-3 col-lg-3">
     <a href="<?= base_url('finance/invoices') ?>" class="text-decoration-none d-block h-100">
       <div class="kpi-card kpi-red h-100">
@@ -70,9 +82,11 @@
       </div>
     </a>
   </div>
+  <?php endif; ?>
 </div>
 <?php endif; ?>
 
+<?php if (! $propertyOnly): ?>
 <div class="row g-3 mb-3">
   <div class="col-md-4">
     <div class="fm-card h-100">
@@ -121,8 +135,9 @@
     </div>
   </div>
 </div>
+<?php endif; ?>
 
-<?php if (!empty($facilityStats)): ?>
+<?php if (! empty($facilityStats)): ?>
 <div class="fm-card mb-3">
   <div class="card-header-fm">
     <h5><i class="bi bi-building me-2"></i>Property occupancy</h5>
@@ -151,7 +166,7 @@
 <?php endif; ?>
 
 <div class="row g-3">
-  <div class="col-lg-6">
+  <div class="<?= $propertyOnly ? 'col-12' : 'col-lg-6' ?>">
     <div class="fm-card">
       <div class="card-header-fm">
         <h5><i class="bi bi-calendar-event me-2"></i>Contract expiry alerts</h5>
@@ -162,7 +177,6 @@
           <thead><tr><th>Contract</th><th>Client</th><th>Property / Unit</th><th>Expiry</th><th></th></tr></thead>
           <tbody>
           <?php foreach ($expiringContracts as $c):
-            helper('fm');
             $daysLeft = ! empty($c['end_date']) ? fm_contract_days_until($c['end_date']) : null;
             $contractUrl = base_url('contracts/' . (int) ($c['id'] ?? 0));
             $isExpired = $daysLeft !== null && $daysLeft < 0;
@@ -191,6 +205,7 @@
       </div>
     </div>
   </div>
+  <?php if (! $propertyOnly): ?>
   <div class="col-lg-6">
     <div class="fm-card">
       <div class="card-header-fm">
@@ -219,9 +234,10 @@
       </div>
     </div>
   </div>
+  <?php endif; ?>
 </div>
 
-<?php if (!empty($unitExpiryAlerts)): ?>
+<?php if (! empty($unitExpiryAlerts)): ?>
 <div class="fm-card mt-3">
   <div class="card-header-fm">
     <h5><i class="bi bi-grid me-2"></i>Unit contract expiry (by property)</h5>
@@ -255,6 +271,7 @@
 </div>
 <?php endif; ?>
 
+<?php if (! $propertyOnly): ?>
 <div class="fm-card mt-3">
   <div class="card-header-fm">
     <h5><i class="bi bi-tools me-2"></i>Maintenance history <span class="badge bg-secondary-subtle text-secondary">Read-only</span></h5>
@@ -281,6 +298,7 @@
     </table>
   </div>
 </div>
+<?php endif; ?>
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
 <script>

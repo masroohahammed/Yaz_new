@@ -551,6 +551,40 @@ if (! function_exists('fm_create_btn')) {
     }
 }
 
+if (! function_exists('fm_dashboard_property_only')) {
+    /**
+     * Limited PM dashboard: property KPIs + contract/unit expiry only (no finance, maintenance, AI).
+     * Used when the role has show/view access but not full finance or executive dashboard rights.
+     */
+    function fm_dashboard_property_only(?string $role = null): bool
+    {
+        $role = $role ?? fm_user_role();
+        if ($role === 'super_admin') {
+            return false;
+        }
+
+        $rbac = fm_rbac();
+
+        if ($rbac->can($role, 'dashboard.kpi')
+            || $rbac->can($role, 'finance.invoices')
+            || $rbac->can($role, 'finance')) {
+            return false;
+        }
+
+        $hasProperty = $rbac->can($role, 'facilities')
+            || $rbac->can($role, 'units.view')
+            || $rbac->can($role, 'leases');
+
+        if (! $hasProperty) {
+            return false;
+        }
+
+        return $rbac->can($role, 'ui.kpi')
+            || $rbac->canViewKpis($role)
+            || ! $rbac->can($role, 'reports');
+    }
+}
+
 if (! function_exists('fm_can_view_kpis')) {
     function fm_can_view_kpis(?string $role = null): bool
     {

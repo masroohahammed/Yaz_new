@@ -39,6 +39,9 @@ class Dashboard extends BaseController
 
     private function propertyManagementDashboard(): string
     {
+        helper('fm');
+        $propertyOnly = fm_dashboard_property_only();
+
         $currency = $this->settings['currency'] ?? 'QAR';
         $dash     = new DashboardService($this->db);
 
@@ -85,14 +88,18 @@ class Dashboard extends BaseController
         }
 
         $totalsSvc = new \App\Services\FinanceTotalsService($this->db);
-        $totalsSvc->syncOverdueInvoices();
-        $totals   = $totalsSvc->invoiceTotals($this->companyScope()->facilityIds(), $this->pmCompanyIdFromSession());
+        if (! $propertyOnly) {
+            $totalsSvc->syncOverdueInvoices();
+        }
+        $totals   = $propertyOnly
+            ? ['overdue' => 0, 'overdue_count' => 0, 'revenue' => 0, 'outstanding' => 0, 'cancelled' => 0]
+            : $totalsSvc->invoiceTotals($this->companyScope()->facilityIds(), $this->pmCompanyIdFromSession());
         $overdue  = ['overdue_amount' => $totals['overdue'], 'overdue_count' => $totals['overdue_count']];
         $revenue  = $totals['revenue'];
         $pending  = $totals['outstanding'];
         $cancelled = $totals['cancelled'];
 
-        $openMaintenance = $this->scopeFacilities($this->db->table('maintenance_requests'))
+        $openMaintenance = $propertyOnly ? 0 : $this->scopeFacilities($this->db->table('maintenance_requests'))
             ->whereIn('status', ['pending', 'reviewed', 'approved'])
             ->countAllResults();
 
@@ -131,27 +138,34 @@ class Dashboard extends BaseController
             $expiringContracts = $expiringQ->orderBy('c.end_date', 'ASC')->get()->getResultArray();
         }
 
-        $overdueInvoices = $this->db->table('invoices i')
-            ->select('i.id, i.invoice_number, i.total, i.due_date, f.name AS facility_name')
-            ->join('facilities f', 'f.id=i.facility_id', 'left')
-            ->where('i.status', 'overdue');
-        $this->scopeFacilities($overdueInvoices, 'i.facility_id');
-        $overdueInvoices = $overdueInvoices->orderBy('i.due_date', 'ASC')->get()->getResultArray();
+        $overdueInvoices = [];
+        if (! $propertyOnly) {
+            $overdueInvoices = $this->db->table('invoices i')
+                ->select('i.id, i.invoice_number, i.total, i.due_date, f.name AS facility_name')
+                ->join('facilities f', 'f.id=i.facility_id', 'left')
+                ->where('i.status', 'overdue');
+            $this->scopeFacilities($overdueInvoices, 'i.facility_id');
+            $overdueInvoices = $overdueInvoices->orderBy('i.due_date', 'ASC')->get()->getResultArray();
+        }
 
-        $recentMaintenance = $this->db->table('maintenance_requests mr')
-            ->select('mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at, f.name AS facility_name')
-            ->join('facilities f', 'f.id=mr.facility_id', 'left');
-        $this->scopeFacilities($recentMaintenance, 'mr.facility_id');
-        $recentMaintenance = $recentMaintenance->orderBy('mr.created_at', 'DESC')
-            ->limit(6)->get()->getResultArray();
+        $recentMaintenance = [];
+        if (! $propertyOnly) {
+            $recentMaintenance = $this->db->table('maintenance_requests mr')
+                ->select('mr.id, mr.ticket_number, mr.category, mr.priority, mr.status, mr.created_at, f.name AS facility_name')
+                ->join('facilities f', 'f.id=mr.facility_id', 'left');
+            $this->scopeFacilities($recentMaintenance, 'mr.facility_id');
+            $recentMaintenance = $recentMaintenance->orderBy('mr.created_at', 'DESC')
+                ->limit(6)->get()->getResultArray();
+        }
 
         $facilityRows = $dash->facilityStatsWithOccupancy($this->companyScope()->facilityIds());
         $revTrend     = $dash->revenueExpenseTrend(6);
 
-        $aiFlags = $this->cachedAiFlags('pm', $this->pmCompanyIdFromSession());
+        $aiFlags = $propertyOnly ? [] : $this->cachedAiFlags('pm', $this->pmCompanyIdFromSession());
 
         return view('dashboard/pm_dashboard', $this->viewData([
             'title'             => 'Property Management Dashboard',
+            'propertyOnly'      => $propertyOnly,
             'currency'          => $currency,
             'totalFacilities'   => $totalFacilities,
             'totalUnits'        => $totalUnits,

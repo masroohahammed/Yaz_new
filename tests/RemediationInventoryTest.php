@@ -1062,4 +1062,31 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('permissionGroups', $rolesView);
         $this->assertStringContainsString('settings/permissions', $rolesView);
     }
+
+    public function testDashboardPropertyOnlyModeForShowAccessRoles(): void
+    {
+        require_once $this->root . '/app/Helpers/fm_helper.php';
+        $this->assertTrue(function_exists('fm_dashboard_property_only'));
+
+        $helper = file_get_contents($this->root . '/app/Helpers/fm_helper.php');
+        $this->assertStringContainsString('function fm_dashboard_property_only', $helper);
+        $this->assertStringContainsString("'ui.kpi'", $helper);
+        $this->assertStringContainsString("'dashboard.kpi'", $helper);
+
+        $controller = file_get_contents($this->root . '/app/Controllers/Dashboard.php');
+        $this->assertStringContainsString('fm_dashboard_property_only()', $controller);
+        $this->assertStringContainsString("'propertyOnly'", $controller);
+        $this->assertStringContainsString('if (! $propertyOnly)', $controller);
+
+        $view = file_get_contents($this->root . '/app/Views/dashboard/pm_dashboard.php');
+        $this->assertStringContainsString('$propertyOnly', $view);
+        $this->assertStringContainsString('fm_can_route(', $view);
+        $this->assertStringContainsString('if (! $propertyOnly)', $view);
+        $this->assertStringContainsString('Contract expiry alerts', $view);
+        $this->assertStringContainsString('unitExpiryAlerts', $view);
+        $this->assertStringContainsString('Overdue Invoices', $view);
+        $this->assertMatchesRegularExpression('/if\s*\(\s*!\s*\$propertyOnly\s*\)[\s\S]{0,120}Overdue Invoices/', $view);
+        $this->assertMatchesRegularExpression('/if\s*\(\s*!\s*\$propertyOnly\s*\)[\s\S]{0,120}Maintenance history/', $view);
+        $this->assertMatchesRegularExpression('/if\s*\(\s*!\s*\$propertyOnly\s*\)[\s\S]{0,120}Finance snapshot/', $view);
+    }
 }
