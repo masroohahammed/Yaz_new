@@ -1,20 +1,27 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 
-<?php $isEdit = ! empty($facility['id']); ?>
+<?php
+$facility   = $facility ?? [];
+$propertyBase = 'properties';
+$isEdit     = ! empty($facility['id'] ?? null);
+$formAction = $isEdit
+    ? base_url($propertyBase . '/update/' . (int) $facility['id'])
+    : base_url($propertyBase);
+?>
 
 <div class="page-header">
   <div>
     <h1><i class="bi bi-building me-2 text-primary"></i><?= $isEdit ? 'Edit Facility' : 'Add Facility' ?></h1>
-    <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="<?= base_url('facilities') ?>">Facilities</a></li><li class="breadcrumb-item active"><?= $isEdit ? 'Edit' : 'Add' ?></li></ol></nav>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="<?= base_url($propertyBase) ?>">Properties</a></li><li class="breadcrumb-item active"><?= $isEdit ? 'Edit' : 'Add' ?></li></ol></nav>
   </div>
-  <a href="<?= base_url('facilities') ?>" class="btn btn-fm-outline btn-sm">← Back</a>
+  <a href="<?= base_url($propertyBase) ?>" class="btn btn-fm-outline btn-sm">← Back</a>
 </div>
 
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="fm-card p-4">
-            <form action="<?= $isEdit ? '/facilities/'.$facility['id'].'/update' : '/facilities' ?>" method="post">
+            <form action="<?= esc($formAction) ?>" method="post">
                 <?= csrf_field() ?>
 
                 <!-- Company (required) -->

@@ -90,18 +90,19 @@ class Facilities extends BaseController
             ? $this->db->table('landlords')->where('status', 'active')->where('deleted_at', null)->orderBy('full_name')->get()->getResultArray()
             : [];
 
-        return view('facilities/create', [
-            'pageTitle' => 'Add Facility',
-            'companies' => $companies,
-            'managers'  => $managers,
+        return view('facilities/create', $this->viewData([
+            'title'      => 'Add Property',
+            'pageTitle'  => 'Add Facility',
+            'companies'  => $companies,
+            'managers'   => $managers,
             'propertyManagers' => $propertyManagers,
             'realEstateManagers' => $realEstateManagers,
             'landlordUsers' => $landlordUsers,
             'assignedManagerIds' => [],
             'assignedStaff' => [],
-            'landlords' => $landlords,
-            'facility'  => [],
-        ]);
+            'landlords'  => $landlords,
+            'facility'   => [],
+        ]));
     }
 
     public function store()
@@ -340,18 +341,19 @@ class Facilities extends BaseController
         $landlordUsers = $userModel->getUsersByRole('landlord');
         $assignedStaff = $this->assignedStaffIds($id);
 
-        return view('facilities/create', [
-            'pageTitle' => 'Edit Facility — ' . $facility['name'],
-            'facility'  => $facility,
-            'companies' => $companyModel->where('status', 'active')->findAll(),
-            'managers'  => $userModel->getUsersByRole('facility_manager'),
+        return view('facilities/create', $this->viewData([
+            'title'      => 'Edit Property',
+            'pageTitle'  => 'Edit Facility — ' . $facility['name'],
+            'facility'   => $facility,
+            'companies'  => $companyModel->where('status', 'active')->findAll(),
+            'managers'   => $userModel->getUsersByRole('facility_manager'),
             'propertyManagers' => $propertyManagers,
             'realEstateManagers' => $realEstateManagers,
             'landlordUsers' => $landlordUsers,
             'assignedManagerIds' => $assignedStaff['property_manager'] ?: ($assignedStaff['manager'] ?? []),
             'assignedStaff' => $assignedStaff,
-            'landlords' => $landlords,
-        ]);
+            'landlords'  => $landlords,
+        ]));
     }
 
     public function update(int $id)

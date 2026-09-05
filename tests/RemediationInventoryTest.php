@@ -1063,6 +1063,15 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('settings/permissions', $rolesView);
     }
 
+    public function testPropertiesCreateFormDoesNotRequireFacilityIdKey(): void
+    {
+        $view = file_get_contents($this->root . '/app/Views/facilities/create.php');
+        $this->assertStringContainsString("\$facility = \$facility ?? [];", $view);
+        $this->assertStringContainsString("\$facility['id'] ?? null", $view);
+        $this->assertStringContainsString("base_url(\$propertyBase)", $view);
+        $this->assertStringNotContainsString("! empty(\$facility['id']);", $view);
+    }
+
     public function testDashboardPropertyOnlyModeForShowAccessRoles(): void
     {
         require_once $this->root . '/app/Helpers/fm_helper.php';
