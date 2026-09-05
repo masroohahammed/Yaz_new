@@ -1073,10 +1073,15 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString("'ui.kpi'", $helper);
         $this->assertStringContainsString("'dashboard.kpi'", $helper);
 
+        $rbac = file_get_contents($this->root . '/app/Services/RbacService.php');
+        $this->assertStringContainsString("'facilities')", $rbac);
+        $this->assertMatchesRegularExpression("/canViewKpis[\s\S]{0,400}can\(\$role, 'facilities'\)/", $rbac);
+
         $controller = file_get_contents($this->root . '/app/Controllers/Dashboard.php');
         $this->assertStringContainsString('fm_dashboard_property_only()', $controller);
         $this->assertStringContainsString("'propertyOnly'", $controller);
         $this->assertStringContainsString('if (! $propertyOnly)', $controller);
+        $this->assertStringContainsString("scopeFacilities(\$facilitiesQ, 'id')", $controller);
 
         $view = file_get_contents($this->root . '/app/Views/dashboard/pm_dashboard.php');
         $this->assertStringContainsString('$propertyOnly', $view);

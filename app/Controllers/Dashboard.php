@@ -45,9 +45,14 @@ class Dashboard extends BaseController
         $currency = $this->settings['currency'] ?? 'QAR';
         $dash     = new DashboardService($this->db);
 
-        $totalFacilities = $this->scopeCompany(
+        $facilitiesQ = $this->scopeCompany(
             $this->db->table('facilities')->where('status', 'active')
-        )->countAllResults();
+        );
+        if ($this->db->fieldExists('deleted_at', 'facilities')) {
+            $facilitiesQ->where('deleted_at', null);
+        }
+        $this->scopeFacilities($facilitiesQ, 'id');
+        $totalFacilities = $facilitiesQ->countAllResults();
 
         $unitCounts = $this->scopeFacilities($this->db->table('units')->select('status, COUNT(*) AS cnt', false)->groupBy('status'))->get()->getResultArray();
         $totalUnits = 0;
@@ -70,6 +75,9 @@ class Dashboard extends BaseController
                     $q->where('deleted_at', null);
                 }
                 $this->scopeCompany($q, 'company_id');
+                if ($this->db->fieldExists('facility_id', 'lease_contracts')) {
+                    $this->scopeFacilities($q, 'facility_id');
+                }
 
                 return $q;
             };
@@ -79,12 +87,15 @@ class Dashboard extends BaseController
                 ->where('end_date >=', date('Y-m-d'))
                 ->countAllResults();
         } else {
-            $activeContracts = $this->db->table('contracts')->where('status', 'active')->countAllResults();
-            $expiringSoon    = $this->db->table('contracts')
+            $activeContractsQ = $this->db->table('contracts')->where('status', 'active');
+            $this->scopeFacilities($activeContractsQ, 'facility_id');
+            $activeContracts = $activeContractsQ->countAllResults();
+            $expiringSoonQ   = $this->db->table('contracts')
                 ->where('status', 'active')
                 ->where('end_date <=', date('Y-m-d', strtotime('+60 days')))
-                ->where('end_date >=', date('Y-m-d'))
-                ->countAllResults();
+                ->where('end_date >=', date('Y-m-d'));
+            $this->scopeFacilities($expiringSoonQ, 'facility_id');
+            $expiringSoon = $expiringSoonQ->countAllResults();
         }
 
         $totalsSvc = new \App\Services\FinanceTotalsService($this->db);

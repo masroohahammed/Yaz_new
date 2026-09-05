@@ -261,7 +261,14 @@ class RbacService
             return true;
         }
 
-        return $this->can($role, 'dashboard.kpi') || $this->can($role, 'reports.kpi');
+        if ($this->can($role, 'dashboard.kpi') || $this->can($role, 'reports.kpi')) {
+            return true;
+        }
+
+        // Role matrix "view/show" on property modules — show property KPI widgets.
+        return $this->can($role, 'facilities')
+            || $this->can($role, 'units.view')
+            || $this->can($role, 'leases');
     }
 
     public function can(string $role, string $permission): bool

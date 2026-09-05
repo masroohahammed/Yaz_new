@@ -34,7 +34,7 @@
       <div class="kpi-card kpi-blue h-100">
         <div class="d-flex align-items-center gap-3">
           <div class="kpi-icon"><i class="bi bi-building"></i></div>
-          <div><div class="kpi-label">Properties</div><div class="kpi-value"><?= (int) $totalFacilities ?></div></div>
+          <div><div class="kpi-label">Properties</div><div class="kpi-value"><?= (int) $totalFacilities ?></div><?php if ($propertyOnly): ?><div class="kpi-sub">assigned to you</div><?php endif; ?></div>
         </div>
       </div>
     </a>
