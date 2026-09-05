@@ -16,13 +16,9 @@
   .info-row { display: flex; gap: 6px; font-size: 11px; padding: 4px 0; border-bottom: 1px dotted #ddd; }
   .info-row label { font-weight: 700; min-width: 120px; color: #555; }
   .section-title { font-size: 12px; font-weight: 700; background: #faf7f8; padding: 6px 10px; margin: 16px 0 8px; border-left: 3px solid <?= esc($settings['primary_color'] ?? '#76002b') ?>; }
-  .content-en { margin-bottom: 20px; line-height: 1.75; font-size: 11px; }
-  .content-ar { direction: rtl; text-align: right; line-height: 1.75; font-size: 11px; font-family: 'Cairo', Arial, sans-serif; margin-bottom: 20px; }
-  .divider { border: none; border-top: 1px dashed #bbb; margin: 18px 0; }
-  .signature-block { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 36px; }
-  .signature-party { text-align: center; font-size: 11px; }
+  .content-en { margin-bottom: 0; line-height: 1.75; font-size: 11px; }
+  .content-ar { direction: rtl; text-align: right; line-height: 1.75; font-size: 11px; font-family: 'Cairo', Arial, sans-serif; margin-bottom: 0; }
   .signature-line { border-top: 1px solid #333; margin: 36px 0 6px; }
-  .signature-img { max-height: 64px; max-width: 100%; margin: 0 auto 6px; display: block; }
   .signature-label { font-size: 10px; color: #666; }
   .print-btn { position: fixed; top: 15px; right: 15px; background: <?= esc($settings['primary_color'] ?? '#76002b') ?>; color: #fff; border: none; padding: 8px 16px; cursor: pointer; border-radius: 8px; font-size: 12px; }
   @media print { .print-btn { display: none; } .page { padding: 10mm; } }

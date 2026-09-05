@@ -1,8 +1,8 @@
 {
   "release": "2026-09-05-contract-renewal",
   "date": "2026-09-05",
-  "commit": "pending",
-  "branch": "cursor/contract-sign-bilingual-a002",
+  "commit": "7770703",
+  "release": "2026-09-05-contract-sign-bilingual",
   "features": [
     "digital_signature_and_signing_links",
     "property_access_scoping",
