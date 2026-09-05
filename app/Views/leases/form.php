@@ -85,7 +85,10 @@ $preUnit = $preUnit ?? null;
 
   function loadUnits(facilityId, selectedId) {
     if (!facilityId) return;
-    fetch('<?= base_url('contracts/ajax/units/') ?>' + facilityId, { headers: { 'Accept': 'application/json' } })
+    const includeId = selectedId || '<?= (int) ($contract['unit_id'] ?? ($preUnit['id'] ?? 0)) ?>';
+    const isNew = <?= empty($contract) ? 'true' : 'false' ?>;
+    const qs = isNew ? '?vacant_only=1' + (includeId ? '&include_unit_id=' + includeId : '') : '?include_unit_id=' + includeId;
+    fetch('<?= base_url('contracts/ajax/units/') ?>' + facilityId + qs, { headers: { 'Accept': 'application/json' } })
       .then(r => r.json())
       .then(rows => {
         unitSel.innerHTML = '';

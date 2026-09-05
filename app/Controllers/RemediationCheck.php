@@ -23,9 +23,11 @@ class RemediationCheck extends Controller
         ['path' => 'app/Services/UserFacilityService.php', 'label' => 'User facility scoping service'],
         ['path' => 'app/Services/PropertyAssignmentService.php', 'label' => 'Property staff assignment service'],
         ['path' => 'app/Services/ParkingContractPhotoService.php', 'label' => 'Parking contract photos service'],
+        ['path' => 'app/Services/UnitTenancyService.php', 'label' => 'Unit tenancy guard service'],
         ['path' => 'app/Helpers/fm_helper.php', 'label' => 'FM helper (fm_can_view_kpis)'],
         ['path' => 'database/patches/2026-09-02-lease-contract-signature.sql', 'label' => 'Signature SQL patch'],
         ['path' => 'database/patches/2026-09-04-user-facilities-autoincrement.sql', 'label' => 'User facilities SQL patch'],
+        ['path' => 'database/patches/2026-09-05-units-contracts-autoincrement.sql', 'label' => 'Units/contracts SQL patch'],
         ['path' => 'database/patches/2026-09-04-parking-contract-photos.sql', 'label' => 'Parking photos SQL patch'],
         ['path' => 'database/patches/fm-erp-complete.sql', 'label' => 'Complete SQL bundle'],
     ];

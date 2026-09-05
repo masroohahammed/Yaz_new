@@ -7,6 +7,7 @@ use App\Services\ContractSignatureService;
 use App\Services\EntityQrService;
 use App\Services\ParkingContractService;
 use App\Services\UnitLeaseSyncService;
+use App\Services\UnitTenancyService;
 
 class Units extends BaseController
 {
@@ -113,6 +114,22 @@ class Units extends BaseController
         ];
         if (!$this->validate($rules)) return redirect()->back()->withInput()->with('errors',$this->validator->getErrors());
 
+        $unitNumber = trim((string) $this->request->getPost('unit_number'));
+        $tenancySvc = new UnitTenancyService($this->db);
+        if ($tenancySvc->unitNumberTaken($facilityId, $unitNumber)) {
+            return redirect()->back()->withInput()->with('error', 'Unit number "' . esc($unitNumber) . '" already exists in this property.');
+        }
+
+        $status = (string) $this->request->getPost('status');
+        $tenancyInput = [
+            'tenant_name'    => $this->request->getPost('tenant_name'),
+            'contract_start' => $this->request->getPost('contract_start'),
+            'contract_end'   => $this->request->getPost('contract_end'),
+        ];
+        if ($tenancySvc->requestAssignsTenancy($tenancyInput) && $status !== 'vacant') {
+            return redirect()->back()->withInput()->with('error', $tenancySvc->vacantOnlyMessage());
+        }
+
         $contractEnd = $this->request->getPost('contract_end') ?: null;
 
         $insert = [
@@ -141,8 +158,7 @@ class Units extends BaseController
             'created_by'       => session()->get('user_id'),
         ];
         $insert = $this->withPlateNumber($insert, $this->request->getPost('unit_type'), $this->request->getPost('plate_number'));
-        $this->db->table('units')->insert($insert);
-        $unitId = $this->db->insertID();
+        $unitId  = $tenancySvc->insertUnit($insert);
         (new EntityQrService($this->db))->ensureToken('unit', (int) $unitId);
 
         // Handle contract attachment upload
@@ -161,20 +177,21 @@ class Units extends BaseController
         // Auto-create contract record if tenant present
         if (!empty($this->request->getPost('tenant_name')) && !empty($this->request->getPost('contract_start')) && $contractEnd) {
             $conNum = $this->generateNumber('CON','contracts','contract_number');
-            $this->db->table('contracts')->insert([
+            $tenancySvc->insertLegacyContract([
                 'contract_number' => $conNum,
                 'facility_id'     => $facilityId,
                 'unit_id'         => $unitId,
                 'client_name'     => esc($this->request->getPost('tenant_name')),
                 'client_email'    => esc($this->request->getPost('tenant_email')  ?? ''),
                 'client_mobile'   => esc($this->request->getPost('tenant_mobile') ?? ''),
-                'contract_type'   => 'tenancy',
+                'contract_type'   => 'other',
                 'start_date'      => $this->request->getPost('contract_start'),
                 'end_date'        => $contractEnd,
                 'value'           => $this->request->getPost('rent_amount') ?: 0,
                 'status'          => 'active',
                 'created_by'      => session()->get('user_id'),
             ]);
+            $tenancySvc->markUnitOccupied($unitId);
         }
 
         $this->logActivity('create','units',$unitId);
@@ -493,6 +510,21 @@ class Units extends BaseController
         $this->requirePermission('units.edit');
         $unit = $this->db->table('units')->where('id',$id)->get()->getRowArray();
         if (!$unit) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+
+        $tenancySvc = new UnitTenancyService($this->db);
+        $unitNumber = trim((string) $this->request->getPost('unit_number'));
+        if ($tenancySvc->unitNumberTaken((int) $unit['facility_id'], $unitNumber, $id)) {
+            return redirect()->back()->withInput()->with('error', 'Unit number "' . esc($unitNumber) . '" already exists in this property.');
+        }
+
+        $tenancyInput = [
+            'tenant_name'    => $this->request->getPost('tenant_name'),
+            'contract_start' => $this->request->getPost('contract_start'),
+            'contract_end'   => $this->request->getPost('contract_end'),
+        ];
+        if (! $tenancySvc->canAssignTenancy($unit, $tenancyInput)) {
+            return redirect()->back()->withInput()->with('error', $tenancySvc->vacantOnlyMessage());
+        }
 
         $update = [
             'unit_number'      => esc($this->request->getPost('unit_number')),
