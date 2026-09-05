@@ -30,7 +30,7 @@
     <?php endforeach; ?>
   </select>
   <button class="btn btn-fm-outline btn-sm" type="submit">Filter</button>
-  <?php if (!empty($filters['search']) || !empty($filters['stage'])): ?>
+  <?php if (! empty($filters['search'] ?? null) || ! empty($filters['stage'] ?? null)): ?>
     <a href="<?= base_url('crm?view='.($filters['view']??'list')) ?>" class="btn btn-fm-outline btn-sm">Clear</a>
   <?php endif; ?>
 </form>

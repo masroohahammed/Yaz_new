@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<?php $isEdit = !empty($lead['id']); ?>
+<?php $lead = fm_entity_array($lead ?? null); $isEdit = fm_is_edit_entity($lead); ?>
 <div class="page-header"><div><h1><?= esc($title ?? 'Lead') ?></h1></div><a href="<?= base_url('crm') ?>" class="btn btn-fm-outline btn-sm">Back</a></div>
 <div class="form-card"><form method="post" action="<?= $isEdit ? base_url('crm/'.$lead['id'].'/update') : base_url('crm') ?>"><?= csrf_field() ?>
 <div class="row g-3">

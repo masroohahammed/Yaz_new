@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<?php $isEdit = !empty($quotation['id']); ?>
+<?php $quotation = fm_entity_array($quotation ?? null); $isEdit = fm_is_edit_entity($quotation); ?>
 
 <div class="page-header">
   <div>

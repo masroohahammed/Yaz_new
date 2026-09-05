@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<?php $isEdit = !empty($tenant['id']); $ro = !empty($readOnly); ?>
+<?php $tenant = fm_entity_array($tenant ?? null); $isEdit = fm_is_edit_entity($tenant); $ro = !empty($readOnly); ?>
 <div class="page-header">
   <div><h1><?= esc($title ?? 'Tenant') ?></h1></div>
   <a href="<?= base_url('tenants') ?>" class="btn btn-fm-outline btn-sm">Back</a>

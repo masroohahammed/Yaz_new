@@ -1,7 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 <?php
-$isEdit = !empty($contract['id']);
+$contract = fm_entity_array($contract ?? null);
+$isEdit = fm_is_edit_entity($contract);
 $preUnit = $preUnit ?? null;
 ?>
 <div class="page-header"><div><h1><?= esc($title ?? 'Contract') ?></h1></div><a href="<?= base_url('contracts') ?>" class="btn btn-fm-outline btn-sm">Back</a></div>
@@ -43,7 +44,7 @@ $preUnit = $preUnit ?? null;
   <div class="mt-3"><button class="btn btn-fm-primary"><?= $isEdit ? 'Update' : 'Create' ?> Contract</button></div>
 </form></div>
 
-<?php if ($isEdit && ! empty($contract['id'])): ?>
+<?php if ($isEdit): ?>
 <?= view('partials/_lease_signature_panel', [
     'lease' => $contract,
     'signLink' => session()->getFlashdata('sign_link'),

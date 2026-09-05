@@ -22,7 +22,7 @@ class HrExpenseService
             ->select('ec.*, u.name AS employee_name')
             ->join('users u', 'u.id = ec.user_id', 'left')
             ->orderBy('ec.created_at', 'DESC');
-        if (! empty($filters['status'])) {
+        if (! empty( ?? null)) {
             $q->where('ec.status', $filters['status']);
         }
 

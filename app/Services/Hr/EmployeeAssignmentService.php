@@ -189,7 +189,7 @@ class EmployeeAssignmentService
             ->where('a.is_current', 1)
             ->where('a.assignment_status', 'active');
 
-        if (! empty($filters['designation_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.designation_id', (int) $filters['designation_id']);
         }
 

@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<?php $isEdit = ! empty($role['id']); ?>
+<?php $role = fm_entity_array($role ?? null); $isEdit = fm_is_edit_entity($role); ?>
 <div class="page-header">
   <div><h1><i class="bi bi-person-badge me-2"></i><?= esc($title ?? 'Role') ?></h1></div>
   <a href="<?= base_url('settings/roles') ?>" class="btn btn-fm-outline btn-sm">← Roles</a>

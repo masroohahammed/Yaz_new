@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<?php $isEdit = isset($unit) && !empty($unit['id']); $u = $unit ?? []; ?>
+<?php $unit = fm_entity_array($unit ?? null); $isEdit = fm_is_edit_entity($unit); $u = $unit; ?>
 
 <div class="page-header">
   <div>

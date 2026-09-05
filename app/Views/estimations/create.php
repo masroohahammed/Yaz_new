@@ -1,8 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 <?php
-$isEdit = isset($est) && !empty($est['id']);
-$e = $est ?? [];
+$est = fm_entity_array($est ?? null);
+$isEdit = fm_is_edit_entity($est);
+$e = $est;
 $canViewInternal = $canViewInternal ?? true;
 $existingItems = $items ?? [[
   'type' => 'material', 'item_name' => '', 'description' => '', 'quantity' => 1,

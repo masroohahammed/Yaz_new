@@ -2,10 +2,10 @@
 <?= $this->section('content') ?>
 
 <?php
-$facility   = $facility ?? [];
+$facility     = fm_entity_array($facility ?? null);
 $propertyBase = 'properties';
-$isEdit     = ! empty($facility['id'] ?? null);
-$formAction = $isEdit
+$isEdit       = fm_is_edit_entity($facility);
+$formAction   = $isEdit
     ? base_url($propertyBase . '/update/' . (int) $facility['id'])
     : base_url($propertyBase);
 ?>

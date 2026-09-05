@@ -1,11 +1,12 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php $deal = fm_entity_array($deal ?? null); $isEdit = fm_is_edit_entity($deal); ?>
 <div class="page-header">
-  <div><h1><?= $deal ? 'Edit Sales Deal' : 'New Sales Deal' ?></h1></div>
+  <div><h1><?= $isEdit ? 'Edit Sales Deal' : 'New Sales Deal' ?></h1></div>
   <a href="<?= base_url('sales') ?>" class="btn btn-fm-outline btn-sm">Back</a>
 </div>
 <div class="form-card">
-  <form method="post" action="<?= $deal ? base_url('sales/'.$deal['id'].'/update') : base_url('sales') ?>"><?= csrf_field() ?>
+  <form method="post" action="<?= $isEdit ? base_url('sales/'.$deal['id'].'/update') : base_url('sales') ?>"><?= csrf_field() ?>
   <?php if (session()->getFlashdata('errors')): ?>
     <div class="alert alert-danger"><ul class="mb-0"><?php foreach ((array)session()->getFlashdata('errors') as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div>
   <?php endif; ?>

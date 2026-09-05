@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<?php $isEdit=isset($company)&&!empty($company['id']); $c=$company??[]; ?>
+<?php $company = fm_entity_array($company ?? null); $isEdit = fm_is_edit_entity($company); $c = $company; ?>
 <div class="page-header"><div><h1><i class="bi bi-building-plus me-2"></i><?= $isEdit?'Edit Company':'Add Company' ?></h1></div></div>
 <?= form_open_multipart($isEdit?base_url('settings/companies/update/'.$c['id']):base_url('settings/companies/store')) ?>
 <div class="row g-3">

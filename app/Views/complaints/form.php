@@ -1,11 +1,12 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php $row = fm_entity_array($row ?? null); $isEdit = fm_is_edit_entity($row); ?>
 
 <div class="page-header">
-  <h1><?= empty($row['id']) ? 'New Complaint' : 'Edit Complaint' ?></h1>
+  <h1><?= $isEdit ? 'Edit Complaint' : 'New Complaint' ?></h1>
 </div>
 
-<?= form_open(empty($row['id']) ? base_url('complaints/store') : base_url('complaints/update/' . $row['id'])) ?>
+<?= form_open($isEdit ? base_url('complaints/update/' . (int) $row['id']) : base_url('complaints/store')) ?>
 <div class="fm-card p-4">
   <div class="row g-3">
     <div class="col-md-6">
@@ -27,7 +28,7 @@
         <?php endforeach; ?>
       </select>
     </div>
-    <?php if (! empty($row['id'])): ?>
+    <?php if ($isEdit): ?>
     <div class="col-md-6">
       <label class="form-label">Status *</label>
       <select name="status" class="form-select form-select-sm" required>

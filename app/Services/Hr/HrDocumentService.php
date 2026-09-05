@@ -299,19 +299,19 @@ class HrDocumentService
             ->join('hr_document_categories c', 'c.id = d.category_id', 'left')
             ->where('d.module', 'employee');
 
-        if (! empty($filters['company_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.company_id', (int) $filters['company_id']);
         }
-        if (! empty($filters['facility_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.facility_id', (int) $filters['facility_id']);
         }
-        if (! empty($filters['department_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.department_id', (int) $filters['department_id']);
         }
-        if (! empty($filters['active_only'])) {
+        if (! empty( ?? null)) {
             $q->where('e.status !=', 'inactive');
         }
-        if (! empty($filters['search'])) {
+        if (! empty( ?? null)) {
             $term = trim((string) $filters['search']);
             $q->groupStart()
                 ->like('d.title', $term)

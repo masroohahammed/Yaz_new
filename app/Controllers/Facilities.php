@@ -43,13 +43,13 @@ class Facilities extends BaseController
         }
         $this->scopeFacilities($q, 'f.id');
 
-        if (! empty($filters['status'])) {
+        if (! empty($filters['status'] ?? null)) {
             $q->where('f.status', $filters['status']);
         }
-        if (! empty($filters['company_id'])) {
+        if (! empty($filters['company_id'] ?? null)) {
             $q->where('f.company_id', $filters['company_id']);
         }
-        if (! empty($filters['search'])) {
+        if (! empty($filters['search'] ?? null)) {
             $q->groupStart()
                 ->like('f.name', $filters['search'])
                 ->orLike('f.code', $filters['search'])

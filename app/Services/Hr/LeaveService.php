@@ -23,10 +23,10 @@ class LeaveService
             ->join('hr_leave_types lt', 'lt.id = lr.leave_type_id', 'left')
             ->orderBy('lr.created_at', 'DESC');
 
-        if (! empty($filters['status'])) {
+        if (! empty( ?? null)) {
             $q->where('lr.status', $filters['status']);
         }
-        if (! empty($filters['user_id'])) {
+        if (! empty( ?? null)) {
             $q->where('lr.user_id', (int) $filters['user_id']);
         }
 

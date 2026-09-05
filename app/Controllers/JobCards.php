@@ -76,9 +76,13 @@ class JobCards extends BaseController
                 $builder->where('1', '0');
         }
 
-        if (! empty($filters['status'])) $builder->where('jc.status', $filters['status']);
-        if (! empty($filters['search'])) $builder->like('jc.jc_number', $filters['search'])
+        if (! empty($filters['status'] ?? null)) {
+            $builder->where('jc.status', $filters['status']);
+        }
+        if (! empty($filters['search'] ?? null)) {
+            $builder->like('jc.jc_number', $filters['search'])
                                                   ->orLike('wo.wo_number', $filters['search']);
+        }
 
         $perPage     = 20;
         $page        = max(1, (int) ($filters['page'] ?? 1));

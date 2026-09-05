@@ -324,16 +324,16 @@ class EmploymentContractService
             ->join('vendors v', 'v.id = c.supplier_id', 'left')
             ->join('facilities f', 'f.id = e.facility_id', 'left');
 
-        if (! empty($filters['company_id'])) {
+        if (! empty( ?? null)) {
             $q->where('c.company_id', (int) $filters['company_id']);
         }
-        if (! empty($filters['facility_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.facility_id', (int) $filters['facility_id']);
         }
-        if (! empty($filters['supplier_id'])) {
+        if (! empty( ?? null)) {
             $q->where('c.supplier_id', (int) $filters['supplier_id']);
         }
-        if (! empty($filters['search'])) {
+        if (! empty( ?? null)) {
             $term = trim((string) $filters['search']);
             $q->groupStart()
                 ->like('c.contract_number', $term)
@@ -341,7 +341,7 @@ class EmploymentContractService
                 ->orLike('u.name', $term)
                 ->groupEnd();
         }
-        if (! empty($filters['active_only'])) {
+        if (! empty( ?? null)) {
             $q->where('e.status !=', 'inactive');
         }
 

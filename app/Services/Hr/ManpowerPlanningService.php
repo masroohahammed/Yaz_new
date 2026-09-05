@@ -35,10 +35,10 @@ class ManpowerPlanningService
             ->join('hr_departments dept', 'dept.id = r.department_id', 'left')
             ->whereIn('r.status', ['draft', 'active']);
 
-        if (! empty($filters['company_id'])) {
+        if (! empty( ?? null)) {
             $q->where('r.company_id', (int) $filters['company_id']);
         }
-        if (! empty($filters['facility_id'])) {
+        if (! empty( ?? null)) {
             $q->where('r.facility_id', (int) $filters['facility_id']);
         }
 

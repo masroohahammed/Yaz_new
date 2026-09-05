@@ -1,5 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php $contract = fm_entity_array($contract ?? null); ?>
 <div class="page-header"><div><h1><i class="bi bi-file-earmark-plus me-2"></i>New Contract</h1></div></div>
 <?= form_open_multipart(base_url('finance/contracts/store')) ?>
 <div class="row g-3">
@@ -8,7 +9,7 @@
       <h6><i class="bi bi-person"></i>Client / Tenant Information</h6>
       <div class="row g-2">
         <div class="col-md-8"><label class="form-label">Client Name <span class="text-danger">*</span></label><input type="text" name="client_name" class="form-control" required value="<?= old('client_name') ?>"></div>
-        <div class="col-md-4"><label class="form-label">Contract Type</label><select name="contract_type" class="form-select"><?php foreach(['fm_services'=>'FM Services','amc'=>'AMC','cleaning'=>'Cleaning','security'=>'Security','it_support'=>'IT Support','other'=>'Other'] as $v=>$l): ?><option value="<?= $v ?>" <?= (isset($contract) && $contract['contract_type']===$v)?'selected':'' ?>><?= $l ?></option><?php endforeach; ?></select></div>
+        <div class="col-md-4"><label class="form-label">Contract Type</label><select name="contract_type" class="form-select"><?php foreach(['fm_services'=>'FM Services','amc'=>'AMC','cleaning'=>'Cleaning','security'=>'Security','it_support'=>'IT Support','other'=>'Other'] as $v=>$l): ?><option value="<?= $v ?>" <?= ($contract['contract_type'] ?? '')===$v?'selected':'' ?>><?= $l ?></option><?php endforeach; ?></select></div>
         <div class="col-md-6"><label class="form-label">Client Email</label><input type="email" name="client_email" class="form-control" value="<?= old('client_email') ?>"></div>
         <div class="col-md-6"><label class="form-label">Client Mobile</label><input type="text" name="client_mobile" class="form-control" value="<?= old('client_mobile') ?>"></div>
       </div>

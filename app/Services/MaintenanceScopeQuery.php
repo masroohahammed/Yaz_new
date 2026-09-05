@@ -140,15 +140,15 @@ class MaintenanceScopeQuery
         $sql = '';
         $params = [];
 
-        if (! empty($filters['status'])) {
+        if (! empty($filters['status'] ?? null)) {
             $sql .= ' AND mr.status = ?';
             $params[] = (string) $filters['status'];
         }
-        if (! empty($filters['priority'])) {
+        if (! empty($filters['priority'] ?? null)) {
             $sql .= ' AND mr.priority = ?';
             $params[] = (string) $filters['priority'];
         }
-        if (! empty($filters['search'])) {
+        if (! empty($filters['search'] ?? null)) {
             $sql .= ' AND (mr.ticket_number LIKE ? OR mr.requester_name LIKE ?)';
             $term = '%' . (string) $filters['search'] . '%';
             $params[] = $term;

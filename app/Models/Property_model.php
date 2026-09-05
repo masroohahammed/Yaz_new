@@ -289,7 +289,7 @@ class Property_model extends Model
 
     private function applyListFilters($builder, array $filters): void
     {
-        if (! empty($filters['search'])) {
+        if (! empty( ?? null)) {
             $s = $filters['search'];
             $builder->groupStart()
                 ->like('f.name', $s)
@@ -298,19 +298,19 @@ class Property_model extends Model
                 ->orLike('f.area', $s)
                 ->groupEnd();
         }
-        if (! empty($filters['category'])) {
+        if (! empty( ?? null)) {
             $builder->where('f.category', $filters['category']);
         }
-        if (! empty($filters['listing_status'])) {
+        if (! empty( ?? null)) {
             $builder->where('f.listing_status', $filters['listing_status']);
         }
-        if (! empty($filters['status'])) {
+        if (! empty( ?? null)) {
             $builder->where('f.status', $filters['status']);
         }
         if (isset($filters['for_sale']) && $filters['for_sale'] !== '') {
             $builder->where('f.for_sale', (int) $filters['for_sale']);
         }
-        if (! empty($filters['company_id'])) {
+        if (! empty( ?? null)) {
             $builder->where('f.company_id', (int) $filters['company_id']);
         }
     }

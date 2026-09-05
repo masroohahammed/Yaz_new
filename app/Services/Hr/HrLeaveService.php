@@ -197,13 +197,13 @@ class HrLeaveService
             ->join('employees e', 'e.id = r.employee_id', 'left')
             ->join('users u', 'u.id = e.user_id', 'left');
 
-        if (! empty($filters['employee_id'])) {
+        if (! empty( ?? null)) {
             $q->where('r.employee_id', (int) $filters['employee_id']);
         }
-        if (! empty($filters['status'])) {
+        if (! empty( ?? null)) {
             $q->where('r.status', (string) $filters['status']);
         }
-        if (! empty($filters['company_id']) && $this->db->fieldExists('company_id', 'employees')) {
+        if (! empty( ?? null) && $this->db->fieldExists('company_id', 'employees')) {
             $q->where('e.company_id', (int) $filters['company_id']);
         }
 

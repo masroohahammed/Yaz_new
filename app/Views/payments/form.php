@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<?php $isEdit = !empty($payment['id']); ?>
+<?php $payment = fm_entity_array($payment ?? null); $isEdit = fm_is_edit_entity($payment); ?>
 <div class="page-header"><div><h1><?= esc($title ?? 'Payment') ?></h1></div><a href="<?= base_url('payments') ?>" class="btn btn-fm-outline btn-sm">Back</a></div>
 <div class="form-card">
 <form method="post" action="<?= $isEdit ? base_url('payments/'.$payment['id'].'/update') : base_url('payments') ?>"><?= csrf_field() ?>

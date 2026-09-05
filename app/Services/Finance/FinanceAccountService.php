@@ -34,18 +34,18 @@ class FinanceAccountService
             ->join('facilities f', 'f.id = ba.facility_id', 'left')
             ->orderBy('ba.name', 'ASC');
 
-        if (! empty($filters['status'])) {
+        if (! empty( ?? null)) {
             $q->where('ba.status', $filters['status']);
         } else {
             $q->where('ba.status !=', 'closed');
         }
-        if (! empty($filters['branch_id'])) {
+        if (! empty( ?? null)) {
             $q->where('ba.branch_id', (int) $filters['branch_id']);
         }
-        if (! empty($filters['facility_id'])) {
+        if (! empty( ?? null)) {
             $q->where('ba.facility_id', (int) $filters['facility_id']);
         }
-        if (! empty($filters['company_id'])) {
+        if (! empty( ?? null)) {
             $q->where('ba.company_id', (int) $filters['company_id']);
         }
 
@@ -180,7 +180,7 @@ class FinanceAccountService
             ->join('users u', 'u.id = ca.responsible_user_id', 'left')
             ->orderBy('ca.name', 'ASC');
 
-        if (! empty($filters['status'])) {
+        if (! empty( ?? null)) {
             $q->where('ca.status', $filters['status']);
         } else {
             $q->where('ca.status !=', 'closed');

@@ -1,8 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 <?php
-$isEdit = ! empty($contract['id']);
-$c = $contract ?? [];
+$contract = fm_entity_array($contract ?? null);
+$isEdit = fm_is_edit_entity($contract);
+$c = $contract;
 $propertyId = (int) ($c['facility_id'] ?? service('request')->getGet('property_id') ?? service('request')->getGet('facility_id') ?? 0);
 $unitId = (int) ($c['unit_id'] ?? service('request')->getGet('unit_id') ?? 0);
 $tenantId = (int) ($c['tenant_id'] ?? service('request')->getGet('tenant_id') ?? 0);

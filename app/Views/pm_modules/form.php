@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<?php $isEdit = ! empty($row['id']); ?>
+<?php $row = fm_entity_array($row ?? null); $isEdit = fm_is_edit_entity($row); ?>
 <div class="page-header"><h1><?= esc($title) ?></h1></div>
 <?= form_open($action, ['class' => 'fm-submit-form']) ?>
 <?= csrf_field() ?>

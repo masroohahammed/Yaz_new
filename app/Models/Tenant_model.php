@@ -303,7 +303,7 @@ class Tenant_model extends Model
 
   private function applyListFilters($builder, array $filters): void
   {
-    if (! empty($filters['search'])) {
+    if (! empty( ?? null)) {
       $s = $filters['search'];
       $builder->groupStart()
         ->like('t.full_name', $s)
@@ -312,10 +312,10 @@ class Tenant_model extends Model
         ->orLike('t.qid_no', $s)
         ->groupEnd();
     }
-    if (! empty($filters['status'])) {
+    if (! empty( ?? null)) {
       $builder->where('t.status', $filters['status']);
     }
-    if (! empty($filters['tenant_type'])) {
+    if (! empty( ?? null)) {
       $builder->where('t.tenant_type', $filters['tenant_type']);
     }
     if (isset($filters['blacklisted']) && $filters['blacklisted'] !== '') {

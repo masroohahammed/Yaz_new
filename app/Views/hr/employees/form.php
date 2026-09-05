@@ -2,8 +2,8 @@
 <?= $this->section('content') ?>
 <?= $this->include('hr/_subnav', ['hrActive' => 'employees']) ?>
 <?php
-$e = $employee;
-$isEdit = ! empty($e['id']);
+$e = fm_entity_array($employee ?? null);
+$isEdit = fm_is_edit_entity($e);
 $action = $formAction ?? base_url('hr/employees/store');
 ?>
 

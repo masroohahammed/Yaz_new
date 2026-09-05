@@ -80,7 +80,7 @@ class DocumentManagementService
         } else {
             $aliases = $this->moduleAliases((string) $filters['module']);
             $q->whereIn('d.module', $aliases);
-            if (! empty($filters['ref_id'])) {
+            if (! empty( ?? null)) {
                 $q->where('d.ref_id', (int) $filters['ref_id']);
             }
         }
@@ -100,20 +100,20 @@ class DocumentManagementService
    */
     public function applyFilters(object $q, array $filters): void
     {
-        if (! empty($filters['doc_type'])) {
+        if (! empty( ?? null)) {
             $q->where('d.doc_type', $filters['doc_type']);
         }
-        if (! empty($filters['month'])) {
+        if (! empty( ?? null)) {
             $q->where('d.created_at >=', $filters['month'] . '-01 00:00:00');
             $q->where('d.created_at <', date('Y-m-d H:i:s', strtotime($filters['month'] . '-01 +1 month')));
         }
-        if (! empty($filters['date_from'])) {
+        if (! empty( ?? null)) {
             $q->where('d.created_at >=', $filters['date_from'] . ' 00:00:00');
         }
-        if (! empty($filters['date_to'])) {
+        if (! empty( ?? null)) {
             $q->where('d.created_at <=', $filters['date_to'] . ' 23:59:59');
         }
-        if (! empty($filters['expiry_status'])) {
+        if (! empty( ?? null)) {
             $status = $filters['expiry_status'];
             if ($status === 'expired') {
                 $q->where('d.expiry_date <', date('Y-m-d'));
@@ -127,7 +127,7 @@ class DocumentManagementService
                     ->groupEnd();
             }
         }
-        if (! empty($filters['search'])) {
+        if (! empty( ?? null)) {
             $s = $filters['search'];
             $q->groupStart()
                 ->like('d.title', $s)

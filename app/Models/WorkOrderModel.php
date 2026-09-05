@@ -256,24 +256,24 @@ class WorkOrderModel extends Model
         }
 
         // ---- Search / filter conditions ----
-        if (! empty($filters['status']))
+        if (! empty($filters['status'] ?? null))
             $builder->where('wo.status', $filters['status']);
-        if (! empty($filters['workflow_stage']))
+        if (! empty($filters['workflow_stage'] ?? null))
             $builder->where('wo.workflow_stage', $filters['workflow_stage']);
-        if (! empty($filters['priority']))
+        if (! empty($filters['priority'] ?? null))
             $builder->where('wo.priority', $filters['priority']);
-        if (! empty($filters['facility_id']))
+        if (! empty($filters['facility_id'] ?? null))
             $builder->where('wo.facility_id', (int) $filters['facility_id']);
-        if (! empty($filters['unit_id']))
+        if (! empty($filters['unit_id'] ?? null))
             $builder->where('wo.unit_id', (int) $filters['unit_id']);
-        if (! empty($filters['asset_id']))
+        if (! empty($filters['asset_id'] ?? null))
             $builder->where('wo.asset_id', (int) $filters['asset_id']);
-        if (! empty($filters['search']))
+        if (! empty($filters['search'] ?? null))
             $builder->groupStart()
                     ->like('wo.title', $filters['search'])
                     ->orLike('wo.wo_number', $filters['search'])
                     ->groupEnd();
-        if (! empty($filters['wo_ids']))
+        if (! empty($filters['wo_ids'] ?? null))
             $builder->whereIn('wo.id', $filters['wo_ids']);
 
         // ---- Pagination ----

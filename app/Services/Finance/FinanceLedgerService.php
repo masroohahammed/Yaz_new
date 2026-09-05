@@ -401,28 +401,28 @@ class FinanceLedgerService
             ->orderBy('ft.transaction_date', 'DESC')
             ->orderBy('ft.id', 'DESC');
 
-        if (! empty($filters['status'])) {
+        if (! empty( ?? null)) {
             $q->where('ft.status', $filters['status']);
         }
-        if (! empty($filters['account_type'])) {
+        if (! empty( ?? null)) {
             $q->where('ft.account_type', $filters['account_type']);
         }
-        if (! empty($filters['account_id'])) {
+        if (! empty( ?? null)) {
             $q->where('ft.account_id', (int) $filters['account_id']);
         }
-        if (! empty($filters['transaction_type'])) {
+        if (! empty( ?? null)) {
             $q->where('ft.transaction_type', $filters['transaction_type']);
         }
-        if (! empty($filters['facility_id'])) {
+        if (! empty( ?? null)) {
             $q->where('ft.facility_id', (int) $filters['facility_id']);
         }
-        if (! empty($filters['branch_id'])) {
+        if (! empty( ?? null)) {
             $q->where('ft.branch_id', (int) $filters['branch_id']);
         }
-        if (! empty($filters['date_from'])) {
+        if (! empty( ?? null)) {
             $q->where('ft.transaction_date >=', $filters['date_from']);
         }
-        if (! empty($filters['date_to'])) {
+        if (! empty( ?? null)) {
             $q->where('ft.transaction_date <=', $filters['date_to']);
         }
 

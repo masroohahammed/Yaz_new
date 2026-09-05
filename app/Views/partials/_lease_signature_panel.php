@@ -5,8 +5,8 @@
  * @var string|null               $signLink Flash copy of signing URL
  * @var bool|null                 $signatureReady DB columns present (null = auto-detect)
  */
-$lease = $lease ?? null;
-if (empty($lease['id'])) {
+$lease = fm_entity_array($lease ?? null);
+if (! fm_is_edit_entity($lease)) {
     return;
 }
 $leaseId = (int) $lease['id'];

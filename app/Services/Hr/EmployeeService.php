@@ -44,27 +44,27 @@ class EmployeeService
             $scopeFacilities($q, 'e.facility_id');
         }
 
-        if (! empty($filters['company_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.company_id', (int) $filters['company_id']);
         }
-        if (! empty($filters['status_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.status_id', (int) $filters['status_id']);
-        } elseif (! empty($filters['status'])) {
+        } elseif (! empty( ?? null)) {
             $q->where('e.status', $filters['status']);
         }
-        if (! empty($filters['employee_type_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.employee_type_id', (int) $filters['employee_type_id']);
         }
-        if (! empty($filters['employment_source_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.employment_source_id', (int) $filters['employment_source_id']);
         }
-        if (! empty($filters['department_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.department_id', (int) $filters['department_id']);
         }
-        if (! empty($filters['facility_id'])) {
+        if (! empty( ?? null)) {
             $q->where('e.facility_id', (int) $filters['facility_id']);
         }
-        if (! empty($filters['search'])) {
+        if (! empty( ?? null)) {
             $term = trim((string) $filters['search']);
             $q->groupStart()
                 ->like('e.emp_code', $term)

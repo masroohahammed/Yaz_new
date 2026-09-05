@@ -1066,10 +1066,67 @@ final class RemediationInventoryTest extends TestCase
     public function testPropertiesCreateFormDoesNotRequireFacilityIdKey(): void
     {
         $view = file_get_contents($this->root . '/app/Views/facilities/create.php');
-        $this->assertStringContainsString("\$facility = \$facility ?? [];", $view);
-        $this->assertStringContainsString("\$facility['id'] ?? null", $view);
-        $this->assertStringContainsString("base_url(\$propertyBase)", $view);
+        $this->assertStringContainsString('fm_entity_array', $view);
+        $this->assertStringContainsString('fm_is_edit_entity', $view);
         $this->assertStringNotContainsString("! empty(\$facility['id']);", $view);
+    }
+
+    public function testSharedEntityHelpersExistForSafeCreateEditForms(): void
+    {
+        require_once $this->root . '/app/Helpers/fm_helper.php';
+        $this->assertTrue(function_exists('fm_entity_array'));
+        $this->assertTrue(function_exists('fm_is_edit_entity'));
+        $this->assertTrue(function_exists('fm_filter_has'));
+
+        $helper = file_get_contents($this->root . '/app/Helpers/fm_helper.php');
+        $this->assertStringContainsString('function fm_entity_array', $helper);
+        $this->assertStringContainsString("?? null", $helper);
+    }
+
+    public function testCreateEditFormsUseSafeEntityHelpers(): void
+    {
+        foreach ([
+            'app/Views/payments/form.php',
+            'app/Views/leases/form.php',
+            'app/Views/tenants/form.php',
+            'app/Views/landlords/form.php',
+            'app/Views/outgoing_cheques/form.php',
+            'app/Views/quotations/form.php',
+            'app/Views/crm/form.php',
+            'app/Views/pm_modules/form.php',
+            'app/Views/hr/employees/form.php',
+            'app/Views/contracts/form.php',
+            'app/Views/complaints/form.php',
+            'app/Views/facilities/create.php',
+            'app/Views/units/create.php',
+            'app/Views/settings/create_company.php',
+            'app/Views/estimations/create.php',
+            'app/Views/sales/form.php',
+            'app/Views/utilities/form.php',
+        ] as $rel) {
+            $src = file_get_contents($this->root . '/' . $rel);
+            $this->assertStringContainsString('fm_entity_array', $src, "Missing fm_entity_array in {$rel}");
+            $this->assertStringContainsString('fm_is_edit_entity', $src, "Missing fm_is_edit_entity in {$rel}");
+            $this->assertDoesNotMatchRegularExpression(
+                '/!\\s*empty\\(\\$\\w+\\[\'id\'\\]\\)/',
+                $src,
+                "Unsafe id access remains in {$rel}"
+            );
+        }
+    }
+
+    public function testListFiltersUseNullCoalescingOnMissingKeys(): void
+    {
+        foreach ([
+            'app/Controllers/Facilities.php',
+            'app/Controllers/JobCards.php',
+            'app/Models/WorkOrderModel.php',
+            'app/Services/MaintenanceScopeQuery.php',
+        ] as $rel) {
+            $src = file_get_contents($this->root . '/' . $rel);
+            $this->assertStringContainsString("\$filters['", $src, $rel);
+            $this->assertStringNotContainsString("! empty(\$filters['status'])", $src, "Unsafe filter access in {$rel}");
+        }
     }
 
     public function testDashboardPropertyOnlyModeForShowAccessRoles(): void

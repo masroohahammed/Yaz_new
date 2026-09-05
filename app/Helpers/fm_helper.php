@@ -585,6 +585,30 @@ if (! function_exists('fm_dashboard_property_only')) {
     }
 }
 
+if (! function_exists('fm_entity_array')) {
+    /** Normalize nullable create/edit row payloads (avoids undefined array key on PHP 8+). */
+    function fm_entity_array(mixed $row = null): array
+    {
+        return is_array($row) ? $row : [];
+    }
+}
+
+if (! function_exists('fm_is_edit_entity')) {
+    function fm_is_edit_entity(mixed $row = null): bool
+    {
+        $row = fm_entity_array($row);
+
+        return ! empty($row['id'] ?? null);
+    }
+}
+
+if (! function_exists('fm_filter_has')) {
+    function fm_filter_has(array $filters, string $key): bool
+    {
+        return ! empty($filters[$key] ?? null);
+    }
+}
+
 if (! function_exists('fm_can_view_kpis')) {
     function fm_can_view_kpis(?string $role = null): bool
     {

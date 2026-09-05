@@ -71,18 +71,18 @@ class PettyCashService
             ->join('facilities f', 'f.id = pa.facility_id', 'left')
             ->orderBy('pa.name');
 
-        if (! empty($filters['status'])) {
+        if (! empty( ?? null)) {
             $q->where('pa.status', $filters['status']);
         } else {
             $q->where('pa.status !=', 'closed');
         }
-        if (! empty($filters['branch_id'])) {
+        if (! empty( ?? null)) {
             $q->where('pa.branch_id', (int) $filters['branch_id']);
         }
-        if (! empty($filters['facility_id'])) {
+        if (! empty( ?? null)) {
             $q->where('pa.facility_id', (int) $filters['facility_id']);
         }
-        if (! empty($filters['custodian_user_id'])) {
+        if (! empty( ?? null)) {
             $q->where('pa.custodian_user_id', (int) $filters['custodian_user_id']);
         }
 

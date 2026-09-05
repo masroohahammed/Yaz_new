@@ -166,16 +166,16 @@ class HrAttendanceService
             $q->select('s.name AS shift_name', false)->join('hr_shifts s', 's.id = a.shift_id', 'left');
         }
 
-        if (! empty($filters['employee_id'])) {
+        if (! empty( ?? null)) {
             $q->where('a.employee_id', (int) $filters['employee_id']);
         }
-        if (! empty($filters['facility_id'])) {
+        if (! empty( ?? null)) {
             $q->where('a.facility_id', (int) $filters['facility_id']);
         }
-        if (! empty($filters['month'])) {
+        if (! empty( ?? null)) {
             $q->like('a.date', (string) $filters['month'], 'after');
         }
-        if (! empty($filters['company_id']) && $this->db->fieldExists('company_id', 'employees')) {
+        if (! empty( ?? null) && $this->db->fieldExists('company_id', 'employees')) {
             $q->where('e.company_id', (int) $filters['company_id']);
         }
 

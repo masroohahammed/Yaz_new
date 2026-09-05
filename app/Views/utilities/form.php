@@ -1,11 +1,12 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
+<?php $account = fm_entity_array($account ?? null); $isEdit = fm_is_edit_entity($account); ?>
 <div class="page-header">
-  <div><h1><?= $account ? 'Edit Utility Account' : 'New Utility Account' ?></h1></div>
+  <div><h1><?= $isEdit ? 'Edit Utility Account' : 'New Utility Account' ?></h1></div>
   <a href="<?= base_url('utilities') ?>" class="btn btn-fm-outline btn-sm">Back</a>
 </div>
 <div class="form-card">
-  <form method="post" action="<?= $account ? base_url('utilities/'.$account['id'].'/update') : base_url('utilities') ?>"><?= csrf_field() ?>
+  <form method="post" action="<?= $isEdit ? base_url('utilities/'.$account['id'].'/update') : base_url('utilities') ?>"><?= csrf_field() ?>
   <?php if (session()->getFlashdata('errors')): ?>
     <div class="alert alert-danger"><ul class="mb-0"><?php foreach ((array)session()->getFlashdata('errors') as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div>
   <?php endif; ?>
