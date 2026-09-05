@@ -3,7 +3,7 @@
 <?php
 $primaryColor = $settings['primary_color'] ?? '#76002b';
 helper('fm');
-$daysLeft       = fm_contract_days_until($unit['contract_end'] ?? null);
+$daysLeft       = fm_contract_days_until($unit['effective_contract_end'] ?? $unit['contract_end'] ?? null);
 $daysUntil      = ($daysLeft !== null && $daysLeft > 0) ? $daysLeft : null;
 $daysExpiredAgo = ($daysLeft !== null && $daysLeft < 0) ? abs($daysLeft) : null;
 $isExpired      = $daysExpiredAgo !== null;

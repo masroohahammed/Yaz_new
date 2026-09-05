@@ -878,7 +878,7 @@ final class RemediationInventoryTest extends TestCase
     {
         $build = file_get_contents($this->root . '/public/BUILD.json');
         $this->assertStringContainsString('2026-09-05-contract-renewal', $build);
-        $this->assertStringContainsString('contract_renewal_future_dates', $build);
+        $this->assertStringContainsString('unit_expiry_dates_display', $build);
         $this->assertStringContainsString('digital_signature_and_signing_links', $build);
 
         $check = file_get_contents($this->root . '/app/Controllers/RemediationCheck.php');
