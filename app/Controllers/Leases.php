@@ -82,6 +82,7 @@ class Leases extends BaseController
         $preUnitId = (int) ($this->request->getGet('unit_id') ?? 0);
         $units     = [];
         $preUnit   = null;
+        $tenancySvc = new \App\Services\UnitTenancyService($this->db);
         if ($preUnitId > 0 && $this->db->tableExists('units')) {
             $preUnit = $this->db->table('units')->where('id', $preUnitId)->get()->getRowArray();
             if ($preUnit) {
@@ -89,7 +90,11 @@ class Leases extends BaseController
                 if (fm_is_parking_unit($preUnit)) {
                     return redirect()->to(fm_unit_parking_contract_url($preUnitId));
                 }
-                $units = $this->unitsForFacility((int) $preUnit['facility_id']);
+                if (! $tenancySvc->unitIsVacant($preUnit)) {
+                    return redirect()->to(base_url('units/view/' . $preUnitId))
+                        ->with('error', $tenancySvc->vacantOnlyMessage());
+                }
+                $units = $tenancySvc->vacantUnitsForFacility((int) $preUnit['facility_id'], $preUnitId);
             }
         }
 
@@ -124,6 +129,12 @@ class Leases extends BaseController
 
         $this->assertFacilityAccess((int) $this->request->getPost('facility_id'));
 
+        $tenancySvc = new \App\Services\UnitTenancyService($this->db);
+        $unitId     = (int) $this->request->getPost('unit_id');
+        if (! $tenancySvc->unitIsVacant($tenancySvc->unitRow($unitId))) {
+            return redirect()->back()->withInput()->with('error', $tenancySvc->vacantOnlyMessage());
+        }
+
         $data = $this->contractPayload();
         $data['contract_number'] = $this->generateNumber('LC', self::TABLE, 'contract_number');
         $data['created_by']      = $this->currentUser()['id'] ?: null;
@@ -145,6 +156,7 @@ class Leases extends BaseController
                 (int) $data['tenant_id'],
                 $data['start_date'] ?? date('Y-m-d')
             );
+            $tenancySvc->markUnitOccupied((int) $data['unit_id']);
         }
 
         return redirect()->to(base_url('contracts/' . $id))->with('success', 'Lease contract created.');
@@ -223,7 +235,7 @@ class Leases extends BaseController
             return redirect()->to(base_url('contracts/' . $id . '/parking-print'));
         }
 
-        $units = $this->unitsForFacility((int) $contract['facility_id']);
+        $units = $this->unitsForFacility((int) $contract['facility_id'], (int) ($contract['unit_id'] ?? 0));
 
         return view('leases/form', $this->viewData([
             'title'      => 'Edit Contract',
@@ -259,6 +271,13 @@ class Leases extends BaseController
         }
 
         $this->assertFacilityAccess((int) $this->request->getPost('facility_id'));
+
+        $old = $this->pmFind(self::TABLE, $id);
+        $tenancySvc = new \App\Services\UnitTenancyService($this->db);
+        $newUnitId  = (int) $this->request->getPost('unit_id');
+        if ($old && $newUnitId !== (int) ($old['unit_id'] ?? 0) && ! $tenancySvc->unitIsVacant($tenancySvc->unitRow($newUnitId))) {
+            return redirect()->back()->withInput()->with('error', $tenancySvc->vacantOnlyMessage());
+        }
 
         $data = $this->contractPayload();
         $data['updated_at'] = date('Y-m-d H:i:s');
@@ -931,8 +950,15 @@ class Leases extends BaseController
             return $this->response->setJSON([]);
         }
 
+        $includeUnitId = (int) ($this->request->getGet('include_unit_id') ?? 0);
+        if ($this->request->getGet('vacant_only')) {
+            $tenancySvc = new \App\Services\UnitTenancyService($this->db);
+
+            return $this->response->setJSON($tenancySvc->vacantUnitsForFacility($facilityId, $includeUnitId));
+        }
+
         $q = $this->db->table('units')
-            ->select('id, unit_number, unit_type, plate_number')
+            ->select('id, unit_number, unit_type, plate_number, status')
             ->where('facility_id', $facilityId)
             ->orderBy('unit_number');
         if ($this->db->fieldExists('deleted_at', 'units')) {
@@ -1232,19 +1258,14 @@ class Leases extends BaseController
     }
 
     /** @return list<array<string,mixed>> */
-    private function unitsForFacility(int $facilityId): array
+    private function unitsForFacility(int $facilityId, int $includeUnitId = 0): array
     {
         if ($facilityId < 1 || ! $this->db->tableExists('units')) {
             return [];
         }
 
-        $q = $this->db->table('units')->select('id, unit_number, unit_type, plate_number')
-            ->where('facility_id', $facilityId)->orderBy('unit_number');
-        if ($this->db->fieldExists('deleted_at', 'units')) {
-            $q->where('deleted_at', null);
-        }
-
-        return $q->get()->getResultArray();
+        return (new \App\Services\UnitTenancyService($this->db))
+            ->vacantUnitsForFacility($facilityId, $includeUnitId);
     }
 
     private function contractPayload(): array
