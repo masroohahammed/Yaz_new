@@ -62,6 +62,40 @@ class UserModel extends Model
     }
 
     /**
+     * Flat merged user list for multiple role names (deduped by user id).
+     *
+     * @param  list<string>  $roleNames
+     * @return list<array<string, mixed>>
+     */
+    public function flattenUsersByRoles(array $roleNames, ?int $companyId = null): array
+    {
+        $grouped = $this->getUsersByRoles($roleNames, $companyId);
+        $users   = [];
+        $seen    = [];
+
+        foreach ($roleNames as $roleName) {
+            foreach ($grouped[$roleName] ?? [] as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $uid = (int) ($row['id'] ?? 0);
+                if ($uid < 1 || isset($seen[$uid])) {
+                    continue;
+                }
+                $seen[$uid] = true;
+                $users[]    = $row;
+            }
+        }
+
+        usort($users, static fn (array $a, array $b): int => strcmp(
+            (string) ($a['name'] ?? ''),
+            (string) ($b['name'] ?? '')
+        ));
+
+        return $users;
+    }
+
+    /**
      * Find user by email for auth.
      */
     public function findByEmail(string $email): ?array

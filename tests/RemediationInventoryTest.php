@@ -1071,6 +1071,16 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringNotContainsString("! empty(\$facility['id']);", $view);
     }
 
+    public function testPropertiesCreateUsesFlattenedPropertyManagers(): void
+    {
+        $ctrl = file_get_contents($this->root . '/app/Controllers/Facilities.php');
+        $this->assertStringContainsString('flattenUsersByRoles', $ctrl);
+        $this->assertStringNotContainsString("getUsersByRoles(['property_manager', 'manager'])", $ctrl);
+
+        $model = file_get_contents($this->root . '/app/Models/UserModel.php');
+        $this->assertStringContainsString('function flattenUsersByRoles', $model);
+    }
+
     public function testSharedEntityHelpersExistForSafeCreateEditForms(): void
     {
         require_once $this->root . '/app/Helpers/fm_helper.php';

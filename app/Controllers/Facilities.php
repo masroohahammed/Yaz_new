@@ -83,7 +83,7 @@ class Facilities extends BaseController
 
         $companies = $companyModel->where('status', 'active')->findAll();
         $managers  = $userModel->getUsersByRole('facility_manager');
-        $propertyManagers = $userModel->getUsersByRoles(['property_manager', 'manager']);
+        $propertyManagers   = $userModel->flattenUsersByRoles(['property_manager', 'manager']);
         $realEstateManagers = $userModel->getUsersByRole('real_estate_manager');
         $landlordUsers = $userModel->getUsersByRole('landlord');
         $landlords = $this->db->tableExists('landlords')
@@ -336,7 +336,7 @@ class Facilities extends BaseController
             ? $this->db->table('landlords')->where('status', 'active')->where('deleted_at', null)->orderBy('full_name')->get()->getResultArray()
             : [];
 
-        $propertyManagers = $userModel->getUsersByRoles(['property_manager', 'manager']);
+        $propertyManagers   = $userModel->flattenUsersByRoles(['property_manager', 'manager']);
         $realEstateManagers = $userModel->getUsersByRole('real_estate_manager');
         $landlordUsers = $userModel->getUsersByRole('landlord');
         $assignedStaff = $this->assignedStaffIds($id);
