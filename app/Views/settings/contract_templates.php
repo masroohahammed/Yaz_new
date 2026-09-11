@@ -40,7 +40,7 @@ $placeholders = \App\Services\ContractTemplateService::PLACEHOLDERS;
         <div class="mb-2"><label class="form-label small">Sort order</label><input type="number" name="sort_order" class="form-control form-control-sm" value="<?= esc($editingType['sort_order'] ?? old('sort_order') ?? 99) ?>"></div>
         <div class="mb-3 form-check"><input type="checkbox" name="is_active" value="1" class="form-check-input" id="typeActive" <?= ($editingType['is_active'] ?? 1) ? 'checked' : '' ?>><label class="form-check-label" for="typeActive">Active</label></div>
         <button type="submit" class="btn btn-fm-primary btn-sm w-100"><?= $editingType ? 'Update type' : 'Add type' ?></button>
-        <?php if ($editingType): ?><a href="<?= base_url('settings/contract-templates') ?>" class="btn btn-fm-outline btn-sm w-100 mt-2">Cancel</a><?php endif; ?>
+        <?php if ($editingType): ?><a href="<?= base_url('settings/contract-setup') ?>" class="btn btn-fm-outline btn-sm w-100 mt-2">Cancel</a><?php endif; ?>
         <?= form_close() ?>
       </div>
     </div>
@@ -88,7 +88,7 @@ $placeholders = \App\Services\ContractTemplateService::PLACEHOLDERS;
         <div class="mb-2"><label class="form-label small">Terms & conditions (AR)</label><textarea name="terms_ar" class="form-control fm-tinymce-rtl" rows="4"><?= esc($editing['terms_ar'] ?? old('terms_ar') ?? '') ?></textarea></div>
         <div class="form-text mb-2">Placeholders: <?= esc(implode(', ', $placeholders)) ?></div>
         <button type="submit" class="btn btn-fm-primary"><?= $editing ? 'Update template' : 'Create template' ?></button>
-        <?php if ($editing): ?><a href="<?= base_url('settings/contract-templates') ?>" class="btn btn-fm-outline ms-2">Cancel edit</a><?php endif; ?>
+        <?php if ($editing): ?><a href="<?= base_url('settings/contract-setup') ?>" class="btn btn-fm-outline ms-2">Cancel edit</a><?php endif; ?>
         <?= form_close() ?>
       </div>
     </div>
