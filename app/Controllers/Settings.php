@@ -474,17 +474,26 @@ class Settings extends BaseController
     public function contractTemplates()
     {
         $this->requireRole('super_admin', 'property_manager', 'real_estate_manager');
+        $typeSvc = new \App\Services\ContractTypeService($this->db);
         $templates = [];
         if ($this->db->tableExists('contract_templates')) {
-            $templates = $this->db->table('contract_templates')
-                ->orderBy('name', 'ASC')
-                ->get()
-                ->getResultArray();
+            if ($this->db->tableExists('contract_types') && $this->db->fieldExists('contract_type_id', 'contract_templates')) {
+                $templates = $this->db->table('contract_templates ct')
+                    ->select('ct.*, ct2.name_en AS type_name')
+                    ->join('contract_types ct2', 'ct2.id = ct.contract_type_id', 'left')
+                    ->orderBy('ct.name', 'ASC')
+                    ->get()->getResultArray();
+            } else {
+                $templates = $this->db->table('contract_templates')
+                    ->orderBy('name', 'ASC')
+                    ->get()->getResultArray();
+            }
         }
 
         return view('settings/contract_templates', $this->viewData([
-            'title'     => 'Contract Templates',
-            'templates' => $templates,
+            'title'         => 'Contract Setup',
+            'templates'     => $templates,
+            'contractTypes' => $typeSvc->allTypes(),
         ]));
     }
 
@@ -508,6 +517,13 @@ class Settings extends BaseController
             'is_active'  => $this->request->getPost('is_active') ? 1 : 0,
             'updated_at' => date('Y-m-d H:i:s'),
         ];
+        if ($this->db->fieldExists('contract_type_id', 'contract_templates')) {
+            $data['contract_type_id'] = (int) ($this->request->getPost('contract_type_id') ?? 0) ?: null;
+        }
+        if ($this->db->fieldExists('terms_en', 'contract_templates')) {
+            $data['terms_en'] = $this->request->getPost('terms_en') ?? '';
+            $data['terms_ar'] = $this->request->getPost('terms_ar') ?? '';
+        }
 
         if ($id > 0) {
             $this->db->table('contract_templates')->where('id', $id)->update($data);
@@ -524,6 +540,25 @@ class Settings extends BaseController
         return redirect()->to(base_url('settings/contract-templates'))->with('success', 'Template created.');
     }
 
+    public function saveContractType()
+    {
+        $this->requireRole('super_admin', 'property_manager', 'real_estate_manager');
+        if (! $this->db->tableExists('contract_types')) {
+            return redirect()->back()->with('error', 'Run migration: contract_types table missing.');
+        }
+
+        $id     = (int) ($this->request->getPost('id') ?? 0);
+        $nameEn = trim((string) $this->request->getPost('name_en'));
+        if ($nameEn === '') {
+            return redirect()->back()->withInput()->with('error', 'English name is required.');
+        }
+
+        $typeSvc = new \App\Services\ContractTypeService($this->db);
+        $newId   = $typeSvc->saveFromPost($this->request->getPost(), $id);
+        $this->logActivity($id > 0 ? 'update' : 'create', 'contract_types', $newId, $nameEn);
+
+        return redirect()->to(base_url('settings/contract-templates'))->with('success', 'Contract type saved.');
+    }
 
     public function permissionsMatrix()
     {

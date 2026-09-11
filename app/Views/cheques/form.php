@@ -47,7 +47,34 @@
     <?php if (!empty($cheque['notes'])): ?>
     <div class="col-12"><p class="text-muted"><?= nl2br(esc($cheque['notes'])) ?></p></div>
     <?php endif; ?>
+    <?php if (!empty($cheque['image_path'])): ?>
+    <div class="col-12"><a href="<?= base_url($cheque['image_path']) ?>" target="_blank" class="btn btn-sm btn-fm-outline">View cheque scan</a></div>
+    <?php endif; ?>
+    <?php if (!empty($cheque['payable_to_type'])): ?>
+    <div class="col-md-4"><strong>Payable to:</strong> <?= esc(ucfirst($cheque['payable_to_type'])) ?></div>
+    <?php endif; ?>
+    <?php if (!empty($cheque['due_date'])): ?>
+    <div class="col-md-4"><strong>Due date:</strong> <?= esc($cheque['due_date']) ?></div>
+    <?php endif; ?>
   </div>
+  <?php if (!empty($history)): ?>
+  <div class="mt-3">
+    <h6 class="small text-muted text-uppercase">Status history</h6>
+    <table class="table table-sm mb-0">
+      <thead><tr><th>When</th><th>From</th><th>To</th><th>Notes</th></tr></thead>
+      <tbody>
+      <?php foreach ($history as $h): ?>
+        <tr>
+          <td class="small"><?= esc($h['created_at'] ?? '') ?></td>
+          <td><?= esc($h['from_status'] ?? '—') ?></td>
+          <td><?= esc($h['to_status'] ?? '') ?></td>
+          <td class="small"><?= esc($h['notes'] ?? '') ?></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+  <?php endif; ?>
 
 <?php else: ?>
 <form method="post" action="<?= isset($cheque['id']) ? base_url('cheques/'.$cheque['id'].'/update') : base_url('cheques') ?>"><?= csrf_field() ?>

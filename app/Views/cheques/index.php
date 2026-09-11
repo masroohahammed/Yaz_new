@@ -1,9 +1,9 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
-<div class="page-header"><div><h1><i class="bi bi-bank me-2 text-primary"></i>Incoming Cheques</h1></div>
+<div class="page-header"><div><h1><i class="bi bi-bank me-2 text-primary"></i>Cheque Tracking</h1><div class="small text-muted">Bulk import (Excel/CSV), status tracking, bounce, and cash conversion</div></div>
 <div class="d-flex gap-2">
 <?php if (empty($migrationRequired)): ?>
-<a href="<?= base_url('cheques/import') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-upload me-1"></i>Import</a>
+<a href="<?= base_url('cheques/import') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-upload me-1"></i>Excel/CSV Import</a>
 <a href="<?= base_url('cheques/export-csv') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-download me-1"></i>CSV</a>
 <a href="<?= base_url('cheques/create') ?>" class="btn btn-fm-primary btn-sm">Register Cheque</a>
 <?php endif; ?>

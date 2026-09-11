@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
 use App\Services\AiModel;
+use App\Services\ChequeTrackingService;
 
 class Cheques extends BaseController
 {
@@ -116,10 +117,13 @@ class Cheques extends BaseController
             return redirect()->to(base_url('cheques'))->with('error', 'Cheque not found.');
         }
 
+        $history = (new ChequeTrackingService($this->db))->historyForCheque($id);
+
         return view('cheques/form', $this->viewData([
             'title'    => 'Cheque #' . $cheque['cheque_no'],
             'cheque'   => $cheque,
             'readOnly' => true,
+            'history'  => $history,
         ]));
     }
 
@@ -160,6 +164,7 @@ class Cheques extends BaseController
         }
 
         $this->db->table(self::TABLE)->where('id', $id)->update($updateData);
+        (new ChequeTrackingService($this->db))->logStatusChange($id, $cheque['status'] ?? null, 'bounced', $reason, (int) ($this->currentUser()['id'] ?? 0));
 
         (new AiModel($this->db))->raiseFlag(
             'cheque',
@@ -202,6 +207,7 @@ class Cheques extends BaseController
         }
 
         $this->db->table(self::TABLE)->where('id', $id)->update($update);
+        (new ChequeTrackingService($this->db))->logStatusChange($id, $cheque['status'] ?? null, 'deposited', 'Cheque deposited', (int) ($this->currentUser()['id'] ?? 0));
 
         $this->logActivity('deposit', 'cheques', $id, 'Cheque deposited: ' . $cheque['cheque_no']);
 
@@ -237,6 +243,7 @@ class Cheques extends BaseController
         }
 
         $this->db->table(self::TABLE)->where('id', $id)->update($update);
+        (new ChequeTrackingService($this->db))->logStatusChange($id, $cheque['status'] ?? null, 'cleared', 'Cheque cleared', (int) ($this->currentUser()['id'] ?? 0));
 
         $this->logActivity('clear', 'cheques', $id, 'Cheque cleared: ' . $cheque['cheque_no']);
 
@@ -283,6 +290,7 @@ class Cheques extends BaseController
         }
 
         $this->db->table(self::TABLE)->where('id', $id)->update($updateData);
+        (new ChequeTrackingService($this->db))->logStatusChange($id, $cheque['status'] ?? null, 'cleared', 'Converted to cash' . ($notes ? ': ' . $notes : ''), (int) ($this->currentUser()['id'] ?? 0));
 
         if ($this->pmTableExists('lease_payments') && ! empty($cheque['contract_id'])) {
             $payNo = $this->generateNumber('PAY', 'lease_payments', 'payment_number');

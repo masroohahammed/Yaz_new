@@ -1170,4 +1170,37 @@ final class RemediationInventoryTest extends TestCase
         $this->assertMatchesRegularExpression('/if\s*\(\s*!\s*\$propertyOnly\s*\)[\s\S]{0,120}Maintenance history/', $view);
         $this->assertMatchesRegularExpression('/if\s*\(\s*!\s*\$propertyOnly\s*\)[\s\S]{0,120}Finance snapshot/', $view);
     }
+
+    public function testContractSetupTypesAndPaymentTracking(): void
+    {
+        foreach ([
+            'app/Services/ContractTypeService.php',
+            'app/Services/ContractTemplateService.php',
+            'app/Services/PaymentTrackingService.php',
+            'app/Services/ChequeTrackingService.php',
+            'app/Database/Migrations/2026-09-11-120000_ContractTypesAndPaymentTracking.php',
+            'database/patches/2026-09-11-contract-types-payments.sql',
+        ] as $rel) {
+            $this->assertFileExists($this->root . '/' . $rel, "Missing {$rel}");
+        }
+
+        $form = file_get_contents($this->root . '/app/Views/contracts/form.php');
+        $this->assertStringContainsString('contract_type_id', $form);
+        $this->assertStringContainsString('parkingFields', $form);
+        $this->assertStringContainsString('fm-tinymce', $form);
+
+        $settings = file_get_contents($this->root . '/app/Views/settings/contract_templates.php');
+        $this->assertStringContainsString('Contract Setup', $settings);
+        $this->assertStringContainsString('contract-types/save', $settings);
+
+        $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
+        $this->assertStringContainsString('saveUtilityTransfer', $leases);
+        $this->assertStringContainsString('recordChequePayment', $leases);
+        $this->assertStringContainsString('contracts/form', $leases);
+
+        $paymentsShow = file_get_contents($this->root . '/app/Views/payments/show.php');
+        $this->assertStringContainsString('Partial payment', $paymentsShow);
+        $this->assertStringContainsString('Postpone payment', $paymentsShow);
+        $this->assertStringContainsString('Payment history', $paymentsShow);
+    }
 }
