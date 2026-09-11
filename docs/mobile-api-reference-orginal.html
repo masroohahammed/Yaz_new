@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Al Yazwa FM — API Reference</title>
+<style>
+:root{--brand:#1a1a5e;--green:#059669;--blue:#2563eb;--bg:#f5f6f8;--card:#fff;--muted:#6b7280;--border:#e5e7eb}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#1c1c1e;line-height:1.55}
+header{background:linear-gradient(135deg,var(--brand),#3d38a3);color:#fff;padding:28px 20px}
+header h1{margin:0 0 4px;font-size:26px}header p{margin:0;opacity:.9;font-size:14px}
+.wrap{max-width:920px;margin:0 auto;padding:20px 16px 40px}
+.hero{background:var(--card);border-radius:12px;padding:18px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.hero table{width:100%;border-collapse:collapse;font-size:14px}
+.hero th,.hero td{text-align:left;padding:7px 10px;border:1px solid var(--border)}
+.hero th{background:#fafafa;width:130px}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btns a{background:var(--brand);color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600}
+.btns a.green{background:#5d7a1f}
+nav.toc{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+nav.toc ul{margin:0;padding-left:18px}nav.toc a{color:var(--brand)}
+section{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+section h2{margin:0 0 6px;font-size:18px;color:var(--brand);border-bottom:2px solid var(--border);padding-bottom:8px}
+section .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+.ep{border:1px solid var(--border);border-radius:10px;margin:14px 0;overflow:hidden}
+.ep-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;background:#fafafa;border-bottom:1px solid var(--border)}
+.method{font-size:10px;font-weight:700;color:#fff;padding:3px 8px;border-radius:5px}
+.method.get{background:var(--green)}.method.post{background:var(--blue)}
+.path{font-size:13px;font-weight:600}
+.badge{font-size:10px;padding:2px 8px;border-radius:99px}
+.badge.jwt{background:#ede9fe;color:var(--brand)}.badge.pub{background:#e8f5d8;color:#5d7a1f}
+.ep-body{padding:12px 14px 16px;font-size:14px}
+.use{margin:0 0 8px}.codes{font-size:12px;color:var(--muted);margin:0 0 10px}
+.label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 5px}
+pre{background:#f3f4f6;border-radius:7px;padding:10px 12px;overflow-x:auto;font-size:11px;line-height:1.45;margin:0;white-space:pre-wrap;word-break:break-word}
+pre.curl{background:#1e1e2e;color:#cdd6f4}
+pre.json{background:#f8fafc;border:1px solid var(--border)}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:14px}footer a{color:var(--brand)}
+</style>
+</head>
+<body>
+<header><div class="wrap" style="padding:0"><h1>Al Yazwa FM — API Reference</h1><p>REST API v1 · Postman import · cURL · JSON examples</p></div></header>
+<div class="wrap">
+<div class="hero">
+  <table>
+    <tr><th>Base URL</th><td><code>https://pfms.alyazwa.com/api/v1</code></td></tr>
+    <tr><th>Auth</th><td><code>Authorization: Bearer &lt;token&gt;</code> (from POST /auth/login)</td></tr>
+    <tr><th>Content-Type</th><td><code>application/json</code></td></tr>
+    <tr><th>Token lifetime</th><td>24 hours</td></tr>
+  </table>
+  <div class="btns">
+    <a href="alyazwa-fm-api.postman_collection.json" download>Download Postman Collection</a>
+    <a href="index.html" class="green">App Downloads</a>
+  </div>
+</div>
+<nav class="toc"><strong>Endpoints</strong><ul><li><a href="#auth">Authentication</a></li><li><a href="#portal">Tenant Portal</a></li><li><a href="#fm">Facility Management</a></li><li><a href="#employee">Employee Self-Service</a></li><li><a href="#other">Properties, Finance &amp; Logging</a></li></ul></nav>
+<section id="auth"><h2>Authentication</h2>
+<article class="ep" id="health-check">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/health</code>
+    <span class="badge pub">Public</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Health Check</strong> — Verify the API is deployed and reachable before testing login. No authentication required.</p>
+    <p class="codes">HTTP: 200 OK</p>
+    <div class="label">Input</div><pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Al Yazwa FM API v1 is reachable&quot;,
+  &quot;version&quot;: &quot;2.5.1&quot;,
+  &quot;login&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;url&quot;: &quot;https://pfms.alyazwa.com/api/v1/auth/login&quot;
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/health&#x27; \
+  -H &#x27;Accept: application/json&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="login">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/auth/login</code>
+    <span class="badge pub">Public</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Login</strong> — Authenticate a user with email and password. Returns a bearer token (valid 24 hours) and user profile including app_area for mobile routing.</p>
+    <p class="codes">HTTP: 200 · 400 missing fields · 401 invalid credentials · 503 user_sessions table missing</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;email&quot;: &quot;user@example.com&quot;,
+  &quot;password&quot;: &quot;your-password&quot;
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Login successful&quot;,
+  &quot;token&quot;: &quot;a1b2c3d4e5f6...&quot;,
+  &quot;user&quot;: {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;Ahmed Hassan&quot;,
+    &quot;email&quot;: &quot;user@example.com&quot;,
+    &quot;phone&quot;: &quot;+97455551234&quot;,
+    &quot;role&quot;: &quot;technician&quot;,
+    &quot;role_display&quot;: &quot;Technician&quot;,
+    &quot;workspace&quot;: &quot;fm&quot;,
+    &quot;app_area&quot;: &quot;fm&quot;,
+    &quot;company_id&quot;: 1,
+    &quot;tenant_id&quot;: null,
+    &quot;employee_id&quot;: 12
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/auth/login&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{
+  &quot;email&quot;: &quot;user@example.com&quot;,
+  &quot;password&quot;: &quot;your-password&quot;
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="current-user">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/auth/me</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Current User</strong> — Get the currently logged-in user profile. Used on app startup to restore session.</p>
+    <p class="codes">HTTP: 200 · 401 invalid or expired token</p>
+    <div class="label">Input</div><pre>Header: Authorization: Bearer &lt;token&gt;</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;user&quot;: {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;Ahmed Hassan&quot;,
+    &quot;email&quot;: &quot;user@example.com&quot;,
+    &quot;role&quot;: &quot;technician&quot;,
+    &quot;app_area&quot;: &quot;fm&quot;,
+    &quot;employee_id&quot;: 12
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/auth/me&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article></section><section id="portal"><h2>Tenant Portal</h2><p class="sub">Roles: tenant, client · Requires linked tenant record</p>
+<article class="ep" id="list-contracts">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/contracts</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>List Contracts</strong> — List all lease contracts belonging to the authenticated tenant.</p>
+    <p class="codes">HTTP: 200 · 403 no tenant linked</p>
+    <div class="label">Input</div><pre>Bearer token only</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;contract_number&quot;: &quot;LC-2027-0892&quot;,
+      &quot;status&quot;: &quot;active&quot;,
+      &quot;tenant_name&quot;: &quot;Mohammed Al-Rashid&quot;,
+      &quot;property_unit&quot;: &quot;Yazwa Tower, Apt 402&quot;,
+      &quot;start_date&quot;: &quot;2027-01-01&quot;,
+      &quot;end_date&quot;: &quot;2027-12-31&quot;,
+      &quot;annual_rent&quot;: 84000,
+      &quot;rent_amount&quot;: 7000,
+      &quot;security_deposit&quot;: 7000,
+      &quot;currency&quot;: &quot;QAR&quot;
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/portal/contracts&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="contract-detail">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/contracts/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Contract Detail</strong> — Get full contract details including unit info, rent, deposit, and linked legal documents.</p>
+    <p class="codes">HTTP: 200 · 404 not found</p>
+    <div class="label">Input</div><pre>Path parameter: id = contract ID</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;id&quot;: 1,
+    &quot;contract_number&quot;: &quot;LC-2027-0892&quot;,
+    &quot;status&quot;: &quot;active&quot;,
+    &quot;facility_name&quot;: &quot;Yazwa Tower&quot;,
+    &quot;unit_number&quot;: &quot;402&quot;,
+    &quot;annual_rent&quot;: 84000,
+    &quot;documents&quot;: [
+      { &quot;id&quot;: 5, &quot;title&quot;: &quot;Official_Contract_V2.pdf&quot;, &quot;is_pdf&quot;: true, &quot;download_url&quot;: &quot;...&quot; }
+    ]
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/portal/contracts/1&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="list-payments">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/payments?q=&amp;status=&amp;page=1&amp;per_page=20</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>List Payments</strong> — Get payment overview (outstanding, due days, paid YTD) and paginated payment history.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Query: q (search), status (pending|paid|overdue|partial), page, per_page (max 50)</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;overview&quot;: {
+    &quot;currency&quot;: &quot;QAR&quot;,
+    &quot;total_outstanding&quot;: 12450,
+    &quot;due_in_days&quot;: 4,
+    &quot;paid_ytd&quot;: 84200,
+    &quot;invoice_count&quot;: 12,
+    &quot;upcoming_amount&quot;: 4500,
+    &quot;upcoming_date&quot;: &quot;2027-05-01&quot;
+  },
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 10,
+      &quot;payment_number&quot;: &quot;PAY-2027-0042&quot;,
+      &quot;amount&quot;: 4500,
+      &quot;status&quot;: &quot;paid&quot;,
+      &quot;is_paid&quot;: true,
+      &quot;due_date&quot;: &quot;2027-04-01&quot;
+    }
+  ],
+  &quot;meta&quot;: { &quot;page&quot;: 1, &quot;per_page&quot;: 20, &quot;total&quot;: 12 }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/portal/payments?q=&amp;status=&amp;page=1&amp;per_page=20&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="payment-detail">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/payments/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Payment Detail</strong> — Get a single payment or receipt detail for the tenant.</p>
+    <p class="codes">HTTP: 200 · 404</p>
+    <div class="label">Input</div><pre>Path parameter: id = payment ID</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;id&quot;: 10,
+    &quot;payment_number&quot;: &quot;PAY-2027-0042&quot;,
+    &quot;amount&quot;: 4500,
+    &quot;currency&quot;: &quot;QAR&quot;,
+    &quot;status&quot;: &quot;paid&quot;,
+    &quot;is_paid&quot;: true,
+    &quot;payment_date&quot;: &quot;2027-04-02&quot;,
+    &quot;due_date&quot;: &quot;2027-04-01&quot;,
+    &quot;facility_name&quot;: &quot;Yazwa Tower&quot;,
+    &quot;unit_number&quot;: &quot;402&quot;
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/portal/payments/1&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="list-maintenance-requests">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/requests</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>List Maintenance Requests</strong> — List maintenance/service requests submitted by the tenant.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Bearer token</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 125,
+      &quot;reference&quot;: &quot;REQ-2026-00125&quot;,
+      &quot;title&quot;: &quot;AC Maintenance – Master Bed&quot;,
+      &quot;category&quot;: &quot;HVAC&quot;,
+      &quot;priority&quot;: &quot;high&quot;,
+      &quot;status&quot;: &quot;in_progress&quot;,
+      &quot;created_at&quot;: &quot;2026-10-24 09:15:00&quot;,
+      &quot;facility_name&quot;: &quot;Yazwa Tower&quot;,
+      &quot;unit_number&quot;: &quot;402&quot;
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/portal/requests&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="request-detail">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/requests/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Request Detail</strong> — Get request detail with progress timeline, photos, assigned technician, and activity log.</p>
+    <p class="codes">HTTP: 200 · 404</p>
+    <div class="label">Input</div><pre>Path parameter: id = request ID</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;id&quot;: 125,
+    &quot;reference&quot;: &quot;REQ-2026-00125&quot;,
+    &quot;title&quot;: &quot;AC Maintenance – Master Bed&quot;,
+    &quot;status&quot;: &quot;in_progress&quot;,
+    &quot;progress&quot;: { &quot;steps&quot;: [...], &quot;done_count&quot;: 2, &quot;active_index&quot;: 2 },
+    &quot;technician&quot;: { &quot;id&quot;: 8, &quot;name&quot;: &quot;John Smith&quot;, &quot;role&quot;: &quot;Technician&quot;, &quot;phone&quot;: &quot;+974...&quot; },
+    &quot;activity&quot;: [{ &quot;title&quot;: &quot;Technician dispatched&quot;, &quot;at&quot;: &quot;2026-09-11 11:45:00&quot; }]
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/portal/requests/1&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="create-request">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/portal/requests</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Create Request</strong> — Submit a new maintenance request. Optional photo via multipart field photo.</p>
+    <p class="codes">HTTP: 201 · 422 validation error</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;title&quot;: &quot;AC not cooling in bedroom&quot;,
+  &quot;category&quot;: &quot;HVAC&quot;,
+  &quot;priority&quot;: &quot;high&quot;,
+  &quot;description&quot;: &quot;The AC unit is leaking water and not cooling since yesterday.&quot;,
+  &quot;unit_id&quot;: 42
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Request submitted successfully&quot;,
+  &quot;data&quot;: {
+    &quot;id&quot;: 126,
+    &quot;reference&quot;: &quot;REQ-2026-00126&quot;,
+    &quot;category&quot;: &quot;HVAC&quot;,
+    &quot;expected_response_hours&quot;: 24
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/portal/requests&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;title&quot;: &quot;AC not cooling in bedroom&quot;,
+  &quot;category&quot;: &quot;HVAC&quot;,
+  &quot;priority&quot;: &quot;high&quot;,
+  &quot;description&quot;: &quot;The AC unit is leaking water and not cooling since yesterday.&quot;,
+  &quot;unit_id&quot;: 42
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="send-request-message">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/portal/requests/{id}/messages</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Send Request Message</strong> — Send a message on an existing request. Routed to work-order chat if request was converted to WO.</p>
+    <p class="codes">HTTP: 200 · 404 · 422 empty message</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;message&quot;: &quot;Please call before arrival.&quot;
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Message sent&quot;
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/portal/requests/1/messages&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;message&quot;: &quot;Please call before arrival.&quot;
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="download-document">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/documents/{id}/download</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Download Document</strong> — Download a legal document (PDF/ZIP) linked to the tenant&#x27;s contract or facility. Returns file binary, not JSON.</p>
+    <p class="codes">HTTP: 200 · 403 access denied · 404</p>
+    <div class="label">Input</div><pre>Path parameter: id = document ID</pre>
+    <div class="label">Response example</div>
+    <pre class="json">(Binary file download — not JSON)</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/portal/documents/1/download&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article></section><section id="fm"><h2>Facility Management</h2><p class="sub">Roles: technician, maintenance, maintenance_staff, supervisor, maintenance_supervisor, facility_manager, qa_inspector</p>
+<article class="ep" id="dashboard">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/dashboard</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Dashboard</strong> — Role-scoped operations dashboard with KPIs and urgent work orders. Response varies by role.</p>
+    <p class="codes">HTTP: 200 · 403 FM role required</p>
+    <div class="label">Input</div><pre>Bearer token</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;role&quot;: &quot;technician&quot;,
+  &quot;data&quot;: {
+    &quot;kpis&quot;: [
+      { &quot;key&quot;: &quot;assigned&quot;, &quot;label&quot;: &quot;Assigned&quot;, &quot;value&quot;: 3 },
+      { &quot;key&quot;: &quot;in_progress&quot;, &quot;label&quot;: &quot;In Progress&quot;, &quot;value&quot;: 2 }
+    ],
+    &quot;urgent_work_orders&quot;: [
+      { &quot;id&quot;: 42, &quot;wo_number&quot;: &quot;WO-2026-0142&quot;, &quot;title&quot;: &quot;HVAC repair&quot;, &quot;priority&quot;: &quot;critical&quot;, &quot;status&quot;: &quot;in_progress&quot;, &quot;facility_name&quot;: &quot;Yazwa Tower&quot; }
+    ]
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/fm/dashboard&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="list-work-orders">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/work-orders?status=&amp;q=</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>List Work Orders</strong> — List work orders scoped to user role. Technicians see only assigned orders.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Query: status, q (search wo_number or title)</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 42,
+      &quot;wo_number&quot;: &quot;WO-2026-0142&quot;,
+      &quot;title&quot;: &quot;HVAC repair&quot;,
+      &quot;priority&quot;: &quot;critical&quot;,
+      &quot;status&quot;: &quot;in_progress&quot;,
+      &quot;sla_breached&quot;: false,
+      &quot;facility_name&quot;: &quot;Yazwa Tower&quot;,
+      &quot;assigned_name&quot;: &quot;Ahmed Hassan&quot;
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/fm/work-orders?status=&amp;q=&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="work-order-detail">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/work-orders/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Work Order Detail</strong> — Get work order detail with job cards, timeline fields, and allowed status actions for current role.</p>
+    <p class="codes">HTTP: 200 · 404</p>
+    <div class="label">Input</div><pre>Path parameter: id = work order ID</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;id&quot;: 42,
+    &quot;wo_number&quot;: &quot;WO-2026-0142&quot;,
+    &quot;title&quot;: &quot;HVAC repair&quot;,
+    &quot;description&quot;: &quot;Replace filter and check refrigerant&quot;,
+    &quot;status&quot;: &quot;in_progress&quot;,
+    &quot;job_cards&quot;: [{ &quot;id&quot;: 10, &quot;jc_number&quot;: &quot;JC-2026-0042&quot;, &quot;status&quot;: &quot;in_progress&quot; }],
+    &quot;actions&quot;: [&quot;on_hold&quot;, &quot;completed&quot;]
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/fm/work-orders/1&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="update-work-order-status">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/work-orders/{id}/status</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Update Work Order Status</strong> — Update work order status. Allowed transitions depend on role and current status.</p>
+    <p class="codes">HTTP: 200 · 403 invalid transition · 404</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;status&quot;: &quot;in_progress&quot;,
+  &quot;execution_percent&quot;: 50,
+  &quot;notes&quot;: &quot;Started repair&quot;
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Work order updated&quot;
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/fm/work-orders/1/status&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;status&quot;: &quot;in_progress&quot;,
+  &quot;execution_percent&quot;: 50,
+  &quot;notes&quot;: &quot;Started repair&quot;
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="assign-technician">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/work-orders/{id}/assign</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Assign Technician</strong> — Assign a technician to a work order. Supervisor or Facility Manager only.</p>
+    <p class="codes">HTTP: 200 · 422 invalid technician · 403</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;technician_id&quot;: 5
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Technician assigned&quot;,
+  &quot;data&quot;: { &quot;technician_id&quot;: 5, &quot;technician_name&quot;: &quot;Ahmed Hassan&quot; }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/fm/work-orders/1/assign&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;technician_id&quot;: 5
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="create-job-card">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/work-orders/{id}/job-cards</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Create Job Card</strong> — Create a job card for a work order and assign a technician. Supervisor/Manager only.</p>
+    <p class="codes">HTTP: 200 · 422 · 404</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;technician_id&quot;: 5,
+  &quot;description&quot;: &quot;Replace AC filter and test cooling&quot;,
+  &quot;scheduled_date&quot;: &quot;2026-09-15&quot;
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Job card created&quot;,
+  &quot;data&quot;: { &quot;id&quot;: 10, &quot;jc_number&quot;: &quot;JC-2026-0042&quot;, &quot;technician_id&quot;: 5, &quot;technician_name&quot;: &quot;Ahmed Hassan&quot; }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/fm/work-orders/1/job-cards&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;technician_id&quot;: 5,
+  &quot;description&quot;: &quot;Replace AC filter and test cooling&quot;,
+  &quot;scheduled_date&quot;: &quot;2026-09-15&quot;
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="list-complaints">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/complaints?status=</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>List Complaints</strong> — List helpdesk complaints for FM staff review and action.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Query: status (optional filter)</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 130,
+      &quot;ticket_number&quot;: &quot;REQ-2026-00130&quot;,
+      &quot;title&quot;: &quot;Water leak&quot;,
+      &quot;priority&quot;: &quot;high&quot;,
+      &quot;status&quot;: &quot;pending&quot;,
+      &quot;requester_name&quot;: &quot;Tenant Name&quot;,
+      &quot;facility_name&quot;: &quot;Yazwa Tower&quot;,
+      &quot;unit_number&quot;: &quot;402&quot;
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/fm/complaints?status=&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="complaint-detail">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/complaints/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Complaint Detail</strong> — Get complaint detail with allowed actions (verify, approve, reject).</p>
+    <p class="codes">HTTP: 200 · 404</p>
+    <div class="label">Input</div><pre>Path parameter: id</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;id&quot;: 130,
+    &quot;ticket_number&quot;: &quot;REQ-2026-00130&quot;,
+    &quot;title&quot;: &quot;Water leak&quot;,
+    &quot;status&quot;: &quot;pending&quot;,
+    &quot;description&quot;: &quot;...&quot;,
+    &quot;actions&quot;: [&quot;verify&quot;, &quot;reject&quot;]
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/fm/complaints/1&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="complaint-action">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/complaints/{id}/action</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Complaint Action</strong> — Process a complaint: verify, approve, or reject.</p>
+    <p class="codes">HTTP: 200 · 403 · 404</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;action&quot;: &quot;verify&quot;
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Complaint updated&quot;
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/fm/complaints/1/action&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;action&quot;: &quot;verify&quot;
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="list-job-cards">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/job-cards</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>List Job Cards</strong> — List job cards scoped to role. Technicians see only their assignments.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Bearer token</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 10,
+      &quot;jc_number&quot;: &quot;JC-2026-0042&quot;,
+      &quot;status&quot;: &quot;in_progress&quot;,
+      &quot;wo_number&quot;: &quot;WO-2026-0142&quot;,
+      &quot;wo_title&quot;: &quot;HVAC repair&quot;,
+      &quot;technician_name&quot;: &quot;Ahmed Hassan&quot;
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/fm/job-cards&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="job-card-detail">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/job-cards/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Job Card Detail</strong> — Get job card detail with allowed status actions.</p>
+    <p class="codes">HTTP: 200 · 403 · 404</p>
+    <div class="label">Input</div><pre>Path parameter: id</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;id&quot;: 10,
+    &quot;jc_number&quot;: &quot;JC-2026-0042&quot;,
+    &quot;status&quot;: &quot;in_progress&quot;,
+    &quot;description&quot;: &quot;Replace AC filter&quot;,
+    &quot;labor_hours&quot;: 0,
+    &quot;actions&quot;: [&quot;completed&quot;]
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/fm/job-cards/1&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="update-job-card-status">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/job-cards/{id}/status</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Update Job Card Status</strong> — Update job card status. Technician can mark in_progress or completed.</p>
+    <p class="codes">HTTP: 200 · 403 · 404</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;status&quot;: &quot;completed&quot;,
+  &quot;labor_hours&quot;: 2.5,
+  &quot;completion_notes&quot;: &quot;Filter replaced, AC cooling normally&quot;
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Job card updated&quot;
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/fm/job-cards/1/status&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;status&quot;: &quot;completed&quot;,
+  &quot;labor_hours&quot;: 2.5,
+  &quot;completion_notes&quot;: &quot;Filter replaced, AC cooling normally&quot;
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="list-technicians">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/technicians</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>List Technicians</strong> — Get active technicians for work order / job card assignment. Supervisor/Manager only.</p>
+    <p class="codes">HTTP: 200 · 403</p>
+    <div class="label">Input</div><pre>Bearer token</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    { &quot;id&quot;: 5, &quot;name&quot;: &quot;Ahmed Hassan&quot;, &quot;email&quot;: &quot;ahmed@example.com&quot;, &quot;phone&quot;: &quot;+97455551234&quot; }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/fm/technicians&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article></section><section id="employee"><h2>Employee Self-Service</h2><p class="sub">Requires employees record linked to user · Also available to FM staff via Account menu</p>
+<article class="ep" id="profile">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/profile</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Profile</strong> — Get employee master profile: code, department, designation, shift times, facility.</p>
+    <p class="codes">HTTP: 200 · 403 no employee record</p>
+    <div class="label">Input</div><pre>Bearer token</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;employee_id&quot;: 12,
+    &quot;emp_code&quot;: &quot;EMP-001&quot;,
+    &quot;name&quot;: &quot;Sara Ali&quot;,
+    &quot;email&quot;: &quot;sara@example.com&quot;,
+    &quot;department&quot;: &quot;FM&quot;,
+    &quot;designation&quot;: &quot;Technician&quot;,
+    &quot;shift_start&quot;: &quot;08:00:00&quot;,
+    &quot;shift_end&quot;: &quot;17:00:00&quot;,
+    &quot;facility_name&quot;: &quot;Yazwa Tower&quot;
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/employee/profile&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="dashboard">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/dashboard</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Dashboard</strong> — Employee home dashboard: today&#x27;s attendance, break status, monthly KPIs, pending leaves.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Bearer token</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;employee&quot;: { &quot;emp_code&quot;: &quot;EMP-001&quot;, &quot;name&quot;: &quot;Sara Ali&quot; },
+    &quot;today&quot;: { &quot;check_in&quot;: &quot;08:02:00&quot;, &quot;status&quot;: &quot;present&quot; },
+    &quot;on_break&quot;: false,
+    &quot;month_summary&quot;: { &quot;present_days&quot;: 18, &quot;late_days&quot;: 1, &quot;total_hours&quot;: 142.5 },
+    &quot;pending_leaves&quot;: 1,
+    &quot;is_manager&quot;: false
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/employee/dashboard&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="check-in">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/attendance/check-in</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Check In</strong> — Record daily check-in. Optional GPS coordinates. Marks late if after shift start + 15 minutes.</p>
+    <p class="codes">HTTP: 200 · 409 already checked in</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;latitude&quot;: 25.2854,
+  &quot;longitude&quot;: 51.531
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Checked in at 08:02&quot;,
+  &quot;data&quot;: { &quot;status&quot;: &quot;present&quot;, &quot;check_in&quot;: &quot;2026-09-11 08:02:00&quot; }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/employee/attendance/check-in&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;latitude&quot;: 25.2854,
+  &quot;longitude&quot;: 51.531
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="check-out">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/attendance/check-out</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Check Out</strong> — Record daily check-out. Calculates hours_worked and overtime_hrs automatically.</p>
+    <p class="codes">HTTP: 200 · 409 no check-in or already checked out</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;reason&quot;: &quot;&quot;
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Checked out. Hours worked: 8.5&quot;,
+  &quot;data&quot;: { &quot;check_out&quot;: &quot;2026-09-11 17:30:00&quot;, &quot;hours_worked&quot;: 8.5, &quot;overtime_hrs&quot;: 0.5 }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/employee/attendance/check-out&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;reason&quot;: &quot;&quot;
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="break-start">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/attendance/break-start</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Break Start</strong> — Start a break period for today.</p>
+    <p class="codes">HTTP: 200 · 409 break already open · 501 employee_breaks table missing</p>
+    <div class="label">Request JSON</div><pre>{}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Break started&quot;
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/employee/attendance/break-start&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="break-end">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/attendance/break-end</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Break End</strong> — End the current open break and return duration in minutes.</p>
+    <p class="codes">HTTP: 200 · 409 no open break</p>
+    <div class="label">Request JSON</div><pre>{}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Break ended (15 min)&quot;,
+  &quot;data&quot;: { &quot;duration_mins&quot;: 15 }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/employee/attendance/break-end&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="attendance-history">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/attendance?month=2026-09</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Attendance History</strong> — Get monthly attendance records for the employee.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Query: month=YYYY-MM (defaults to current month)</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;month&quot;: &quot;2026-09&quot;,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 100,
+      &quot;date&quot;: &quot;2026-09-01&quot;,
+      &quot;check_in&quot;: &quot;08:00:00&quot;,
+      &quot;check_out&quot;: &quot;17:05:00&quot;,
+      &quot;status&quot;: &quot;present&quot;,
+      &quot;hours_worked&quot;: 8.08,
+      &quot;overtime_hrs&quot;: 0.08
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/employee/attendance?month=2026-09&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="list-leave-requests">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/leaves</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>List Leave Requests</strong> — List own leave requests and their approval status.</p>
+    <p class="codes">HTTP: 200 · 501 leave_requests table missing</p>
+    <div class="label">Input</div><pre>Bearer token</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 5,
+      &quot;leave_type&quot;: &quot;annual&quot;,
+      &quot;start_date&quot;: &quot;2026-09-20&quot;,
+      &quot;end_date&quot;: &quot;2026-09-22&quot;,
+      &quot;days&quot;: 3,
+      &quot;status&quot;: &quot;pending&quot;,
+      &quot;reason&quot;: &quot;Family trip&quot;
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/employee/leaves&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="apply-leave">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/leaves</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Apply Leave</strong> — Submit a new leave request for approval.</p>
+    <p class="codes">HTTP: 200 · 422 invalid dates · 501 table missing</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;leave_type&quot;: &quot;annual&quot;,
+  &quot;start_date&quot;: &quot;2026-09-20&quot;,
+  &quot;end_date&quot;: &quot;2026-09-22&quot;,
+  &quot;reason&quot;: &quot;Family trip&quot;
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Leave request submitted&quot;,
+  &quot;data&quot;: { &quot;id&quot;: 5, &quot;days&quot;: 3, &quot;status&quot;: &quot;pending&quot; }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/employee/leaves&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;leave_type&quot;: &quot;annual&quot;,
+  &quot;start_date&quot;: &quot;2026-09-20&quot;,
+  &quot;end_date&quot;: &quot;2026-09-22&quot;,
+  &quot;reason&quot;: &quot;Family trip&quot;
+}&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="team-attendance">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/team-attendance?date=2026-09-11</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Team Attendance</strong> — Supervisor/Manager: view team attendance for a specific date.</p>
+    <p class="codes">HTTP: 200 · 403 not manager role</p>
+    <div class="label">Input</div><pre>Query: date=YYYY-MM-DD (defaults to today)</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;date&quot;: &quot;2026-09-11&quot;,
+  &quot;data&quot;: [
+    {
+      &quot;employee_id&quot;: 12,
+      &quot;emp_code&quot;: &quot;EMP-001&quot;,
+      &quot;name&quot;: &quot;Ahmed Hassan&quot;,
+      &quot;check_in&quot;: &quot;08:01:00&quot;,
+      &quot;check_out&quot;: null,
+      &quot;status&quot;: &quot;present&quot;,
+      &quot;hours_worked&quot;: null
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/employee/team-attendance?date=2026-09-11&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="leave-approvals">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/leave-approvals</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Leave Approvals</strong> — Supervisor/Manager: list pending leave requests awaiting approval.</p>
+    <p class="codes">HTTP: 200 · 403</p>
+    <div class="label">Input</div><pre>Bearer token</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 5,
+      &quot;leave_type&quot;: &quot;annual&quot;,
+      &quot;start_date&quot;: &quot;2026-09-20&quot;,
+      &quot;end_date&quot;: &quot;2026-09-22&quot;,
+      &quot;days&quot;: 3,
+      &quot;status&quot;: &quot;pending&quot;,
+      &quot;employee_name&quot;: &quot;Ahmed Hassan&quot;,
+      &quot;emp_code&quot;: &quot;EMP-002&quot;
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/employee/leave-approvals&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="leave-action">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/leaves/{id}/action</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Leave Action</strong> — Supervisor/Manager: approve or reject a leave request. Approved leaves mark attendance as leave.</p>
+    <p class="codes">HTTP: 200 · 409 already processed · 403 · 404</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;action&quot;: &quot;approve&quot;
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Leave request approved&quot;,
+  &quot;data&quot;: { &quot;id&quot;: 5, &quot;status&quot;: &quot;approved&quot; }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/employee/leaves/1/action&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27; \
+  -d &#x27;{
+  &quot;action&quot;: &quot;approve&quot;
+}&#x27;</pre>
+  </div>
+</article></section><section id="other"><h2>Properties, Finance &amp; Logging</h2>
+<article class="ep" id="list-properties">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/properties</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>List Properties</strong> — List facilities/properties within the user&#x27;s company scope.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Bearer token</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    { &quot;id&quot;: 1, &quot;name&quot;: &quot;Yazwa Tower&quot;, &quot;code&quot;: &quot;YT-01&quot;, &quot;city&quot;: &quot;Doha&quot;, &quot;status&quot;: &quot;active&quot; }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/properties&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="property-kpis">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/properties/kpis/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Property KPIs</strong> — Get property KPIs: unit count, occupancy %, active contracts, expiring leases, open work orders.</p>
+    <p class="codes">HTTP: 200 · 404</p>
+    <div class="label">Input</div><pre>Path parameter: id = facility ID</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;Yazwa Tower&quot;,
+    &quot;total_units&quot;: 120,
+    &quot;occupied_units&quot;: 102,
+    &quot;occupancy_pct&quot;: 85.0,
+    &quot;active_contracts&quot;: 98,
+    &quot;expiring_soon&quot;: 5,
+    &quot;open_work_orders&quot;: 3
+  }
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/properties/kpis/1&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="trial-balance">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/finance/trial-balance?as_of=2026-09-11</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Trial Balance</strong> — Get GL trial balance report as of a specific date.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Query: as_of=YYYY-MM-DD</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;as_of&quot;: &quot;2026-09-11&quot;,
+  &quot;gl_enabled&quot;: true,
+  &quot;rows&quot;: [{ &quot;account_code&quot;: &quot;1000&quot;, &quot;account_name&quot;: &quot;Cash&quot;, &quot;debit&quot;: 50000, &quot;credit&quot;: 0 }],
+  &quot;total_debit&quot;: 100000,
+  &quot;total_credit&quot;: 100000
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/finance/trial-balance?as_of=2026-09-11&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="bank-reconciliation">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/finance/reconciliation?from=2026-09-01&amp;to=2026-09-11</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Bank Reconciliation</strong> — Get bank activity summary and reconciliation data for a date range.</p>
+    <p class="codes">HTTP: 200</p>
+    <div class="label">Input</div><pre>Query: from, to (YYYY-MM-DD)</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;from&quot;: &quot;2026-09-01&quot;,
+  &quot;to&quot;: &quot;2026-09-11&quot;,
+  &quot;total_in&quot;: 50000,
+  &quot;total_out&quot;: 30000,
+  &quot;net&quot;: 20000,
+  &quot;activity&quot;: [...],
+  &quot;bank_accounts&quot;: [...]
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X GET &#x27;https://pfms.alyazwa.com/api/v1/finance/reconciliation?from=2026-09-01&amp;to=2026-09-11&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Authorization: Bearer YOUR_TOKEN&#x27;</pre>
+  </div>
+</article>
+<article class="ep" id="app-log">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/app-log</code>
+    <span class="badge pub">Public</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>App Log</strong> — Mobile client telemetry logging. No JWT required. Optional user_id in body.</p>
+    <p class="codes">HTTP: 200 · 400 missing action · 503 app_mobile_logs table missing</p>
+    <div class="label">Request JSON</div><pre>{
+  &quot;action&quot;: &quot;login_success&quot;,
+  &quot;status&quot;: &quot;info&quot;,
+  &quot;message&quot;: &quot;User logged in&quot;,
+  &quot;app_version&quot;: &quot;2.5.1&quot;,
+  &quot;platform&quot;: &quot;android&quot;,
+  &quot;context&quot;: {
+    &quot;screen&quot;: &quot;login&quot;
+  }
+}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Logged&quot;
+}</pre>
+    <div class="label">cURL</div>
+    <pre class="curl">curl -X POST &#x27;https://pfms.alyazwa.com/api/v1/app-log&#x27; \
+  -H &#x27;Accept: application/json&#x27; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{
+  &quot;action&quot;: &quot;login_success&quot;,
+  &quot;status&quot;: &quot;info&quot;,
+  &quot;message&quot;: &quot;User logged in&quot;,
+  &quot;app_version&quot;: &quot;2.5.1&quot;,
+  &quot;platform&quot;: &quot;android&quot;,
+  &quot;context&quot;: {
+    &quot;screen&quot;: &quot;login&quot;
+  }
+}&#x27;</pre>
+  </div>
+</article></section>
+</div>
+<footer>Al Yazwa FM API v1 · <a href="index.html">Downloads</a></footer>
+</body></html>
