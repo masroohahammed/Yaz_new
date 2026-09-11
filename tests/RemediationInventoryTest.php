@@ -1237,5 +1237,11 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('Partial payment', $paymentsShow);
         $this->assertStringContainsString('Postpone payment', $paymentsShow);
         $this->assertStringContainsString('Payment history', $paymentsShow);
+
+        $leaseShow = file_get_contents($this->root . '/app/Views/leases/show.php');
+        $this->assertStringContainsString('Bulk import cheques', $leaseShow);
+        $this->assertStringContainsString('cheque-bulk-import', $leaseShow);
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString('cheque-bulk-import', $routes);
     }
 }
