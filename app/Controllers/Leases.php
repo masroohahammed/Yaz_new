@@ -1616,34 +1616,13 @@ class Leases extends BaseController
             return $this->renderParkingContractDocument($d, true, $signatureB64);
         }
 
-        $templateEn = $contract['custom_content_en'] ?? '';
-        $templateAr = $contract['custom_content_ar'] ?? '';
-        if ($templateEn === '' && $this->pmTableExists('contract_templates')) {
-            $tpl = $this->db->table('contract_templates')->where('is_active', 1)
-                ->orderBy('id', 'DESC')->limit(1)->get()->getRowArray();
-            if ($tpl) {
-                $templateEn = $tpl['content_en'] ?? '';
-                $templateAr = $tpl['content_ar'] ?? '';
-            }
-        }
-
-        $vars = [
-            '{{unit_number}}'       => esc($contract['unit_number'] ?? ''),
-            '{{property_name}}'     => esc($contract['facility_name'] ?? ''),
-            '{{tenant_name}}'       => esc($contract['tenant_name'] ?? ''),
-            '{{tenant_qid}}'        => esc($tenantQid),
-            '{{rent_amount}}'       => number_format((float) ($contract['rent_amount'] ?? 0), 2),
-            '{{currency}}'          => $this->settings['currency'] ?? 'QAR',
-            '{{payment_frequency}}' => esc($contract['payment_frequency'] ?? ''),
-            '{{start_date}}'        => esc($contract['start_date'] ?? ''),
-            '{{end_date}}'          => esc($contract['end_date'] ?? ''),
-            '{{contract_number}}'   => esc($contract['contract_number'] ?? ''),
-        ];
+        $contract['currency'] = $this->settings['currency'] ?? 'QAR';
+        $resolved = (new ContractTemplateService($this->db))->resolveForContract($contract, $tenantQid);
 
         return $this->renderStandardLeasePdf(
             $contract,
-            strtr($templateEn, $vars),
-            strtr($templateAr, $vars),
+            $resolved['content_en'],
+            $resolved['content_ar'],
             $tenantQid,
             $signatureB64
         );

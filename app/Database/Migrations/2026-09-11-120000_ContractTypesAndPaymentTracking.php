@@ -2,6 +2,7 @@
 
 namespace App\Database\Migrations;
 
+use App\Services\ParkingContractTemplateDefaults;
 use CodeIgniter\Database\Migration;
 
 class ContractTypesAndPaymentTracking extends Migration
@@ -156,9 +157,10 @@ class ContractTypesAndPaymentTracking extends Migration
 
         $defaults = [
             'parking' => [
-                'name' => 'Default Parking Agreement',
-                'content_en' => '<p>Parking Space Lease Agreement for unit {{unit_number}}. Plate {{plate_number}}. Rent {{rent_amount}} {{currency}} per {{payment_frequency}}.</p>',
-                'content_ar' => '<p>عقد إيجار موقف للوحدة {{unit_number}}. لوحة {{plate_number}}. الأجرة {{rent_amount}} {{currency}}.</p>',
+                'name'       => 'Default Parking Agreement',
+                'content_en' => ParkingContractTemplateDefaults::contentEn(),
+                'content_ar' => ParkingContractTemplateDefaults::contentAr(),
+                'upsert'     => true,
             ],
             'residential' => [
                 'name' => 'Default Residential Lease',
@@ -183,11 +185,19 @@ class ContractTypesAndPaymentTracking extends Migration
             if ($typeId < 1) {
                 continue;
             }
-            $exists = $this->db->table('contract_templates')
+            $existing = $this->db->table('contract_templates')
                 ->where('contract_type_id', $typeId)
                 ->where('name', $tpl['name'])
-                ->countAllResults();
-            if ($exists > 0) {
+                ->get()->getRowArray();
+            if ($existing && ! empty($tpl['upsert'])) {
+                $this->db->table('contract_templates')->where('id', (int) $existing['id'])->update([
+                    'content_en' => $tpl['content_en'],
+                    'content_ar' => $tpl['content_ar'],
+                    'updated_at' => $now,
+                ]);
+                continue;
+            }
+            if ($existing) {
                 continue;
             }
             $this->db->table('contract_templates')->insert([

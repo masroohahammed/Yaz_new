@@ -34,34 +34,8 @@ class LeaseContractDocumentService
         $svc       = new ContractSignatureService($this->db);
         $tenantQid = $svc->tenantQid($contract);
 
-        $templateEn = (string) ($contract['custom_content_en'] ?? '');
-        $templateAr = (string) ($contract['custom_content_ar'] ?? '');
-
-        if ($templateEn === '' && $this->db->tableExists('contract_templates')) {
-            $tplId = $contract['template_id'] ?? null;
-            $q     = $this->db->table('contract_templates')->where('is_active', 1);
-            if ($tplId) {
-                $q->where('id', $tplId);
-            }
-            $tpl = $q->orderBy('id', 'DESC')->limit(1)->get()->getRowArray();
-            if ($tpl) {
-                $templateEn = (string) ($tpl['content_en'] ?? '');
-                $templateAr = (string) ($tpl['content_ar'] ?? '');
-            }
-        }
-
-        $vars = [
-            '{{unit_number}}'       => esc($contract['unit_number'] ?? ''),
-            '{{property_name}}'     => esc($contract['facility_name'] ?? ''),
-            '{{tenant_name}}'       => esc($contract['tenant_name'] ?? ''),
-            '{{tenant_qid}}'        => esc($tenantQid),
-            '{{rent_amount}}'       => number_format((float) ($contract['rent_amount'] ?? 0), 2),
-            '{{currency}}'          => $systemSettings['currency'] ?? 'QAR',
-            '{{payment_frequency}}' => esc($contract['payment_frequency'] ?? ''),
-            '{{start_date}}'        => esc($contract['start_date'] ?? ''),
-            '{{end_date}}'          => esc($contract['end_date'] ?? ''),
-            '{{contract_number}}'   => esc($contract['contract_number'] ?? ''),
-        ];
+        $contract['currency'] = $systemSettings['currency'] ?? 'QAR';
+        $resolved = (new ContractTemplateService($this->db))->resolveForContract($contract, $tenantQid);
 
         return [
             'contract'           => $contract,
@@ -71,8 +45,10 @@ class LeaseContractDocumentService
             'companyLogoB64'     => $branding['logoB64'],
             'currency'           => $systemSettings['currency'] ?? 'QAR',
             'tenantQid'          => $tenantQid,
-            'templateEn'         => strtr($templateEn, $vars),
-            'templateAr'         => strtr($templateAr, $vars),
+            'templateEn'         => $resolved['content_en'],
+            'templateAr'         => $resolved['content_ar'],
+            'termsEn'            => $resolved['terms_en'],
+            'termsAr'            => $resolved['terms_ar'],
             'tenantSignatureB64' => $tenantSignatureB64,
             'usePdf'             => true,
         ];
@@ -94,6 +70,8 @@ class LeaseContractDocumentService
         $d         = $svc->buildDefaults($unitId, (int) ($contract['id'] ?? 0));
         $contractDate = (string) ($d['contract_date'] ?? date('Y-m-d'));
 
+        $resolved = (new ContractTemplateService($this->db))->resolveForParkingDocument($d, $contract);
+
         return [
             'd'                  => $d,
             'settings'           => $branding['settings'],
@@ -112,6 +90,11 @@ class LeaseContractDocumentService
             'endDateAr'          => $svc->formatDateAr((string) ($d['end_date'] ?? '')),
             'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
             'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
+            'templateEn'         => $resolved['content_en'],
+            'templateAr'         => $resolved['content_ar'],
+            'termsEn'            => $resolved['terms_en'],
+            'termsAr'            => $resolved['terms_ar'],
+            'useCustomTemplate'  => true,
         ];
     }
 }

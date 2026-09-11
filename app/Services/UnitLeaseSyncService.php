@@ -129,6 +129,13 @@ class UnitLeaseSyncService
             $row['contract_kind'] = $isParking ? 'parking' : 'standard';
         }
 
+        if ($isParking && $this->db->fieldExists('contract_type_id', 'lease_contracts') && $this->db->tableExists('contract_types')) {
+            $typeRow = $this->db->table('contract_types')->select('id')->where('slug', 'parking')->get()->getRowArray();
+            if ($typeRow) {
+                $row['contract_type_id'] = (int) $typeRow['id'];
+            }
+        }
+
         if ($isParking && $this->db->fieldExists('plate_number', 'lease_contracts')) {
             $row['plate_number'] = trim((string) ($unit['plate_number'] ?? '')) ?: null;
         }

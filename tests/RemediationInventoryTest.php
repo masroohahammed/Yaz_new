@@ -1180,6 +1180,7 @@ final class RemediationInventoryTest extends TestCase
             'app/Services/ChequeTrackingService.php',
             'app/Services/ChequePaymentSyncService.php',
             'app/Services/SpreadsheetImportService.php',
+            'app/Services/ParkingContractTemplateDefaults.php',
             'app/Database/Migrations/2026-09-11-120000_ContractTypesAndPaymentTracking.php',
             'database/patches/2026-09-11-contract-types-payments.sql',
             'docs/MOBILE_API.md',
@@ -1206,6 +1207,16 @@ final class RemediationInventoryTest extends TestCase
         $cheques = file_get_contents($this->root . '/app/Controllers/Cheques.php');
         $this->assertStringContainsString('SpreadsheetImportService', $cheques);
         $this->assertStringContainsString('ChequePaymentSyncService', $cheques);
+
+        $parkingTpl = file_get_contents($this->root . '/app/Services/ParkingContractTemplateDefaults.php');
+        $this->assertStringContainsString('Article One: Term and Rent', $parkingTpl);
+        $this->assertStringContainsString('{{duration_en}}', $parkingTpl);
+
+        $trait = file_get_contents($this->root . '/app/Controllers/Traits/ParkingContractTrait.php');
+        $this->assertStringContainsString('resolveForParkingDocument', $trait);
+
+        $tplSvc = file_get_contents($this->root . '/app/Services/ContractTemplateService.php');
+        $this->assertStringContainsString('{{parking_unit_no}}', $tplSvc);
 
         $paymentsShow = file_get_contents($this->root . '/app/Views/payments/show.php');
         $this->assertStringContainsString('Partial payment', $paymentsShow);
