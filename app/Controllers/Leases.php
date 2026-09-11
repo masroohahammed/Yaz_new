@@ -5,8 +5,10 @@ namespace App\Controllers;
 use App\Controllers\Traits\PmModuleTrait;
 use App\Controllers\Traits\ParkingContractTrait;
 use App\Models\Contract_model;
+use App\Services\ChequeImportService;
 use App\Services\ChequePaymentSyncService;
 use App\Services\ChequeTrackingService;
+use App\Services\SpreadsheetImportService;
 use App\Services\ContractSignatureService;
 use App\Services\ContractTemplateService;
 use App\Services\ContractTypeService;
@@ -1396,6 +1398,60 @@ class Leases extends BaseController
         $this->logActivity('cheque', 'lease_contracts', $id, 'Cheque registered: ' . $chequeNo);
 
         return redirect()->to(base_url('contracts/' . $id))->with('success', 'Cheque recorded and linked to contract.');
+    }
+
+    public function bulkImportCheques(int $id)
+    {
+        if (! $this->request->is('post')) {
+            return redirect()->back();
+        }
+
+        $contract = $this->contractDetail($id);
+        if (! $contract) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
+        }
+
+        if (($contract['payment_type'] ?? '') !== 'cheque') {
+            return redirect()->back()->with('error', 'Bulk cheque import is only available when payment mode is Cheque.');
+        }
+
+        if (! $this->pmTableExists('cheques')) {
+            return redirect()->back()->with('error', 'Cheques module not available.');
+        }
+
+        $file = $this->request->getFile('import_file');
+        if (! $file || ! $file->isValid()) {
+            return redirect()->back()->with('error', 'Please upload a valid Excel (.xlsx) or CSV file.');
+        }
+
+        $rows = (new SpreadsheetImportService())->rowsFromUpload($file);
+        if ($rows === []) {
+            return redirect()->back()->with('error', 'No cheque rows found in the uploaded file.');
+        }
+
+        $payableType = $this->request->getPost('payable_to_type') ?: 'company';
+        $payableId   = (int) ($this->request->getPost('payable_to_id') ?? 0) ?: null;
+        $receivedDate = $this->request->getPost('received_date') ?: date('Y-m-d');
+
+        $uid    = (int) ($this->currentUser()['id'] ?? 0);
+        $result = (new ChequeImportService($this->db))->importRows($rows, $uid, [
+            'forced_contract_id'     => $id,
+            'company_id'             => (int) ($contract['company_id'] ?? 0) ?: null,
+            'default_payable_to_type'=> $payableType,
+            'default_payable_to_id'  => $payableId,
+            'default_received_date'  => $receivedDate,
+        ]);
+
+        $msg = $result['count'] . ' cheque(s) imported for this contract.';
+        if ($result['errors'] !== []) {
+            $msg .= ' Skipped ' . count($result['errors']) . ' row(s).';
+        }
+
+        $this->logActivity('cheque_bulk_import', 'lease_contracts', $id, 'Imported ' . $result['count'] . ' cheques');
+
+        return redirect()->to(base_url('contracts/' . $id))
+            ->with('success', $msg)
+            ->with('import_errors', $result['errors']);
     }
 
     /** @param list<array<string,mixed>> $units */

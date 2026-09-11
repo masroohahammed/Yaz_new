@@ -1192,6 +1192,7 @@ final class RemediationInventoryTest extends TestCase
             'app/Services/PaymentTrackingService.php',
             'app/Services/ChequeTrackingService.php',
             'app/Services/ChequePaymentSyncService.php',
+            'app/Services/ChequeImportService.php',
             'app/Services/SpreadsheetImportService.php',
             'app/Services/ParkingContractTemplateDefaults.php',
             'app/Database/Migrations/2026-09-11-120000_ContractTypesAndPaymentTracking.php',
@@ -1213,6 +1214,7 @@ final class RemediationInventoryTest extends TestCase
         $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
         $this->assertStringContainsString('saveUtilityTransfer', $leases);
         $this->assertStringContainsString('recordChequePayment', $leases);
+        $this->assertStringContainsString('bulkImportCheques', $leases);
         $this->assertStringContainsString('contracts/form', $leases);
         $this->assertStringContainsString('syncContractRentSchedule', $leases);
         $this->assertStringContainsString('contract_type_name', $leases);

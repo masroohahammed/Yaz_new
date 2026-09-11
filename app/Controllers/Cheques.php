@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
 use App\Services\AiModel;
+use App\Services\ChequeImportService;
 use App\Services\ChequePaymentSyncService;
 use App\Services\ChequeTrackingService;
 use App\Services\SpreadsheetImportService;
@@ -343,72 +344,13 @@ class Cheques extends BaseController
             return redirect()->back()->with('error', 'Please upload a valid Excel (.xlsx) or CSV file.');
         }
 
-        $rows   = (new SpreadsheetImportService())->rowsFromUpload($file);
-        $count  = 0;
-        $errors = [];
-        $uid    = (int) ($this->currentUser()['id'] ?? 0);
-        $chequeSvc = new ChequeTrackingService($this->db);
-        $paySync   = new ChequePaymentSyncService($this->db);
-
-        foreach ($rows as $lineNum => $row) {
-            $chequeNo = trim($row['cheque_no'] ?? $row['cheque_number'] ?? '');
-            $amount   = trim($row['amount'] ?? '');
-            if ($chequeNo === '' || $amount === '') {
-                $errors[] = 'Row ' . ($lineNum + 2) . ': cheque_no and amount required';
-                continue;
-            }
-
-            $contractId = null;
-            $tenantId   = null;
-            $facilityId = null;
-            $landlordId = null;
-            $paymentId  = (int) ($row['payment_id'] ?? 0) ?: null;
-            $cid        = (int) ($row['contract_id'] ?? 0);
-            if ($cid > 0 && $this->pmTableExists('lease_contracts')) {
-                $contract = $this->db->table('lease_contracts')->where('id', $cid)->get()->getRowArray();
-                if ($contract) {
-                    $contractId = $cid;
-                    $tenantId   = (int) ($contract['tenant_id'] ?? 0) ?: null;
-                    $facilityId = (int) ($contract['facility_id'] ?? 0) ?: null;
-                }
-            }
-
-            $payableType = strtolower(trim($row['payable_to_type'] ?? $row['payable_to'] ?? 'company'));
-            if (! in_array($payableType, ['company', 'landlord'], true)) {
-                $payableType = 'company';
-            }
-            $payableId = (int) ($row['payable_to_id'] ?? $row['landlord_id'] ?? 0) ?: null;
-            if ($payableType === 'landlord') {
-                $landlordId = $payableId;
-            }
-
-            $insert = [
-                'company_id'      => $this->pmCompanyId(),
-                'contract_id'     => $contractId,
-                'tenant_id'       => $tenantId,
-                'facility_id'     => $facilityId,
-                'payment_id'      => $paymentId,
-                'landlord_id'     => $landlordId,
-                'payable_to_type' => $payableType,
-                'payable_to_id'   => $payableId,
-                'cheque_no'       => esc($chequeNo),
-                'amount'          => $amount,
-                'bank_name'       => esc(trim($row['bank_name'] ?? '')) ?: null,
-                'account_name'    => esc(trim($row['account_name'] ?? '')) ?: null,
-                'account_no'      => esc(trim($row['account_no'] ?? '')) ?: null,
-                'cheque_date'     => trim($row['cheque_date'] ?? $row['issue_date'] ?? '') ?: null,
-                'due_date'        => trim($row['due_date'] ?? '') ?: null,
-                'received_date'   => trim($row['received_date'] ?? '') ?: null,
-                'status'          => 'pending',
-            ];
-
-            $newId = $chequeSvc->createCheque($insert, $uid);
-            $insert['id'] = $newId;
-            if ($paymentId) {
-                $paySync->onChequeRegistered($insert, $uid);
-            }
-            $count++;
-        }
+        $rows = (new SpreadsheetImportService())->rowsFromUpload($file);
+        $uid  = (int) ($this->currentUser()['id'] ?? 0);
+        $result = (new ChequeImportService($this->db))->importRows($rows, $uid, [
+            'company_id' => $this->pmCompanyId(),
+        ]);
+        $count  = $result['count'];
+        $errors = $result['errors'];
 
         $msg = $count . ' cheque(s) imported.';
         if ($errors) {

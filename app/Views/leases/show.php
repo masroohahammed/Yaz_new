@@ -177,6 +177,12 @@ $canRenew = in_array($contract['status'], ['active', 'draft', 'expired'], true);
 <?php if (($contract['payment_type'] ?? '') === 'cheque'): ?>
 <div class="form-card mb-3">
   <h6 class="text-muted text-uppercase small mb-2">Cheque payment</h6>
+  <?php if ($errs = session()->getFlashdata('import_errors')): ?>
+  <div class="alert alert-warning small py-2">
+    <strong>Bulk import notes:</strong>
+    <ul class="mb-0 mt-1"><?php foreach ((array) $errs as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul>
+  </div>
+  <?php endif; ?>
   <?= form_open_multipart(base_url('contracts/'.$contract['id'].'/cheque-payment')) ?>
   <?= csrf_field() ?>
   <div class="row g-2">
@@ -217,6 +223,46 @@ $canRenew = in_array($contract['status'], ['active', 'draft', 'expired'], true);
     <div class="col-md-6"><label class="form-label small">Notes</label><input name="notes" class="form-control form-control-sm"></div>
   </div>
   <button type="submit" class="btn btn-sm btn-fm-primary mt-2">Register cheque</button>
+  <?= form_close() ?>
+
+  <hr class="my-3">
+  <h6 class="text-muted text-uppercase small mb-2">Bulk import cheques</h6>
+  <p class="small text-muted mb-2">Upload <strong>.xlsx</strong> or <strong>.csv</strong> to register multiple cheques for this contract. <code>contract_id</code> is applied automatically.</p>
+  <?= form_open_multipart(base_url('contracts/'.$contract['id'].'/cheque-bulk-import')) ?>
+  <?= csrf_field() ?>
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small">Excel / CSV file *</label>
+      <input type="file" name="import_file" class="form-control form-control-sm" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small">Default payable to</label>
+      <select name="payable_to_type" id="bulkPayableToType" class="form-select form-select-sm">
+        <option value="company">Company</option>
+        <option value="landlord">Landlord</option>
+      </select>
+    </div>
+    <div class="col-md-3" id="bulkLandlordSelectWrap" style="display:none">
+      <label class="form-label small">Landlord account</label>
+      <select name="payable_to_id" class="form-select form-select-sm">
+        <option value="">— Select landlord —</option>
+        <?php foreach ($landlords ?? [] as $ll): ?>
+        <option value="<?= $ll['id'] ?>"><?= esc($ll['full_name']) ?><?= !empty($ll['bank_name']) ? ' ('.$ll['bank_name'].')' : '' ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small">Received date</label>
+      <input type="date" name="received_date" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>">
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-sm btn-fm-outline w-100"><i class="bi bi-upload me-1"></i>Import cheques</button>
+    </div>
+  </div>
+  <details class="mt-2 small text-muted">
+    <summary class="cursor-pointer">Spreadsheet columns</summary>
+    <code class="d-block mt-1">cheque_no, amount, due_date, cheque_date, payment_id, bank_name, account_name, account_no, payable_to_type, payable_to_id</code>
+  </details>
   <?= form_close() ?>
 </div>
 <?php endif; ?>
@@ -331,9 +377,15 @@ $canRenew = in_array($contract['status'], ['active', 'draft', 'expired'], true);
 </div></div></div>
 
 <script>
-document.getElementById('payableToType')?.addEventListener('change', function () {
-  const wrap = document.getElementById('landlordSelectWrap');
-  if (wrap) wrap.style.display = this.value === 'landlord' ? '' : 'none';
-});
+function toggleLandlordSelect(selectId, wrapId) {
+  const sel = document.getElementById(selectId);
+  const wrap = document.getElementById(wrapId);
+  if (!sel || !wrap) return;
+  const sync = () => { wrap.style.display = sel.value === 'landlord' ? '' : 'none'; };
+  sel.addEventListener('change', sync);
+  sync();
+}
+toggleLandlordSelect('payableToType', 'landlordSelectWrap');
+toggleLandlordSelect('bulkPayableToType', 'bulkLandlordSelectWrap');
 </script>
 <?= $this->endSection() ?>

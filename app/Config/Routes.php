@@ -409,6 +409,7 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->post('contracts/(:num)/save-print',              'Leases::savePrint/$1');
     $routes->post('contracts/(:num)/utility-transfer',         'Leases::saveUtilityTransfer/$1');
     $routes->post('contracts/(:num)/cheque-payment',         'Leases::recordChequePayment/$1');
+    $routes->post('contracts/(:num)/cheque-bulk-import',    'Leases::bulkImportCheques/$1');
     $routes->post('contracts/(:num)/generate-sign-link',     'Leases::generateSignLink/$1');
     $routes->post('contracts/(:num)/regenerate-sign-link',   'Leases::regenerateSignLink/$1');
     $routes->get('contracts/(:num)/signed-pdf',              'Leases::downloadSignedPdf/$1');
