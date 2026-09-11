@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate docs/API_REFERENCE.html from docs/build_api_reference_html.php endpoint definitions."""
+"""Generate API HTML docs from docs/build_api_reference_html.php endpoint definitions."""
 
 from __future__ import annotations
 
@@ -11,7 +11,22 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 PHP_BUILD = ROOT / "build_api_reference_html.php"
-OUT = ROOT / "API_REFERENCE.html"
+PHP_MOBILE_BUILD = ROOT / "build_mobile_api_reference_html.php"
+OUT_FULL = ROOT / "API_REFERENCE.html"
+OUT_MOBILE = ROOT / "mobile-api-reference.html"
+
+MOBILE_GROUPS = [
+    "System",
+    "Authentication",
+    "App Telemetry",
+    "Property Management",
+    "Facility Management (FM)",
+    "Tenant Portal",
+    "Work Orders (PM)",
+    "Finance",
+    "Inspections",
+    "Public (no login)",
+]
 
 BASE_URL = "{{BASE_URL}}"
 PUBLIC_BASE = "{{PUBLIC_BASE}}"
@@ -240,10 +255,47 @@ def slug(ep: dict) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
 
-def render(endpoints: list[dict]) -> str:
+MOBILE_FLOW_SECTION = """
+<section id="app-flow" class="flow">
+  <h2 style="margin-top:0;font-size:1.1rem;">Original mobile app flow</h2>
+  <ol>
+    <li><strong>Startup</strong> — <code>GET /api/v1/health</code> then optional <code>POST /api/v1/app-log</code> (splash / telemetry)</li>
+    <li><strong>Login</strong> — <code>POST /api/v1/auth/login</code> → store <code>token</code></li>
+    <li><strong>Profile</strong> — <code>GET /api/v1/auth/me</code> → read <code>role</code> and route UI</li>
+    <li><strong>FM roles</strong> (facility_manager, supervisor, technician) — <code>/fm/dashboard</code>, work orders, complaints, job cards, technicians</li>
+    <li><strong>Tenant role</strong> — <code>/portal/contracts</code>, payments, service requests, document download</li>
+    <li><strong>Properties</strong> — list + KPIs for assigned facilities</li>
+    <li><strong>Inspections</strong> — property / unit compliance lists and detail</li>
+    <li><strong>Public</strong> — guest maintenance submit + ticket tracking (no token)</li>
+  </ol>
+</section>"""
+
+
+def _ordered_groups(endpoints: list[dict], group_order: list[str] | None) -> dict[str, list[dict]]:
     groups: dict[str, list[dict]] = {}
     for ep in endpoints:
         groups.setdefault(ep["group"], []).append(ep)
+    if not group_order:
+        return groups
+    ordered: dict[str, list[dict]] = {}
+    for g in group_order:
+        if g in groups:
+            ordered[g] = groups[g]
+    return ordered
+
+
+def render(
+    endpoints: list[dict],
+    *,
+    title: str,
+    subtitle: str,
+    page_title: str,
+    extra_nav: str = "",
+    extra_main: str = "",
+    group_order: list[str] | None = None,
+    flow_styles: bool = False,
+) -> str:
+    groups = _ordered_groups(endpoints, group_order)
 
     nav = []
     body = []
@@ -269,12 +321,20 @@ def render(endpoints: list[dict]) -> str:
 </article>"""
             )
 
+    flow_css = ""
+    if flow_styles:
+        flow_css = """
+.flow { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; margin-bottom:1.5rem; }
+.flow ol { margin:.5rem 0 0; padding-left:1.25rem; color:var(--muted); font-size:.9rem; }
+.flow li { margin:.35rem 0; }
+.flow code { background:#0d1117; padding:.1rem .35rem; border-radius:4px; font-size:.82rem; }"""
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FM ERP — API Reference (Postman / cURL)</title>
+<title>{esc(page_title)}</title>
 <style>
 :root {{ --bg:#0f1419; --card:#1a2332; --border:#2d3a4f; --text:#e7ecf3; --muted:#8b9cb3; --get:#61affe; --post:#49cc90; --accent:#7c6cff; }}
 * {{ box-sizing:border-box; }}
@@ -289,7 +349,7 @@ nav a {{ display:block; color:#b8c5d6; text-decoration:none; font-size:.85rem; p
 nav a:hover {{ color:#fff; }}
 main {{ flex:1; padding:1.5rem 2rem 3rem; min-width:0; }}
 .vars {{ background:var(--card); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; margin-bottom:2rem; }}
-.vars code {{ background:#0d1117; padding:.15rem .4rem; border-radius:4px; font-size:.85rem; }}
+.vars code {{ background:#0d1117; padding:.15rem .4rem; border-radius:4px; font-size:.85rem; }}{flow_css}
 .endpoint {{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1.25rem 1.5rem; margin-bottom:1.25rem; scroll-margin-top:1rem; }}
 .endpoint h3 {{ margin:0 0 .75rem; font-size:1.05rem; display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }}
 .method {{ font-size:.7rem; font-weight:700; padding:.2rem .55rem; border-radius:4px; text-transform:uppercase; color:#000; }}
@@ -312,13 +372,14 @@ pre.curl {{ border-left:3px solid var(--accent); white-space:pre-wrap; word-brea
 </head>
 <body>
 <header>
-  <h1>FM ERP — REST API Reference</h1>
-  <p>CodeIgniter 4 · API v1 · Postman-ready cURL for every endpoint with JSON examples</p>
+  <h1>{esc(title)}</h1>
+  <p>{esc(subtitle)}</p>
 </header>
 <div class="wrap">
 <nav>
   <h2>Setup</h2>
   <a href="#variables">Variables</a>
+  {extra_nav}
   <a href="#postman">Postman import</a>
   {''.join(nav)}
 </nav>
@@ -327,8 +388,9 @@ pre.curl {{ border-left:3px solid var(--accent); white-space:pre-wrap; word-brea
   <h2 style="margin-top:0;font-size:1.1rem;">Replace before calling</h2>
   <p><code>{{{{BASE_URL}}}}</code> — API base, e.g. <code>https://your-domain.com/public/api/v1</code></p>
   <p><code>{{{{PUBLIC_BASE}}}}</code> — Site root, e.g. <code>https://your-domain.com/public</code></p>
-  <p><code>{{{{TOKEN}}}}</code> — JWT from <code>POST /auth/login</code> (<code>Authorization: Bearer …</code>)</p>
+  <p><code>{{{{TOKEN}}}}</code> — Session token from <code>POST /auth/login</code> (<code>Authorization: Bearer …</code>, valid 24h)</p>
 </section>
+{extra_main}
 <section id="postman" class="note">
   <strong>Import into Postman:</strong> Click <em>Import → Raw text</em> and paste any cURL block below. Postman converts it to a ready request. Set collection variables <code>BASE_URL</code> and <code>TOKEN</code> to avoid editing each request.
 </section>
@@ -348,22 +410,60 @@ function copyPre(btn) {{
 def try_php_build() -> bool:
     try:
         subprocess.run(["php", str(PHP_BUILD)], check=True, capture_output=True, text=True)
-        return OUT.exists()
+        subprocess.run(
+            ["php", str(PHP_MOBILE_BUILD)], check=True, capture_output=True, text=True
+        )
+        return OUT_FULL.exists() and OUT_MOBILE.exists()
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
 
 
+def mobile_endpoints(all_eps: list[dict]) -> list[dict]:
+    allowed = set(MOBILE_GROUPS)
+    return [ep for ep in all_eps if ep["group"] in allowed]
+
+
+def write_python_docs(endpoints: list[dict]) -> None:
+    OUT_FULL.write_text(
+        render(
+            endpoints,
+            title="FM ERP — REST API Reference",
+            subtitle="CodeIgniter 4 · API v1 · Postman-ready cURL for every endpoint with JSON examples",
+            page_title="FM ERP — API Reference (Postman / cURL)",
+        ),
+        encoding="utf-8",
+    )
+    mobile_eps = mobile_endpoints(endpoints)
+    OUT_MOBILE.write_text(
+        render(
+            mobile_eps,
+            title="FM ERP — Mobile API Reference",
+            subtitle="Original Flutter mobile app flow · API v1 · Postman-ready cURL with JSON examples",
+            page_title="FM ERP — Mobile API Reference (Postman / cURL)",
+            extra_nav='<a href="#app-flow">App flow</a>',
+            extra_main=MOBILE_FLOW_SECTION,
+            group_order=MOBILE_GROUPS,
+            flow_styles=True,
+        ),
+        encoding="utf-8",
+    )
+
+
 def main() -> int:
     if try_php_build():
-        print(f"Generated via PHP: {OUT}")
+        print(f"Generated via PHP: {OUT_FULL}, {OUT_MOBILE}")
         return 0
     endpoints = parse_php_endpoints()
     if not endpoints:
         print("Failed to parse endpoints from PHP source", file=sys.stderr)
         return 1
-    OUT.write_text(render(endpoints), encoding="utf-8")
+    write_python_docs(endpoints)
+    mobile_eps = mobile_endpoints(endpoints)
     print(
-        f"Generated via Python: {OUT} ({len(endpoints)} endpoints, {OUT.stat().st_size} bytes)"
+        f"Generated via Python: {OUT_FULL} ({len(endpoints)} endpoints, {OUT_FULL.stat().st_size} bytes)"
+    )
+    print(
+        f"Generated via Python: {OUT_MOBILE} ({len(mobile_eps)} endpoints, {OUT_MOBILE.stat().st_size} bytes)"
     )
     return 0
 

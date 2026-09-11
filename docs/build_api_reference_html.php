@@ -452,6 +452,10 @@ function jsonPretty(mixed $data): string
     return escHtml(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 }
 
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') !== realpath(__FILE__)) {
+    return;
+}
+
 $eps = endpoints();
 $groups = [];
 foreach ($eps as $ep) {
@@ -566,6 +570,6 @@ function copyPre(btn) {
 </html>
 <?php
 $html = ob_get_clean();
-$out = dirname(__DIR__) . '/docs/API_REFERENCE.html';
+$out = __DIR__ . '/API_REFERENCE.html';
 file_put_contents($out, $html);
 echo "Written {$out} (" . strlen($html) . " bytes)\n";
