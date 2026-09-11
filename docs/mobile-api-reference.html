@@ -3,113 +3,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FM ERP — Mobile API Reference (Postman / cURL)</title>
+<title>Al Yazwa FM — Mobile API Reference</title>
 <style>
-:root { --bg:#0f1419; --card:#1a2332; --border:#2d3a4f; --text:#e7ecf3; --muted:#8b9cb3; --get:#61affe; --post:#49cc90; --accent:#7c6cff; }
-* { box-sizing:border-box; }
-body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text); margin:0; line-height:1.5; }
-header { background:linear-gradient(135deg,#1a2332,#252d3d); border-bottom:1px solid var(--border); padding:2rem; }
-header h1 { margin:0 0 .5rem; font-size:1.75rem; }
-header p { margin:.25rem 0; color:var(--muted); max-width:720px; }
-.wrap { display:flex; gap:0; max-width:1400px; margin:0 auto; }
-nav { width:260px; flex-shrink:0; position:sticky; top:0; height:100vh; overflow-y:auto; padding:1rem; border-right:1px solid var(--border); background:#121820; }
-nav h2 { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:1.25rem 0 .5rem; }
-nav a { display:block; color:#b8c5d6; text-decoration:none; font-size:.85rem; padding:.25rem 0; }
-nav a:hover { color:#fff; }
-main { flex:1; padding:1.5rem 2rem 3rem; min-width:0; }
-.vars { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; margin-bottom:2rem; }
-.vars code { background:#0d1117; padding:.15rem .4rem; border-radius:4px; font-size:.85rem; }
-.flow { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; margin-bottom:1.5rem; }
-.flow ol { margin:.5rem 0 0; padding-left:1.25rem; color:var(--muted); font-size:.9rem; }
-.flow li { margin:.35rem 0; }
-.flow code { background:#0d1117; padding:.1rem .35rem; border-radius:4px; font-size:.82rem; }
-.endpoint { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1.25rem 1.5rem; margin-bottom:1.25rem; scroll-margin-top:1rem; }
-.endpoint h3 { margin:0 0 .75rem; font-size:1.05rem; display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
-.method { font-size:.7rem; font-weight:700; padding:.2rem .55rem; border-radius:4px; text-transform:uppercase; color:#000; }
-.method.get { background:var(--get); }
-.method.post { background:var(--post); }
-.path { font-family: ui-monospace, monospace; font-size:.9rem; color:#c9d6e3; }
-.desc { color:var(--muted); margin:0 0 .75rem; }
-.meta { font-size:.85rem; margin-bottom:1rem; }
-.meta strong { color:var(--text); }
-h4 { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:1rem 0 .4rem; }
-pre { background:#0d1117; border:1px solid var(--border); border-radius:6px; padding:.85rem 1rem; overflow-x:auto; font-size:.78rem; line-height:1.45; margin:0; position:relative; }
-pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break:break-all; }
-.copy-btn { position:absolute; top:.5rem; right:.5rem; background:#2d3a4f; border:none; color:#fff; font-size:.7rem; padding:.25rem .5rem; border-radius:4px; cursor:pointer; }
-.copy-btn:hover { background:var(--accent); }
-.muted { color:var(--muted); font-style:italic; }
-.group-title { font-size:1.35rem; margin:2rem 0 1rem; padding-bottom:.5rem; border-bottom:1px solid var(--border); }
-.note { background:#1e2a3a; border-left:3px solid var(--get); padding:.75rem 1rem; border-radius:0 6px 6px 0; margin-bottom:1.5rem; font-size:.9rem; }
-@media (max-width:900px) { .wrap { flex-direction:column; } nav { width:100%; height:auto; position:relative; } }
+:root{--brand:#1a1a5e;--green:#059669;--blue:#2563eb;--bg:#f5f6f8;--card:#fff;--muted:#6b7280;--border:#e5e7eb}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#1c1c1e;line-height:1.55}
+header{background:linear-gradient(135deg,var(--brand),#3d38a3);color:#fff;padding:28px 20px}
+header h1{margin:0 0 4px;font-size:26px}header p{margin:0;opacity:.9;font-size:14px}
+.wrap{max-width:920px;margin:0 auto;padding:20px 16px 40px}
+.hero{background:var(--card);border-radius:12px;padding:18px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.hero table{width:100%;border-collapse:collapse;font-size:14px}
+.hero th,.hero td{text-align:left;padding:7px 10px;border:1px solid var(--border)}
+.hero th{background:#fafafa;width:130px}
+.hero code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:13px}
+.flow{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05);font-size:14px}
+.flow ol{margin:8px 0 0;padding-left:20px;color:var(--muted)}
+.flow li{margin:4px 0}
+.flow code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px}
+nav.toc{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+nav.toc ul{margin:8px 0 0;padding-left:18px}nav.toc a{color:var(--brand);text-decoration:none}
+nav.toc a:hover{text-decoration:underline}
+.note{background:#eef2ff;border-left:4px solid var(--brand);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#374151}
+section{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+section h2{margin:0 0 6px;font-size:18px;color:var(--brand);border-bottom:2px solid var(--border);padding-bottom:8px}
+section .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+.ep{border:1px solid var(--border);border-radius:10px;margin:14px 0;overflow:hidden}
+.ep-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;background:#fafafa;border-bottom:1px solid var(--border)}
+.method{font-size:10px;font-weight:700;color:#fff;padding:3px 8px;border-radius:5px;text-transform:uppercase}
+.method.get{background:var(--green)}.method.post{background:var(--blue)}
+.path{font-size:13px;font-weight:600;font-family:Consolas,Monaco,monospace}
+.badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600}
+.badge.jwt{background:#ede9fe;color:var(--brand)}.badge.pub{background:#e8f5d8;color:#5d7a1f}
+.ep-body{padding:12px 14px 16px;font-size:14px}
+.use{margin:0 0 8px}.codes{font-size:12px;color:var(--muted);margin:0 0 10px}
+.label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 5px}
+pre{background:#f3f4f6;border-radius:7px;padding:10px 12px;overflow-x:auto;font-size:11px;line-height:1.45;margin:0;white-space:pre-wrap;word-break:break-word;font-family:Consolas,Monaco,monospace}
+pre.curl{background:#1e1e2e;color:#cdd6f4}
+pre.json{background:#f8fafc;border:1px solid var(--border)}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:14px 0 4px}
 </style>
 </head>
 <body>
-<header>
-  <h1>FM ERP — Mobile API Reference</h1>
-  <p>Original Flutter mobile app flow · API v1 · Postman-ready cURL with JSON examples</p>
-</header>
+<header><div class="wrap" style="padding-top:0;padding-bottom:0"><h1>Al Yazwa FM — Mobile API Reference</h1><p>REST API v1 · Postman import · cURL · JSON examples</p></div></header>
 <div class="wrap">
-<nav>
-  <h2>Setup</h2>
-  <a href="#variables">Variables</a>
-  <a href="#app-flow">App flow</a>
-  <a href="#postman">Postman import</a>
-  <h2>System</h2><a href="#get-api-v1-health">GET /api/v1/health</a><h2>Authentication</h2><a href="#post-api-v1-auth-login">POST /api/v1/auth/login</a><a href="#get-api-v1-auth-me">GET /api/v1/auth/me</a><h2>Tenant Portal</h2><a href="#get-api-v1-portal-contracts">GET /api/v1/portal/contracts</a><a href="#get-api-v1-portal-contracts-id">GET /api/v1/portal/contracts/{id}</a><a href="#get-api-v1-portal-payments-q-status-page-per-page">GET /api/v1/portal/payments?q=&amp;status=&amp;page=&amp;per_page=</a><a href="#get-api-v1-portal-payments-id">GET /api/v1/portal/payments/{id}</a><a href="#get-api-v1-portal-requests">GET /api/v1/portal/requests</a><a href="#get-api-v1-portal-requests-id">GET /api/v1/portal/requests/{id}</a><a href="#post-api-v1-portal-requests">POST /api/v1/portal/requests</a><a href="#post-api-v1-portal-requests-id-messages">POST /api/v1/portal/requests/{id}/messages</a><a href="#get-api-v1-portal-documents-id-download">GET /api/v1/portal/documents/{id}/download</a><h2>Facility Management (FM)</h2><a href="#get-api-v1-fm-dashboard">GET /api/v1/fm/dashboard</a><a href="#get-api-v1-fm-work-orders-status-q">GET /api/v1/fm/work-orders?status=&amp;q=</a><a href="#get-api-v1-fm-work-orders-id">GET /api/v1/fm/work-orders/{id}</a><a href="#post-api-v1-fm-work-orders-id-status">POST /api/v1/fm/work-orders/{id}/status</a><a href="#post-api-v1-fm-work-orders-id-assign">POST /api/v1/fm/work-orders/{id}/assign</a><a href="#post-api-v1-fm-work-orders-id-job-cards">POST /api/v1/fm/work-orders/{id}/job-cards</a><a href="#get-api-v1-fm-complaints">GET /api/v1/fm/complaints</a><a href="#get-api-v1-fm-complaints-id">GET /api/v1/fm/complaints/{id}</a><a href="#post-api-v1-fm-complaints-id-action">POST /api/v1/fm/complaints/{id}/action</a><a href="#get-api-v1-fm-job-cards">GET /api/v1/fm/job-cards</a><a href="#get-api-v1-fm-job-cards-id">GET /api/v1/fm/job-cards/{id}</a><a href="#post-api-v1-fm-job-cards-id-status">POST /api/v1/fm/job-cards/{id}/status</a><a href="#get-api-v1-fm-technicians">GET /api/v1/fm/technicians</a><h2>Employee Self-Service</h2><a href="#get-api-v1-employee-profile">GET /api/v1/employee/profile</a><a href="#get-api-v1-employee-dashboard">GET /api/v1/employee/dashboard</a><a href="#post-api-v1-employee-attendance-check-in">POST /api/v1/employee/attendance/check-in</a><a href="#post-api-v1-employee-attendance-check-out">POST /api/v1/employee/attendance/check-out</a><a href="#post-api-v1-employee-attendance-break-start">POST /api/v1/employee/attendance/break-start</a><a href="#post-api-v1-employee-attendance-break-end">POST /api/v1/employee/attendance/break-end</a><a href="#get-api-v1-employee-attendance-month-yyyy-mm">GET /api/v1/employee/attendance?month=YYYY-MM</a><a href="#get-api-v1-employee-leaves">GET /api/v1/employee/leaves</a><a href="#post-api-v1-employee-leaves">POST /api/v1/employee/leaves</a><a href="#get-api-v1-employee-team-attendance-date-yyyy-mm-dd">GET /api/v1/employee/team-attendance?date=YYYY-MM-DD</a><a href="#get-api-v1-employee-leave-approvals">GET /api/v1/employee/leave-approvals</a><a href="#post-api-v1-employee-leaves-id-action">POST /api/v1/employee/leaves/{id}/action</a><h2>Property Management</h2><a href="#get-api-v1-properties">GET /api/v1/properties</a><a href="#get-api-v1-properties-kpis-facilityid">GET /api/v1/properties/kpis/{facilityId}</a><h2>Finance</h2><a href="#get-api-v1-finance-trial-balance-as-of-yyyy-mm-dd">GET /api/v1/finance/trial-balance?as_of=YYYY-MM-DD</a><a href="#get-api-v1-finance-reconciliation-from-to">GET /api/v1/finance/reconciliation?from=&amp;to=</a><h2>App Telemetry</h2><a href="#post-api-v1-app-log">POST /api/v1/app-log</a>
-</nav>
-<main>
-<section id="variables" class="vars">
-  <h2 style="margin-top:0;font-size:1.1rem;">Replace before calling</h2>
-  <p><code>{{BASE_URL}}</code> — API base, e.g. <code>https://your-domain.com/public/api/v1</code></p>
-  <p><code>{{PUBLIC_BASE}}</code> — Site root, e.g. <code>https://your-domain.com/public</code></p>
-  <p><code>{{TOKEN}}</code> — Session token from <code>POST /auth/login</code> (<code>Authorization: Bearer …</code>, valid 24h)</p>
-</section>
-
-<section id="app-flow" class="flow">
-  <h2 style="margin-top:0;font-size:1.1rem;">Original mobile app flow</h2>
+<div class="hero">
+  <table>
+    <tr><th>Base URL</th><td><code>{{BASE_URL}}</code> <span style="color:var(--muted)">e.g. https://pfms.alyazwa.com/api/v1</span></td></tr>
+    <tr><th>Auth</th><td><code>Authorization: Bearer &lt;token&gt;</code> from <code>POST /auth/login</code></td></tr>
+    <tr><th>Content-Type</th><td><code>application/json</code></td></tr>
+    <tr><th>Token lifetime</th><td>24 hours</td></tr>
+  </table>
+</div>
+<div class="flow">
+  <strong>Mobile app flow</strong>
   <ol>
-    <li><strong>Startup</strong> — <code>GET /api/v1/health</code> to verify API reachability</li>
-    <li><strong>Login</strong> — <code>POST /api/v1/auth/login</code> → store <code>token</code> (24h)</li>
-    <li><strong>Session restore</strong> — <code>GET /api/v1/auth/me</code> → read <code>role</code> / <code>app_area</code> and route UI</li>
-    <li><strong>Tenant app</strong> — contracts, payments, maintenance requests, document download</li>
-    <li><strong>FM app</strong> — dashboard, work orders, complaints, job cards, technicians</li>
-    <li><strong>Employee app</strong> — profile, attendance check-in/out, breaks, leave requests, team attendance (managers)</li>
-    <li><strong>Shared</strong> — properties/KPIs, finance reports, optional <code>POST /api/v1/app-log</code> telemetry</li>
+    <li><code>GET /health</code> — verify API is reachable</li>
+    <li><code>POST /auth/login</code> — store bearer token</li>
+    <li><code>GET /auth/me</code> — restore session, read <code>role</code> / <code>app_area</code></li>
+    <li>Route to <strong>Tenant</strong>, <strong>FM</strong>, or <strong>Employee</strong> screens</li>
   </ol>
-</section>
-<section id="postman" class="note">
-  <strong>Import into Postman:</strong> Click <em>Import → Raw text</em> and paste any cURL block below. Postman converts it to a ready request. Set collection variables <code>BASE_URL</code> and <code>TOKEN</code> to avoid editing each request.
-</section>
-<h2 class="group-title">System</h2>
-<article class="endpoint" id="get-api-v1-health">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/health</span></h3>
-  <p class="desc">Health check for load balancers, mobile startup, and monitoring. Confirms the API router is reachable.</p>
-  <p class="meta"><strong>Auth:</strong> None</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/health&quot; \
-  -H &quot;Accept: application/json&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+</div>
+<nav class="toc"><strong>Sections</strong><ul><li><a href="#auth">Authentication</a></li><li><a href="#portal">Tenant Portal</a></li><li><a href="#fm">Facility Management</a></li><li><a href="#employee">Employee Self-Service</a></li><li><a href="#other">Properties, Finance &amp; Logging</a></li></ul></nav>
+<div class="note"><strong>Postman:</strong> Copy any cURL block below → <em>Import → Raw text</em>. Set variables <code>BASE_URL</code> and <code>TOKEN</code>.</div>
+<section id="auth"><h2>Authentication</h2>
+<article class="ep" id="get-api-v1-health">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/health</code>
+    <span class="badge pub">Public</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Health Check</strong> — Health check for load balancers, mobile startup, and monitoring. Confirms the API router is reachable.</p>
+    <p class="codes">Auth: None</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;API is healthy&quot;
 }</pre>
-</article><h2 class="group-title">Authentication</h2>
-<article class="endpoint" id="post-api-v1-auth-login">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/auth/login</span></h3>
-  <p class="desc">Authenticate with email and password. Returns a session token valid for 24 hours (stored in user_sessions).</p>
-  <p class="meta"><strong>Auth:</strong> None</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/auth/login&quot; \
-  -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;email&quot;:&quot;user@example.com&quot;,&quot;password&quot;:&quot;your-password&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/health&quot; \
+  -H &quot;Accept: application/json&quot;</pre>
+  </div>
+</article>
+<article class="ep" id="post-api-v1-auth-login">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/auth/login</code>
+    <span class="badge pub">Public</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Login</strong> — Authenticate with email and password. Returns a session token valid for 24 hours (stored in user_sessions).</p>
+    <p class="codes">Auth: None</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;email&quot;: &quot;user@example.com&quot;,
   &quot;password&quot;: &quot;your-password&quot;
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Login successful&quot;,
   &quot;token&quot;: &quot;a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456&quot;,
@@ -120,19 +112,25 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;role&quot;: &quot;facility_manager&quot;
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/auth/login&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;email&quot;:&quot;user@example.com&quot;,&quot;password&quot;:&quot;your-password&quot;}'</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-auth-me">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/auth/me</span></h3>
-  <p class="desc">Return the currently authenticated user profile and role.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/auth/me&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -H &quot;Accept: application/json&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-auth-me">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/auth/me</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Current User</strong> — Return the currently authenticated user profile and role.</p>
+    <p class="codes">Auth: Bearer JWT</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;user&quot;: {
     &quot;id&quot;: 1,
@@ -144,18 +142,25 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;company_id&quot;: 1
   }
 }</pre>
-</article><h2 class="group-title">Tenant Portal</h2>
-<article class="endpoint" id="get-api-v1-portal-contracts">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/portal/contracts</span></h3>
-  <p class="desc">List lease contracts for the authenticated tenant user.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked tenant)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/portal/contracts&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/auth/me&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Accept: application/json&quot;</pre>
+  </div>
+</article></section><section id="portal"><h2>Tenant Portal</h2>
+<article class="ep" id="get-api-v1-portal-contracts">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/contracts</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Contracts</strong> — List lease contracts for the authenticated tenant user.</p>
+    <p class="codes">Auth: Bearer JWT (linked tenant)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -167,18 +172,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   ],
   &quot;count&quot;: 1
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/portal/contracts&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-portal-contracts-id">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/portal/contracts/{id}</span></h3>
-  <p class="desc">Lease contract detail with property, unit, and downloadable documents list.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked tenant)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/portal/contracts/500&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-portal-contracts-id">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/contracts/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Contracts</strong> — Lease contract detail with property, unit, and downloadable documents list.</p>
+    <p class="codes">Auth: Bearer JWT (linked tenant)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: {
     &quot;id&quot;: 500,
@@ -191,18 +202,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     ]
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/portal/contracts/500&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-portal-payments-q-status-page-per-page">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/portal/payments?q=&amp;status=&amp;page=&amp;per_page=</span></h3>
-  <p class="desc">Payment history with overview (outstanding, upcoming due, paid YTD). Supports search and pagination.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked tenant)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/portal/payments?status=pending&amp;page=1&amp;per_page=20&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-portal-payments-q-status-page-per-page">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/payments?q=&amp;status=&amp;page=&amp;per_page=</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Payments</strong> — Payment history with overview (outstanding, upcoming due, paid YTD). Supports search and pagination.</p>
+    <p class="codes">Auth: Bearer JWT (linked tenant)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;overview&quot;: {
     &quot;total_outstanding&quot;: 8000,
@@ -223,18 +240,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;total&quot;: 1
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/portal/payments?status=pending&amp;page=1&amp;per_page=20&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-portal-payments-id">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/portal/payments/{id}</span></h3>
-  <p class="desc">Single payment / invoice detail for the tenant.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked tenant)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/portal/payments/900&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-portal-payments-id">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/payments/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Payments</strong> — Single payment / invoice detail for the tenant.</p>
+    <p class="codes">Auth: Bearer JWT (linked tenant)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: {
     &quot;id&quot;: 900,
@@ -244,18 +267,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;status&quot;: &quot;pending&quot;
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/portal/payments/900&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-portal-requests">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/portal/requests</span></h3>
-  <p class="desc">List tenant service / maintenance requests submitted via the portal.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked tenant)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/portal/requests&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-portal-requests">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/requests</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Requests</strong> — List tenant service / maintenance requests submitted via the portal.</p>
+    <p class="codes">Auth: Bearer JWT (linked tenant)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -266,18 +295,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   ],
   &quot;count&quot;: 1
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/portal/requests&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-portal-requests-id">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/portal/requests/{id}</span></h3>
-  <p class="desc">Service request detail including message thread.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked tenant)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/portal/requests/30&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-portal-requests-id">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/requests/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Requests</strong> — Service request detail including message thread.</p>
+    <p class="codes">Auth: Bearer JWT (linked tenant)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: {
     &quot;id&quot;: 30,
@@ -290,75 +325,99 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     ]
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/portal/requests/30&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="post-api-v1-portal-requests">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/portal/requests</span></h3>
-  <p class="desc">Submit a new service request. Supports JSON or multipart/form-data with photo attachment.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked tenant)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/portal/requests&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;title&quot;:&quot;AC not cooling&quot;,&quot;category&quot;:&quot;Maintenance&quot;,&quot;priority&quot;:&quot;high&quot;,&quot;description&quot;:&quot;No cold air&quot;,&quot;unit_id&quot;:9536}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+<article class="ep" id="post-api-v1-portal-requests">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/portal/requests</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Requests</strong> — Submit a new service request. Supports JSON or multipart/form-data with photo attachment.</p>
+    <p class="codes">Auth: Bearer JWT (linked tenant)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;title&quot;: &quot;AC not cooling&quot;,
   &quot;category&quot;: &quot;Maintenance&quot;,
   &quot;priority&quot;: &quot;high&quot;,
   &quot;description&quot;: &quot;Unit living room AC runs but no cold air.&quot;,
   &quot;unit_id&quot;: 9536
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Request submitted&quot;,
   &quot;id&quot;: 31
 }</pre>
-</article>
-<article class="endpoint" id="post-api-v1-portal-requests-id-messages">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/portal/requests/{id}/messages</span></h3>
-  <p class="desc">Add a message to an existing service request thread.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked tenant)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/portal/requests/30/messages&quot; \
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/portal/requests&quot; \
   -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;body&quot;:&quot;Any update on the technician visit?&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+  -d '{&quot;title&quot;:&quot;AC not cooling&quot;,&quot;category&quot;:&quot;Maintenance&quot;,&quot;priority&quot;:&quot;high&quot;,&quot;description&quot;:&quot;No cold air&quot;,&quot;unit_id&quot;:9536}'</pre>
+  </div>
+</article>
+<article class="ep" id="post-api-v1-portal-requests-id-messages">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/portal/requests/{id}/messages</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Messages</strong> — Add a message to an existing service request thread.</p>
+    <p class="codes">Auth: Bearer JWT (linked tenant)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;body&quot;: &quot;Any update on the technician visit?&quot;
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Message added&quot;,
   &quot;id&quot;: 2
 }</pre>
-</article>
-<article class="endpoint" id="get-api-v1-portal-documents-id-download">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/portal/documents/{id}/download</span></h3>
-  <p class="desc">Download a contract document file (PDF/image) linked to the tenant's lease.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked tenant)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/portal/documents/88/download&quot; \
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/portal/requests/30/messages&quot; \
   -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -o lease-document.pdf<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-</article><h2 class="group-title">Facility Management (FM)</h2>
-<article class="endpoint" id="get-api-v1-fm-dashboard">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/fm/dashboard</span></h3>
-  <p class="desc">Role-specific FM dashboard KPIs for technician, supervisor, or facility manager.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/fm/dashboard&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;body&quot;:&quot;Any update on the technician visit?&quot;}'</pre>
+  </div>
+</article>
+<article class="ep" id="get-api-v1-portal-documents-id-download">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/portal/documents/{id}/download</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Download</strong> — Download a contract document file (PDF/image) linked to the tenant's lease.</p>
+    <p class="codes">Auth: Bearer JWT (linked tenant)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">None</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/portal/documents/88/download&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -o lease-document.pdf</pre>
+  </div>
+</article></section><section id="fm"><h2>Facility Management</h2><p class="sub">Roles: facility_manager, supervisor, technician, super_admin, qa_inspector</p>
+<article class="ep" id="get-api-v1-fm-dashboard">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/dashboard</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Dashboard</strong> — Role-specific FM dashboard KPIs for technician, supervisor, or facility manager.</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;role&quot;: &quot;facility_manager&quot;,
   &quot;data&quot;: {
@@ -366,18 +425,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;sla_breaches&quot;: 1
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/fm/dashboard&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-fm-work-orders-status-q">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/fm/work-orders?status=&amp;q=</span></h3>
-  <p class="desc">List work orders filtered by role (technician sees assigned only). Query: status, q (search).</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/fm/work-orders?status=in_progress&amp;q=AC&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-fm-work-orders-status-q">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/work-orders?status=&amp;q=</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Work Orders</strong> — List work orders filtered by role (technician sees assigned only). Query: status, q (search).</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -389,18 +454,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   ],
   &quot;count&quot;: 1
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/fm/work-orders?status=in_progress&amp;q=AC&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-fm-work-orders-id">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/fm/work-orders/{id}</span></h3>
-  <p class="desc">Work order detail with job cards and allowed status actions for the current user.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/fm/work-orders/101&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-fm-work-orders-id">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/work-orders/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Work Orders</strong> — Work order detail with job cards and allowed status actions for the current user.</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: {
     &quot;id&quot;: 101,
@@ -412,81 +483,105 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     ]
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/fm/work-orders/101&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="post-api-v1-fm-work-orders-id-status">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/fm/work-orders/{id}/status</span></h3>
-  <p class="desc">Update work order status (role-gated transitions). Optional execution_percent and notes.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/fm/work-orders/101/status&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;status&quot;:&quot;in_progress&quot;,&quot;execution_percent&quot;:50,&quot;notes&quot;:&quot;Started repair&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+<article class="ep" id="post-api-v1-fm-work-orders-id-status">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/work-orders/{id}/status</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Status</strong> — Update work order status (role-gated transitions). Optional execution_percent and notes.</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;status&quot;: &quot;in_progress&quot;,
   &quot;execution_percent&quot;: 50,
   &quot;notes&quot;: &quot;Started repair&quot;
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Work order updated&quot;
 }</pre>
-</article>
-<article class="endpoint" id="post-api-v1-fm-work-orders-id-assign">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/fm/work-orders/{id}/assign</span></h3>
-  <p class="desc">Assign a technician to a work order.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (supervisor/FM)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/fm/work-orders/101/assign&quot; \
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/fm/work-orders/101/status&quot; \
   -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;technician_id&quot;:42}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+  -d '{&quot;status&quot;:&quot;in_progress&quot;,&quot;execution_percent&quot;:50,&quot;notes&quot;:&quot;Started repair&quot;}'</pre>
+  </div>
+</article>
+<article class="ep" id="post-api-v1-fm-work-orders-id-assign">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/work-orders/{id}/assign</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Assign</strong> — Assign a technician to a work order.</p>
+    <p class="codes">Auth: Bearer JWT (supervisor/FM)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;technician_id&quot;: 42
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Technician assigned&quot;
 }</pre>
-</article>
-<article class="endpoint" id="post-api-v1-fm-work-orders-id-job-cards">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/fm/work-orders/{id}/job-cards</span></h3>
-  <p class="desc">Create a job card linked to a work order.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (supervisor/FM)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/fm/work-orders/101/job-cards&quot; \
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/fm/work-orders/101/assign&quot; \
   -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;technician_id&quot;:42,&quot;description&quot;:&quot;Replace filter&quot;,&quot;scheduled_date&quot;:&quot;2026-09-15&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+  -d '{&quot;technician_id&quot;:42}'</pre>
+  </div>
+</article>
+<article class="ep" id="post-api-v1-fm-work-orders-id-job-cards">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/work-orders/{id}/job-cards</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Job Cards</strong> — Create a job card linked to a work order.</p>
+    <p class="codes">Auth: Bearer JWT (supervisor/FM)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;technician_id&quot;: 42,
   &quot;description&quot;: &quot;Replace filter&quot;,
   &quot;scheduled_date&quot;: &quot;2026-09-15&quot;
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Job card created&quot;,
   &quot;id&quot;: 7,
   &quot;jc_number&quot;: &quot;JC-2026-0007&quot;
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/fm/work-orders/101/job-cards&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;technician_id&quot;:42,&quot;description&quot;:&quot;Replace filter&quot;,&quot;scheduled_date&quot;:&quot;2026-09-15&quot;}'</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-fm-complaints">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/fm/complaints</span></h3>
-  <p class="desc">List maintenance complaints (helpdesk requests) for FM review.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/fm/complaints&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-fm-complaints">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/complaints</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Complaints</strong> — List maintenance complaints (helpdesk requests) for FM review.</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -497,18 +592,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   ],
   &quot;count&quot;: 1
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/fm/complaints&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-fm-complaints-id">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/fm/complaints/{id}</span></h3>
-  <p class="desc">Complaint detail with requester info and available actions.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/fm/complaints/20&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-fm-complaints-id">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/complaints/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Complaints</strong> — Complaint detail with requester info and available actions.</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: {
     &quot;id&quot;: 20,
@@ -521,38 +622,50 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     ]
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/fm/complaints/20&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="post-api-v1-fm-complaints-id-action">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/fm/complaints/{id}/action</span></h3>
-  <p class="desc">Verify, approve, or reject a maintenance complaint. reason required on reject.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/fm/complaints/20/action&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;action&quot;:&quot;approve&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+<article class="ep" id="post-api-v1-fm-complaints-id-action">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/complaints/{id}/action</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Action</strong> — Verify, approve, or reject a maintenance complaint. reason required on reject.</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;action&quot;: &quot;approve&quot;,
   &quot;reason&quot;: &quot;Required when action is reject&quot;
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Complaint approved&quot;
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/fm/complaints/20/action&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;action&quot;:&quot;approve&quot;}'</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-fm-job-cards">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/fm/job-cards</span></h3>
-  <p class="desc">List job cards scoped to the user's role and facilities.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/fm/job-cards&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-fm-job-cards">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/job-cards</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Job Cards</strong> — List job cards scoped to the user's role and facilities.</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -563,18 +676,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   ],
   &quot;count&quot;: 1
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/fm/job-cards&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-fm-job-cards-id">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/fm/job-cards/{id}</span></h3>
-  <p class="desc">Job card detail with work order link and technician info.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/fm/job-cards/7&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-fm-job-cards-id">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/job-cards/{id}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Job Cards</strong> — Job card detail with work order link and technician info.</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: {
     &quot;id&quot;: 7,
@@ -583,39 +702,51 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;wo_id&quot;: 101
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/fm/job-cards/7&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="post-api-v1-fm-job-cards-id-status">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/fm/job-cards/{id}/status</span></h3>
-  <p class="desc">Update job card status (assigned → in_progress → completed, etc.).</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/fm/job-cards/7/status&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;status&quot;:&quot;completed&quot;,&quot;labor_hours&quot;:2.5}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+<article class="ep" id="post-api-v1-fm-job-cards-id-status">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/fm/job-cards/{id}/status</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Status</strong> — Update job card status (assigned → in_progress → completed, etc.).</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;status&quot;: &quot;completed&quot;,
   &quot;labor_hours&quot;: 2.5,
   &quot;notes&quot;: &quot;Filter replaced&quot;
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Job card updated&quot;
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/fm/job-cards/7/status&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;status&quot;:&quot;completed&quot;,&quot;labor_hours&quot;:2.5}'</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-fm-technicians">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/fm/technicians</span></h3>
-  <p class="desc">List active technicians available for work order / job card assignment.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (FM roles)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/fm/technicians&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-fm-technicians">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/fm/technicians</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Technicians</strong> — List active technicians available for work order / job card assignment.</p>
+    <p class="codes">Auth: Bearer JWT (FM roles)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -626,19 +757,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   ],
   &quot;count&quot;: 1
 }</pre>
-</article><h2 class="group-title">Employee Self-Service</h2>
-<article class="endpoint" id="get-api-v1-employee-profile">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/profile</span></h3>
-  <p class="desc">Get employee master profile: code, department, designation, shift times, facility.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/profile&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -H &quot;Accept: application/json&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/fm/technicians&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
+</article></section><section id="employee"><h2>Employee Self-Service</h2><p class="sub">Requires employees record linked to user · Also available to FM staff via Account menu</p>
+<article class="ep" id="get-api-v1-employee-profile">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/profile</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Profile</strong> — Get employee master profile: code, department, designation, shift times, facility.</p>
+    <p class="codes">Auth: Bearer JWT (linked employee)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: {
     &quot;employee_id&quot;: 12,
@@ -652,18 +788,25 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;facility_name&quot;: &quot;Yazwa Tower&quot;
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/employee/profile&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Accept: application/json&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-employee-dashboard">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/dashboard</span></h3>
-  <p class="desc">Employee home dashboard: today's attendance, break status, monthly KPIs, pending leaves.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/dashboard&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-employee-dashboard">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/dashboard</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Dashboard</strong> — Employee home dashboard: today's attendance, break status, monthly KPIs, pending leaves.</p>
+    <p class="codes">Auth: Bearer JWT (linked employee)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: {
     &quot;employee&quot;: {
@@ -684,23 +827,27 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;is_manager&quot;: false
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/employee/dashboard&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="post-api-v1-employee-attendance-check-in">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/attendance/check-in</span></h3>
-  <p class="desc">Record daily check-in. Optional GPS coordinates. Marks late if after shift start + 15 minutes.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/attendance/check-in&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;latitude&quot;:25.2854,&quot;longitude&quot;:51.5310}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+<article class="ep" id="post-api-v1-employee-attendance-check-in">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/attendance/check-in</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Check In</strong> — Record daily check-in. Optional GPS coordinates. Marks late if after shift start + 15 minutes.</p>
+    <p class="codes">Auth: Bearer JWT (linked employee)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;latitude&quot;: 25.2854,
   &quot;longitude&quot;: 51.531
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Checked in at 08:02&quot;,
   &quot;data&quot;: {
@@ -708,23 +855,29 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;check_in&quot;: &quot;2026-09-11 08:02:00&quot;
   }
 }</pre>
-</article>
-<article class="endpoint" id="post-api-v1-employee-attendance-check-out">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/attendance/check-out</span></h3>
-  <p class="desc">Record daily check-out. Calculates hours_worked and overtime_hrs automatically.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/attendance/check-out&quot; \
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/employee/attendance/check-in&quot; \
   -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;latitude&quot;:25.2854,&quot;longitude&quot;:51.5310}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+  -d '{&quot;latitude&quot;:25.2854,&quot;longitude&quot;:51.5310}'</pre>
+  </div>
+</article>
+<article class="ep" id="post-api-v1-employee-attendance-check-out">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/attendance/check-out</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Check Out</strong> — Record daily check-out. Calculates hours_worked and overtime_hrs automatically.</p>
+    <p class="codes">Auth: Bearer JWT (linked employee)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;latitude&quot;: 25.2854,
   &quot;longitude&quot;: 51.531
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Checked out&quot;,
   &quot;data&quot;: {
@@ -733,58 +886,78 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;overtime_hrs&quot;: 0.08
   }
 }</pre>
-</article>
-<article class="endpoint" id="post-api-v1-employee-attendance-break-start">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/attendance/break-start</span></h3>
-  <p class="desc">Start a break period for today.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/attendance/break-start&quot; \
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/employee/attendance/check-out&quot; \
   -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d '{}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+  -d '{&quot;latitude&quot;:25.2854,&quot;longitude&quot;:51.5310}'</pre>
+  </div>
+</article>
+<article class="ep" id="post-api-v1-employee-attendance-break-start">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/attendance/break-start</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Break Start</strong> — Start a break period for today.</p>
+    <p class="codes">Auth: Bearer JWT (linked employee)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Break started&quot;,
   &quot;data&quot;: {
     &quot;break_start&quot;: &quot;2026-09-11 12:00:00&quot;
   }
 }</pre>
-</article>
-<article class="endpoint" id="post-api-v1-employee-attendance-break-end">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/attendance/break-end</span></h3>
-  <p class="desc">End the current open break and return duration in minutes.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/attendance/break-end&quot; \
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/employee/attendance/break-start&quot; \
   -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d '{}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+  -d '{}'</pre>
+  </div>
+</article>
+<article class="ep" id="post-api-v1-employee-attendance-break-end">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/attendance/break-end</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Break End</strong> — End the current open break and return duration in minutes.</p>
+    <p class="codes">Auth: Bearer JWT (linked employee)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Break ended&quot;,
   &quot;data&quot;: {
     &quot;duration_minutes&quot;: 45
   }
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/employee/attendance/break-end&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{}'</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-employee-attendance-month-yyyy-mm">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/attendance?month=YYYY-MM</span></h3>
-  <p class="desc">Get monthly attendance records for the employee.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/attendance?month=2026-09&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-employee-attendance-month-yyyy-mm">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/attendance?month=YYYY-MM</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Attendance</strong> — Get monthly attendance records for the employee.</p>
+    <p class="codes">Auth: Bearer JWT (linked employee)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -797,18 +970,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   ],
   &quot;count&quot;: 1
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/employee/attendance?month=2026-09&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-employee-leaves">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/leaves</span></h3>
-  <p class="desc">List own leave requests and their approval status.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/leaves&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-employee-leaves">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/leaves</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Leaves</strong> — List own leave requests and their approval status.</p>
+    <p class="codes">Auth: Bearer JWT (linked employee)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -820,41 +999,53 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     }
   ]
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/employee/leaves&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="post-api-v1-employee-leaves">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/leaves</span></h3>
-  <p class="desc">Submit a new leave request for approval.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/leaves&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;leave_type&quot;:&quot;annual&quot;,&quot;from_date&quot;:&quot;2026-09-20&quot;,&quot;to_date&quot;:&quot;2026-09-22&quot;,&quot;reason&quot;:&quot;Family travel&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+<article class="ep" id="post-api-v1-employee-leaves">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/leaves</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Leaves</strong> — Submit a new leave request for approval.</p>
+    <p class="codes">Auth: Bearer JWT (linked employee)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;leave_type&quot;: &quot;annual&quot;,
   &quot;from_date&quot;: &quot;2026-09-20&quot;,
   &quot;to_date&quot;: &quot;2026-09-22&quot;,
   &quot;reason&quot;: &quot;Family travel&quot;
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Leave request submitted&quot;,
   &quot;id&quot;: 6
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/employee/leaves&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;leave_type&quot;:&quot;annual&quot;,&quot;from_date&quot;:&quot;2026-09-20&quot;,&quot;to_date&quot;:&quot;2026-09-22&quot;,&quot;reason&quot;:&quot;Family travel&quot;}'</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-employee-team-attendance-date-yyyy-mm-dd">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/team-attendance?date=YYYY-MM-DD</span></h3>
-  <p class="desc">Supervisor/Manager: view team attendance for a specific date.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (supervisor/manager)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/team-attendance?date=2026-09-11&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-employee-team-attendance-date-yyyy-mm-dd">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/team-attendance?date=YYYY-MM-DD</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Team Attendance</strong> — Supervisor/Manager: view team attendance for a specific date.</p>
+    <p class="codes">Auth: Bearer JWT (supervisor/manager)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -865,18 +1056,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     }
   ]
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/employee/team-attendance?date=2026-09-11&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-employee-leave-approvals">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/leave-approvals</span></h3>
-  <p class="desc">Supervisor/Manager: list pending leave requests awaiting approval.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (supervisor/manager)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/leave-approvals&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-employee-leave-approvals">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/employee/leave-approvals</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Leave Approvals</strong> — Supervisor/Manager: list pending leave requests awaiting approval.</p>
+    <p class="codes">Auth: Bearer JWT (supervisor/manager)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -888,38 +1085,50 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     }
   ]
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/employee/leave-approvals&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="post-api-v1-employee-leaves-id-action">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/leaves/{id}/action</span></h3>
-  <p class="desc">Supervisor/Manager: approve or reject a leave request. Approved leaves mark attendance as leave.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (supervisor/manager)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/leaves/5/action&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
-  -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;action&quot;:&quot;approve&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+<article class="ep" id="post-api-v1-employee-leaves-id-action">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/employee/leaves/{id}/action</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Action</strong> — Supervisor/Manager: approve or reject a leave request. Approved leaves mark attendance as leave.</p>
+    <p class="codes">Auth: Bearer JWT (supervisor/manager)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;action&quot;: &quot;approve&quot;,
   &quot;reason&quot;: &quot;Required when action is reject&quot;
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Leave approved&quot;
 }</pre>
-</article><h2 class="group-title">Property Management</h2>
-<article class="endpoint" id="get-api-v1-properties">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/properties</span></h3>
-  <p class="desc">List properties (facilities) scoped to the user's company and assigned facilities.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/properties&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/employee/leaves/5/action&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;action&quot;:&quot;approve&quot;}'</pre>
+  </div>
+</article></section><section id="other"><h2>Properties, Finance &amp; Logging</h2>
+<article class="ep" id="get-api-v1-properties">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/properties</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Properties</strong> — List properties (facilities) scoped to the user's company and assigned facilities.</p>
+    <p class="codes">Auth: Bearer JWT</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;data&quot;: [
     {
@@ -932,18 +1141,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   ],
   &quot;count&quot;: 1
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/properties&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-properties-kpis-facilityid">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/properties/kpis/{facilityId}</span></h3>
-  <p class="desc">Property KPIs: occupancy, active contracts, overdue payments, open maintenance, optional AI health score.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/properties/kpis/12&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-properties-kpis-facilityid">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/properties/kpis/{facilityId}</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Kpis</strong> — Property KPIs: occupancy, active contracts, overdue payments, open maintenance, optional AI health score.</p>
+    <p class="codes">Auth: Bearer JWT</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;property&quot;: {
     &quot;id&quot;: 12,
@@ -962,18 +1177,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;currency&quot;: &quot;QAR&quot;
   }
 }</pre>
-</article><h2 class="group-title">Finance</h2>
-<article class="endpoint" id="get-api-v1-finance-trial-balance-as-of-yyyy-mm-dd">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/finance/trial-balance?as_of=YYYY-MM-DD</span></h3>
-  <p class="desc">General ledger trial balance as of a date. Requires finance_manager, finance_user, or super_admin.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (finance role)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/finance/trial-balance?as_of=2026-09-11&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/properties/kpis/12&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
+</article>
+<article class="ep" id="get-api-v1-finance-trial-balance-as-of-yyyy-mm-dd">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/finance/trial-balance?as_of=YYYY-MM-DD</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Trial Balance</strong> — General ledger trial balance as of a date. Requires finance_manager, finance_user, or super_admin.</p>
+    <p class="codes">Auth: Bearer JWT (finance role)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;as_of&quot;: &quot;2026-09-11&quot;,
   &quot;gl_enabled&quot;: true,
@@ -988,18 +1209,24 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   &quot;total_debit&quot;: 50000,
   &quot;total_credit&quot;: 50000
 }</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/finance/trial-balance?as_of=2026-09-11&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
 </article>
-<article class="endpoint" id="get-api-v1-finance-reconciliation-from-to">
-  <h3><span class="method get">GET</span> <span class="path">/api/v1/finance/reconciliation?from=&amp;to=</span></h3>
-  <p class="desc">Bank activity and reconciliation summary for a date range.</p>
-  <p class="meta"><strong>Auth:</strong> Bearer JWT (finance role)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/finance/reconciliation?from=2026-09-01&amp;to=2026-09-11&quot; \
-  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json"><em class="muted">None</em></pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+<article class="ep" id="get-api-v1-finance-reconciliation-from-to">
+  <div class="ep-head">
+    <span class="method get">GET</span>
+    <code class="path">/finance/reconciliation?from=&amp;to=</code>
+    <span class="badge jwt">JWT required</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>Reconciliation</strong> — Bank activity and reconciliation summary for a date range.</p>
+    <p class="codes">Auth: Bearer JWT (finance role)</p>
+    <div class="label">Input</div>
+    <pre>None</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;from&quot;: &quot;2026-09-01&quot;,
   &quot;to&quot;: &quot;2026-09-11&quot;,
@@ -1008,17 +1235,22 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   &quot;total_out&quot;: 8000,
   &quot;net&quot;: 17000
 }</pre>
-</article><h2 class="group-title">App Telemetry</h2>
-<article class="endpoint" id="post-api-v1-app-log">
-  <h3><span class="method post">POST</span> <span class="path">/api/v1/app-log</span></h3>
-  <p class="desc">Log mobile app events (splash screen, errors, CTA clicks) to app_mobile_logs.</p>
-  <p class="meta"><strong>Auth:</strong> None (JWT optional)</p>
-  <h4>cURL — Postman import</h4>
-  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/app-log&quot; \
-  -H &quot;Content-Type: application/json&quot; \
-  -d '{&quot;action&quot;:&quot;splash_loaded&quot;,&quot;status&quot;:&quot;success&quot;,&quot;app_version&quot;:&quot;1.2.0&quot;,&quot;platform&quot;:&quot;android&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
-  <h4>Request body (JSON)</h4>
-  <pre class="json">{
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X GET &quot;{{BASE_URL}}/finance/reconciliation?from=2026-09-01&amp;to=2026-09-11&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;</pre>
+  </div>
+</article>
+<article class="ep" id="post-api-v1-app-log">
+  <div class="ep-head">
+    <span class="method post">POST</span>
+    <code class="path">/app-log</code>
+    <span class="badge pub">Public (optional JWT)</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>App Log</strong> — Log mobile app events (splash screen, errors, CTA clicks) to app_mobile_logs.</p>
+    <p class="codes">Auth: None (JWT optional)</p>
+    <div class="label">Request JSON</div>
+    <pre>{
   &quot;action&quot;: &quot;splash_loaded&quot;,
   &quot;status&quot;: &quot;success&quot;,
   &quot;message&quot;: &quot;App opened&quot;,
@@ -1029,19 +1261,18 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
     &quot;screen&quot;: &quot;home&quot;
   }
 }</pre>
-  <h4>Response example</h4>
-  <pre class="json">{
+    <div class="label">Response example</div>
+    <pre class="json">{
   &quot;status&quot;: true,
   &quot;message&quot;: &quot;Logged&quot;
 }</pre>
-</article>
-</main>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">curl -X POST &quot;{{BASE_URL}}/app-log&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;action&quot;:&quot;splash_loaded&quot;,&quot;status&quot;:&quot;success&quot;,&quot;app_version&quot;:&quot;1.2.0&quot;,&quot;platform&quot;:&quot;android&quot;}'</pre>
+  </div>
+</article></section>
+<footer>Al Yazwa FM · API v1 · 42 endpoints</footer>
 </div>
-<script>
-function copyPre(btn) {
-  const text = btn.parentElement.textContent.replace('Copy','').trim();
-  navigator.clipboard.writeText(text).then(() => { btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',1500); });
-}
-</script>
 </body>
 </html>

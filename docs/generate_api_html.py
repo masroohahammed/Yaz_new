@@ -268,19 +268,79 @@ def slug(ep: dict) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
 
-MOBILE_FLOW_SECTION = """
-<section id="app-flow" class="flow">
-  <h2 style="margin-top:0;font-size:1.1rem;">Original mobile app flow</h2>
-  <ol>
-    <li><strong>Startup</strong> — <code>GET /api/v1/health</code> to verify API reachability</li>
-    <li><strong>Login</strong> — <code>POST /api/v1/auth/login</code> → store <code>token</code> (24h)</li>
-    <li><strong>Session restore</strong> — <code>GET /api/v1/auth/me</code> → read <code>role</code> / <code>app_area</code> and route UI</li>
-    <li><strong>Tenant app</strong> — contracts, payments, maintenance requests, document download</li>
-    <li><strong>FM app</strong> — dashboard, work orders, complaints, job cards, technicians</li>
-    <li><strong>Employee app</strong> — profile, attendance check-in/out, breaks, leave requests, team attendance (managers)</li>
-    <li><strong>Shared</strong> — properties/KPIs, finance reports, optional <code>POST /api/v1/app-log</code> telemetry</li>
-  </ol>
-</section>"""
+MOBILE_SECTIONS = [
+    (
+        "auth",
+        "Authentication",
+        ["System", "Authentication"],
+        None,
+    ),
+    (
+        "portal",
+        "Tenant Portal",
+        ["Tenant Portal"],
+        None,
+    ),
+    (
+        "fm",
+        "Facility Management",
+        ["Facility Management (FM)"],
+        "Roles: facility_manager, supervisor, technician, super_admin, qa_inspector",
+    ),
+    (
+        "employee",
+        "Employee Self-Service",
+        ["Employee Self-Service"],
+        "Requires employees record linked to user · Also available to FM staff via Account menu",
+    ),
+    (
+        "other",
+        "Properties, Finance & Logging",
+        ["Property Management", "Finance", "App Telemetry"],
+        None,
+    ),
+]
+
+
+def short_path(path: str) -> str:
+    for prefix in ("/api/v1", "/api/public"):
+        if path.startswith(prefix):
+            return path[len(prefix) :] or "/"
+    return path
+
+
+def endpoint_title(ep: dict) -> str:
+    overrides = {
+        ("GET", "/api/v1/health"): "Health Check",
+        ("POST", "/api/v1/auth/login"): "Login",
+        ("GET", "/api/v1/auth/me"): "Current User",
+        ("POST", "/api/v1/app-log"): "App Log",
+    }
+    key = (ep["method"], ep["path"].split("?")[0])
+    if key in overrides:
+        return overrides[key]
+    p = short_path(ep["path"]).split("?")[0].strip("/")
+    parts = [x for x in p.split("/") if x and not x.startswith("{")]
+    if not parts:
+        return ep["method"]
+    return parts[-1].replace("-", " ").title()
+
+
+def auth_badge(auth: str) -> tuple[str, str]:
+    low = auth.lower()
+    if auth == "None" or ("none" in low and "jwt" not in low):
+        return "pub", "Public"
+    if "optional" in low:
+        return "pub", "Public (optional JWT)"
+    return "jwt", "JWT required"
+
+
+def json_block(data) -> str:
+    if data is None:
+        return "None"
+    if isinstance(data, str):
+        return data
+    return json.dumps(data, indent=2, ensure_ascii=False)
 
 
 def _ordered_groups(endpoints: list[dict], group_order: list[str] | None) -> dict[str, list[dict]]:
@@ -419,6 +479,133 @@ function copyPre(btn) {{
 </html>"""
 
 
+def render_mobile_clean(endpoints: list[dict]) -> str:
+    """Clean light-theme layout matching the original mobile-api-reference.html."""
+    by_group: dict[str, list[dict]] = {}
+    for ep in endpoints:
+        by_group.setdefault(ep["group"], []).append(ep)
+
+    toc_items = "".join(
+        f'<li><a href="#{sid}">{esc(label)}</a></li>'
+        for sid, label, _, _ in MOBILE_SECTIONS
+    )
+
+    sections_html = []
+    for sid, label, groups, subtitle in MOBILE_SECTIONS:
+        eps_in_section: list[dict] = []
+        for g in groups:
+            eps_in_section.extend(by_group.get(g, []))
+        if not eps_in_section:
+            continue
+
+        sub = f'<p class="sub">{esc(subtitle)}</p>' if subtitle else ""
+        articles = []
+        for ep in eps_in_section:
+            eid = slug(ep)
+            mclass = ep["method"].lower()
+            badge_cls, badge_text = auth_badge(ep["auth"])
+            title = endpoint_title(ep)
+            req_label = "Request JSON" if ep["request"] is not None else "Input"
+            req_body = json_block(ep["request"])
+            resp_body = json_block(ep["response"])
+            articles.append(
+                f"""
+<article class="ep" id="{eid}">
+  <div class="ep-head">
+    <span class="method {mclass}">{esc(ep["method"])}</span>
+    <code class="path">{esc(short_path(ep["path"]))}</code>
+    <span class="badge {badge_cls}">{esc(badge_text)}</span>
+  </div>
+  <div class="ep-body">
+    <p class="use"><strong>{esc(title)}</strong> — {esc(ep["desc"])}</p>
+    <p class="codes">Auth: {esc(ep["auth"])}</p>
+    <div class="label">{req_label}</div>
+    <pre>{esc(req_body)}</pre>
+    <div class="label">Response example</div>
+    <pre class="json">{esc(resp_body)}</pre>
+    <div class="label">cURL — paste into Postman Import → Raw text</div>
+    <pre class="curl">{esc(ep["curl"])}</pre>
+  </div>
+</article>"""
+            )
+
+        sections_html.append(
+            f'<section id="{sid}"><h2>{esc(label)}</h2>{sub}{"".join(articles)}</section>'
+        )
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Al Yazwa FM — Mobile API Reference</title>
+<style>
+:root{{--brand:#1a1a5e;--green:#059669;--blue:#2563eb;--bg:#f5f6f8;--card:#fff;--muted:#6b7280;--border:#e5e7eb}}
+*{{box-sizing:border-box}}body{{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#1c1c1e;line-height:1.55}}
+header{{background:linear-gradient(135deg,var(--brand),#3d38a3);color:#fff;padding:28px 20px}}
+header h1{{margin:0 0 4px;font-size:26px}}header p{{margin:0;opacity:.9;font-size:14px}}
+.wrap{{max-width:920px;margin:0 auto;padding:20px 16px 40px}}
+.hero{{background:var(--card);border-radius:12px;padding:18px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}}
+.hero table{{width:100%;border-collapse:collapse;font-size:14px}}
+.hero th,.hero td{{text-align:left;padding:7px 10px;border:1px solid var(--border)}}
+.hero th{{background:#fafafa;width:130px}}
+.hero code{{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:13px}}
+.flow{{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05);font-size:14px}}
+.flow ol{{margin:8px 0 0;padding-left:20px;color:var(--muted)}}
+.flow li{{margin:4px 0}}
+.flow code{{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px}}
+nav.toc{{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}}
+nav.toc ul{{margin:8px 0 0;padding-left:18px}}nav.toc a{{color:var(--brand);text-decoration:none}}
+nav.toc a:hover{{text-decoration:underline}}
+.note{{background:#eef2ff;border-left:4px solid var(--brand);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#374151}}
+section{{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}}
+section h2{{margin:0 0 6px;font-size:18px;color:var(--brand);border-bottom:2px solid var(--border);padding-bottom:8px}}
+section .sub{{color:var(--muted);font-size:13px;margin:0 0 14px}}
+.ep{{border:1px solid var(--border);border-radius:10px;margin:14px 0;overflow:hidden}}
+.ep-head{{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;background:#fafafa;border-bottom:1px solid var(--border)}}
+.method{{font-size:10px;font-weight:700;color:#fff;padding:3px 8px;border-radius:5px;text-transform:uppercase}}
+.method.get{{background:var(--green)}}.method.post{{background:var(--blue)}}
+.path{{font-size:13px;font-weight:600;font-family:Consolas,Monaco,monospace}}
+.badge{{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600}}
+.badge.jwt{{background:#ede9fe;color:var(--brand)}}.badge.pub{{background:#e8f5d8;color:#5d7a1f}}
+.ep-body{{padding:12px 14px 16px;font-size:14px}}
+.use{{margin:0 0 8px}}.codes{{font-size:12px;color:var(--muted);margin:0 0 10px}}
+.label{{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 5px}}
+pre{{background:#f3f4f6;border-radius:7px;padding:10px 12px;overflow-x:auto;font-size:11px;line-height:1.45;margin:0;white-space:pre-wrap;word-break:break-word;font-family:Consolas,Monaco,monospace}}
+pre.curl{{background:#1e1e2e;color:#cdd6f4}}
+pre.json{{background:#f8fafc;border:1px solid var(--border)}}
+footer{{text-align:center;color:var(--muted);font-size:12px;padding:14px 0 4px}}
+</style>
+</head>
+<body>
+<header><div class="wrap" style="padding-top:0;padding-bottom:0"><h1>Al Yazwa FM — Mobile API Reference</h1><p>REST API v1 · Postman import · cURL · JSON examples</p></div></header>
+<div class="wrap">
+<div class="hero">
+  <table>
+    <tr><th>Base URL</th><td><code>{{{{BASE_URL}}}}</code> <span style="color:var(--muted)">e.g. https://pfms.alyazwa.com/api/v1</span></td></tr>
+    <tr><th>Auth</th><td><code>Authorization: Bearer &lt;token&gt;</code> from <code>POST /auth/login</code></td></tr>
+    <tr><th>Content-Type</th><td><code>application/json</code></td></tr>
+    <tr><th>Token lifetime</th><td>24 hours</td></tr>
+  </table>
+</div>
+<div class="flow">
+  <strong>Mobile app flow</strong>
+  <ol>
+    <li><code>GET /health</code> — verify API is reachable</li>
+    <li><code>POST /auth/login</code> — store bearer token</li>
+    <li><code>GET /auth/me</code> — restore session, read <code>role</code> / <code>app_area</code></li>
+    <li>Route to <strong>Tenant</strong>, <strong>FM</strong>, or <strong>Employee</strong> screens</li>
+  </ol>
+</div>
+<nav class="toc"><strong>Sections</strong><ul>{toc_items}</ul></nav>
+<div class="note"><strong>Postman:</strong> Copy any cURL block below → <em>Import → Raw text</em>. Set variables <code>BASE_URL</code> and <code>TOKEN</code>.</div>
+{"".join(sections_html)}
+<footer>Al Yazwa FM · API v1 · {len(endpoints)} endpoints</footer>
+</div>
+</body>
+</html>"""
+
+
 def try_php_build() -> bool:
     try:
         subprocess.run(["php", str(PHP_BUILD)], check=True, capture_output=True, text=True)
@@ -450,19 +637,7 @@ def write_python_docs(endpoints: list[dict]) -> None:
         encoding="utf-8",
     )
     mobile_eps = mobile_endpoints(endpoints)
-    OUT_MOBILE.write_text(
-        render(
-            mobile_eps,
-            title="FM ERP — Mobile API Reference",
-            subtitle="Original Flutter mobile app flow · API v1 · Postman-ready cURL with JSON examples",
-            page_title="FM ERP — Mobile API Reference (Postman / cURL)",
-            extra_nav='<a href="#app-flow">App flow</a>',
-            extra_main=MOBILE_FLOW_SECTION,
-            group_order=MOBILE_GROUPS,
-            flow_styles=True,
-        ),
-        encoding="utf-8",
-    )
+    OUT_MOBILE.write_text(render_mobile_clean(mobile_eps), encoding="utf-8")
 
 
 def main() -> int:
