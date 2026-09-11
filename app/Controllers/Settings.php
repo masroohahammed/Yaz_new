@@ -494,6 +494,8 @@ class Settings extends BaseController
             'title'         => 'Contract Setup',
             'templates'     => $templates,
             'contractTypes' => $typeSvc->allTypes(),
+            'editId'        => (int) ($this->request->getGet('edit') ?? 0),
+            'editTypeId'    => (int) ($this->request->getGet('edit_type') ?? 0),
         ]));
     }
 

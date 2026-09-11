@@ -243,6 +243,19 @@ final class RemediationInventoryTest extends TestCase
         $routes = file_get_contents($this->root . '/app/Config/Routes.php');
         $this->assertStringContainsString("group('api/v1'", $routes);
         $this->assertStringContainsString("group('api/legacy'", $routes);
+        $this->assertStringContainsString("Api\\V1\\Health::index", $routes);
+        $this->assertStringContainsString("get('health'", $routes);
+        $this->assertFileExists($this->root . '/app/Controllers/Api/V1/Health.php');
+        $this->assertFileExists($this->root . '/app/Controllers/Api/ApiErrors.php');
+    }
+
+    public function testContractSetupViewDoesNotUseRequestInView(): void
+    {
+        $view = file_get_contents($this->root . '/app/Views/settings/contract_templates.php');
+        $this->assertStringNotContainsString('$this->request', $view);
+        $settings = file_get_contents($this->root . '/app/Controllers/Settings.php');
+        $this->assertStringContainsString("'editId'", $settings);
+        $this->assertStringContainsString("'editTypeId'", $settings);
     }
 
     public function testFinanceTotalsServiceIsSingleSourceOfTruth(): void

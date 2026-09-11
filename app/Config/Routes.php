@@ -1032,6 +1032,7 @@ $routes->get('cron/run', 'Cron::runAll');
 
 // API v1
 $routes->group('api/v1', static function ($routes) {
+    $routes->get('health', 'Api\V1\Health::index');
     $routes->post('auth/login', 'Api\V1\Auth::login');
     $routes->post('app-log', 'Api\V1\AppLog::store');
     $routes->group('', ['filter' => 'jwt'], static function ($routes) {
@@ -1095,3 +1096,5 @@ $routes->group('api/legacy', static function ($routes) {
 });
 $routes->post('api/public/maintenance', 'Api\PublicApi::requestMaintenance');
 $routes->get('api/public/track/(:segment)', 'Api\PublicApi::trackRequest/$1');
+
+$routes->set404Override([\App\Controllers\Api\ApiErrors::class, 'notFound']);

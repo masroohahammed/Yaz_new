@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('content') ?>
 <?php
-$editId = (int) ($this->request->getGet('edit') ?? 0);
+$editId = (int) ($editId ?? 0);
 $editing = null;
 foreach ($templates as $t) {
     if ((int) $t['id'] === $editId) {
@@ -9,7 +9,7 @@ foreach ($templates as $t) {
         break;
     }
 }
-$editTypeId = (int) ($this->request->getGet('edit_type') ?? 0);
+$editTypeId = (int) ($editTypeId ?? 0);
 $editingType = null;
 foreach ($contractTypes ?? [] as $ct) {
     if ((int) $ct['id'] === $editTypeId) {

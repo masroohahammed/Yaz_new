@@ -22,6 +22,23 @@ Legacy (deprecated, still supported):
 /api/legacy
 ```
 
+## Health check (no token required)
+
+```http
+GET /api/v1/health
+```
+
+**Response 200:**
+
+```json
+{
+  "status": true,
+  "message": "API is healthy"
+}
+```
+
+Use this endpoint for load balancers, mobile app startup checks, and monitoring.
+
 ## Authentication
 
 ### Login (no token required)
