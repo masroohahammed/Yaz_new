@@ -117,6 +117,8 @@ class ContractTypesAndPaymentTracking extends Migration
         }
 
         $this->seedContractTypes();
+        $this->seedDefaultTemplates();
+        $this->extendPaymentStatuses();
     }
 
     public function down()
@@ -125,6 +127,78 @@ class ContractTypesAndPaymentTracking extends Migration
             if ($this->db->tableExists($table)) {
                 $this->forge->dropTable($table, true);
             }
+        }
+    }
+
+    private function extendPaymentStatuses(): void
+    {
+        if (! $this->db->tableExists('lease_payments') || ! $this->db->fieldExists('status', 'lease_payments')) {
+            return;
+        }
+
+        $this->db->query("ALTER TABLE `lease_payments` MODIFY `status` ENUM(
+            'pending','paid','partial','overdue','cancelled','postponed',
+            'cheque_received','cheque_bounced','converted_to_cash'
+        ) NOT NULL DEFAULT 'pending'");
+    }
+
+    private function seedDefaultTemplates(): void
+    {
+        if (! $this->db->tableExists('contract_templates') || ! $this->db->tableExists('contract_types')) {
+            return;
+        }
+
+        $types = $this->db->table('contract_types')->get()->getResultArray();
+        $bySlug = [];
+        foreach ($types as $t) {
+            $bySlug[$t['slug']] = (int) $t['id'];
+        }
+
+        $defaults = [
+            'parking' => [
+                'name' => 'Default Parking Agreement',
+                'content_en' => '<p>Parking Space Lease Agreement for unit {{unit_number}}. Plate {{plate_number}}. Rent {{rent_amount}} {{currency}} per {{payment_frequency}}.</p>',
+                'content_ar' => '<p>عقد إيجار موقف للوحدة {{unit_number}}. لوحة {{plate_number}}. الأجرة {{rent_amount}} {{currency}}.</p>',
+            ],
+            'residential' => [
+                'name' => 'Default Residential Lease',
+                'content_en' => '<p>Residential lease for {{tenant_name}} at {{property_name}}, unit {{unit_number}}. Rent {{rent_amount}} {{currency}} from {{start_date}} to {{end_date}}.</p>',
+                'content_ar' => '<p>عقد إيجار سكني للمستأجر {{tenant_name}} في {{property_name}} وحدة {{unit_number}}.</p>',
+            ],
+            'commercial' => [
+                'name' => 'Default Commercial Lease',
+                'content_en' => '<p>Commercial lease for {{tenant_name}} at {{property_name}}, unit {{unit_number}}.</p>',
+                'content_ar' => '<p>عقد إيجار تجاري للمستأجر {{tenant_name}}.</p>',
+            ],
+            'other' => [
+                'name' => 'Default Other Contract',
+                'content_en' => '<p>Contract {{contract_number}} between landlord and {{tenant_name}} for unit {{unit_number}}.</p>',
+                'content_ar' => '<p>عقد {{contract_number}} بين المالك والمستأجر {{tenant_name}}.</p>',
+            ],
+        ];
+
+        $now = date('Y-m-d H:i:s');
+        foreach ($defaults as $slug => $tpl) {
+            $typeId = $bySlug[$slug] ?? 0;
+            if ($typeId < 1) {
+                continue;
+            }
+            $exists = $this->db->table('contract_templates')
+                ->where('contract_type_id', $typeId)
+                ->where('name', $tpl['name'])
+                ->countAllResults();
+            if ($exists > 0) {
+                continue;
+            }
+            $this->db->table('contract_templates')->insert([
+                'name'             => $tpl['name'],
+                'contract_type_id' => $typeId,
+                'content_en'       => $tpl['content_en'],
+                'content_ar'       => $tpl['content_ar'],
+                'is_active'        => 1,
+                'created_at'       => $now,
+                'updated_at'       => $now,
+            ]);
         }
     }
 

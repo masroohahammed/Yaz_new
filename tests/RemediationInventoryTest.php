@@ -1178,8 +1178,11 @@ final class RemediationInventoryTest extends TestCase
             'app/Services/ContractTemplateService.php',
             'app/Services/PaymentTrackingService.php',
             'app/Services/ChequeTrackingService.php',
+            'app/Services/ChequePaymentSyncService.php',
+            'app/Services/SpreadsheetImportService.php',
             'app/Database/Migrations/2026-09-11-120000_ContractTypesAndPaymentTracking.php',
             'database/patches/2026-09-11-contract-types-payments.sql',
+            'docs/MOBILE_API.md',
         ] as $rel) {
             $this->assertFileExists($this->root . '/' . $rel, "Missing {$rel}");
         }
@@ -1197,6 +1200,12 @@ final class RemediationInventoryTest extends TestCase
         $this->assertStringContainsString('saveUtilityTransfer', $leases);
         $this->assertStringContainsString('recordChequePayment', $leases);
         $this->assertStringContainsString('contracts/form', $leases);
+        $this->assertStringContainsString('syncContractRentSchedule', $leases);
+        $this->assertStringContainsString('contract_type_name', $leases);
+
+        $cheques = file_get_contents($this->root . '/app/Controllers/Cheques.php');
+        $this->assertStringContainsString('SpreadsheetImportService', $cheques);
+        $this->assertStringContainsString('ChequePaymentSyncService', $cheques);
 
         $paymentsShow = file_get_contents($this->root . '/app/Views/payments/show.php');
         $this->assertStringContainsString('Partial payment', $paymentsShow);

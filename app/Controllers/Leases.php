@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
 use App\Controllers\Traits\ParkingContractTrait;
+use App\Models\Contract_model;
+use App\Services\ChequePaymentSyncService;
 use App\Services\ChequeTrackingService;
 use App\Services\ContractSignatureService;
 use App\Services\ContractTemplateService;
@@ -39,6 +41,10 @@ class Leases extends BaseController
             ->join('units u', 'u.id = lc.unit_id', 'left')
             ->join('facilities f', $this->leaseFacilityJoinSql(), 'left')
             ->where('lc.deleted_at', null);
+        if ($this->db->tableExists('contract_types') && $this->db->fieldExists('contract_type_id', self::TABLE)) {
+            $q->select('ct.name_en AS contract_type_name', false)
+                ->join('contract_types ct', 'ct.id = lc.contract_type_id', 'left');
+        }
         $this->scopeCompany($q, 'lc.company_id');
         $this->applyLeaseFacilityScope($q);
 
@@ -107,6 +113,8 @@ class Leases extends BaseController
             return redirect()->to(base_url('contracts'))->with('error', 'Leases module is not available. Run database migration first.');
         }
 
+        $this->mergePropertyIdIntoPost();
+
         $rules = [
             'tenant_id'   => 'required|integer',
             'facility_id' => 'required|integer',
@@ -136,6 +144,7 @@ class Leases extends BaseController
         $id = (int) $this->db->insertID();
 
         $this->syncParkingUnitPlate((int) $data['unit_id'], $data);
+        $this->syncContractRentSchedule($id);
 
         $this->logActivity('create', 'lease_contracts', $id, 'Contract created: ' . $data['contract_number']);
 
@@ -267,6 +276,8 @@ class Leases extends BaseController
             return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
         }
 
+        $this->mergePropertyIdIntoPost();
+
         $rules = [
             'tenant_id'   => 'required|integer',
             'facility_id' => 'required|integer',
@@ -294,6 +305,7 @@ class Leases extends BaseController
         $this->db->table(self::TABLE)->where('id', $id)->update($data);
 
         $this->syncParkingUnitPlate((int) $data['unit_id'], $data);
+        $this->syncContractRentSchedule($id);
 
         $this->logActivity('update', 'lease_contracts', $id, 'Contract updated');
 
@@ -1347,8 +1359,7 @@ class Leases extends BaseController
             }
         }
 
-        $chequeSvc = new ChequeTrackingService($this->db);
-        $chequeId  = $chequeSvc->createCheque([
+        $chequeData = [
             'company_id'      => $contract['company_id'],
             'contract_id'     => $id,
             'tenant_id'       => $contract['tenant_id'],
@@ -1368,24 +1379,18 @@ class Leases extends BaseController
             'status'          => 'pending',
             'image_path'      => $imagePath,
             'notes'           => esc(trim((string) $this->request->getPost('notes'))) ?: null,
-        ], (int) ($this->currentUser()['id'] ?? 0));
+        ];
+        $chequeSvc = new ChequeTrackingService($this->db);
+        $chequeId  = $chequeSvc->createCheque($chequeData, (int) ($this->currentUser()['id'] ?? 0));
+        $chequeData['id'] = $chequeId;
 
         if ($paymentId && $this->pmTableExists('lease_payments')) {
             $this->db->table('lease_payments')->where('id', $paymentId)->update([
                 'payment_method' => 'cheque',
                 'cheque_no'      => esc($chequeNo),
-                'status'         => 'pending',
                 'updated_at'     => date('Y-m-d H:i:s'),
             ]);
-            (new PaymentTrackingService($this->db))->logStatusChange(
-                $paymentId,
-                null,
-                'cheque_received',
-                $amount,
-                'Cheque #' . $chequeNo . ' registered',
-                $id,
-                (int) ($this->currentUser()['id'] ?? 0)
-            );
+            (new ChequePaymentSyncService($this->db))->onChequeRegistered($chequeData, (int) ($this->currentUser()['id'] ?? 0));
         }
 
         $this->logActivity('cheque', 'lease_contracts', $id, 'Cheque registered: ' . $chequeNo);
@@ -1541,6 +1546,23 @@ class Leases extends BaseController
         }
 
         return strtolower((string) ($contract['unit_type'] ?? '')) === 'parking';
+    }
+
+    private function mergePropertyIdIntoPost(): void
+    {
+        if (! $this->request->getPost('facility_id') && $this->request->getPost('property_id')) {
+            $_POST['facility_id'] = $this->request->getPost('property_id');
+        }
+    }
+
+    private function syncContractRentSchedule(int $contractId): void
+    {
+        $annual = $this->request->getPost('annual_rent');
+        if (! is_array($annual)) {
+            return;
+        }
+
+        model(Contract_model::class)->syncRentSchedule($contractId, $annual);
     }
 
     /** @param array<string, mixed> $data */

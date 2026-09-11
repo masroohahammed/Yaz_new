@@ -58,6 +58,12 @@ CREATE TABLE IF NOT EXISTS `payment_status_history` (
   KEY `idx_psh_payment` (`payment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+ALTER TABLE `lease_payments`
+  MODIFY COLUMN `status` enum(
+    'pending','paid','partial','overdue','cancelled','postponed',
+    'cheque_received','cheque_bounced','converted_to_cash'
+  ) NOT NULL DEFAULT 'pending';
+
 CREATE TABLE IF NOT EXISTS `cheque_status_history` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `cheque_id` int unsigned NOT NULL,
@@ -69,3 +75,17 @@ CREATE TABLE IF NOT EXISTS `cheque_status_history` (
   PRIMARY KEY (`id`),
   KEY `idx_csh_cheque` (`cheque_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO `contract_templates` (`name`, `contract_type_id`, `content_en`, `content_ar`, `is_active`, `created_at`, `updated_at`)
+SELECT 'Default Parking Agreement', ct.id,
+  '<p>Parking lease for unit {{unit_number}}. Plate {{plate_number}}. Rent {{rent_amount}} {{currency}}.</p>',
+  '<p>عقد موقف للوحدة {{unit_number}}. لوحة {{plate_number}}.</p>', 1, NOW(), NOW()
+FROM `contract_types` ct WHERE ct.slug = 'parking'
+AND NOT EXISTS (SELECT 1 FROM `contract_templates` t WHERE t.contract_type_id = ct.id AND t.name = 'Default Parking Agreement');
+
+INSERT IGNORE INTO `contract_templates` (`name`, `contract_type_id`, `content_en`, `content_ar`, `is_active`, `created_at`, `updated_at`)
+SELECT 'Default Residential Lease', ct.id,
+  '<p>Residential lease for {{tenant_name}} at {{property_name}}, unit {{unit_number}}.</p>',
+  '<p>عقد سكني للمستأجر {{tenant_name}}.</p>', 1, NOW(), NOW()
+FROM `contract_types` ct WHERE ct.slug = 'residential'
+AND NOT EXISTS (SELECT 1 FROM `contract_templates` t WHERE t.contract_type_id = ct.id AND t.name = 'Default Residential Lease');

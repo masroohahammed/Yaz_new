@@ -95,7 +95,7 @@ class Payments extends BaseController
             'amount'         => 'required|decimal',
             'payment_method' => 'required|max_length[50]',
             'due_date'       => 'permit_empty|valid_date[Y-m-d]',
-            'status'         => 'required|in_list[pending,paid,partial,overdue,cancelled,postponed]',
+            'status'         => 'required|in_list[pending,paid,partial,overdue,cancelled,postponed,cheque_received,cheque_bounced,converted_to_cash]',
         ];
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
@@ -145,6 +145,7 @@ class Payments extends BaseController
             'paidTotal'       => $paidTotal,
             'balance'         => $tracking->balance(array_merge($payment, ['amount_paid' => $paidTotal])),
             'displayStatus'   => $tracking->displayStatus($payment),
+            'statusBadge'     => $tracking->statusBadge($payment),
             'paymentHistory'  => $tracking->historyForPayment($id),
         ]));
     }
@@ -182,7 +183,7 @@ class Payments extends BaseController
             'amount'         => 'required|decimal',
             'payment_method' => 'required|max_length[50]',
             'due_date'       => 'permit_empty|valid_date[Y-m-d]',
-            'status'         => 'required|in_list[pending,paid,partial,overdue,cancelled,postponed]',
+            'status'         => 'required|in_list[pending,paid,partial,overdue,cancelled,postponed,cheque_received,cheque_bounced,converted_to_cash]',
         ];
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());

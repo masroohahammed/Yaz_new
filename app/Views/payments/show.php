@@ -4,18 +4,7 @@
 helper('fm');
 $paidTotal = (float) ($paidTotal ?? $payment['amount_paid'] ?? 0);
 $balance = (float) ($balance ?? max(0, round((float) ($payment['amount'] ?? 0) - $paidTotal, 2)));
-$displayStatus = (string) ($displayStatus ?? $payment['status'] ?? 'pending');
-$statusLabels = [
-    'pending' => ['Unpaid', 'warning'],
-    'partial' => ['Partially Paid', 'info'],
-    'partially_paid' => ['Partially Paid', 'info'],
-    'paid' => ['Paid', 'success'],
-    'postponed' => ['Postponed', 'secondary'],
-    'overdue' => ['Overdue', 'danger'],
-    'cheque_received' => ['Cheque Received', 'primary'],
-    'cancelled' => ['Cancelled', 'secondary'],
-];
-$st = $statusLabels[$displayStatus] ?? [ucfirst($displayStatus), 'secondary'];
+$st = $statusBadge ?? [ucfirst($payment['status'] ?? 'pending'), 'secondary'];
 $history = $paymentHistory ?? [];
 ?>
 <div class="page-header">

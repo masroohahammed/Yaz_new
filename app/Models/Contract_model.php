@@ -41,7 +41,7 @@ class Contract_model extends Model
             }
         }
 
-        if (! empty( ?? null)) {
+        if (! empty($filters['search'] ?? null)) {
             $s = $filters['search'];
             $builder->groupStart()
                 ->like('lc.contract_number', $s)
@@ -49,10 +49,10 @@ class Contract_model extends Model
                 ->orLike('t.phone', $s)
                 ->groupEnd();
         }
-        if (! empty( ?? null)) {
+        if (! empty($filters['status'] ?? null)) {
             $builder->where('lc.status', $filters['status']);
         }
-        if (! empty( ?? null)) {
+        if (! empty($filters['property_id'] ?? null)) {
             $builder->where('lc.facility_id', (int) $filters['property_id']);
         }
 

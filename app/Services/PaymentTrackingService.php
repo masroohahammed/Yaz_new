@@ -75,10 +75,28 @@ class PaymentTrackingService
         if ($status === 'partial') {
             return 'partially_paid';
         }
-        if ($status === 'paid' && ($payment['payment_method'] ?? '') === 'cheque') {
-            return 'cheque_received';
-        }
 
         return $status;
+    }
+
+    /** @return array{0: string, 1: string} label + bootstrap color */
+    public function statusBadge(array $payment): array
+    {
+        $map = [
+            'pending'           => ['Unpaid', 'warning'],
+            'partial'           => ['Partially Paid', 'info'],
+            'partially_paid'    => ['Partially Paid', 'info'],
+            'paid'              => ['Paid', 'success'],
+            'postponed'         => ['Postponed', 'secondary'],
+            'overdue'           => ['Overdue', 'danger'],
+            'cheque_received'   => ['Cheque Received', 'primary'],
+            'cheque_bounced'    => ['Cheque Bounced', 'danger'],
+            'converted_to_cash' => ['Converted to Cash', 'dark'],
+            'cancelled'         => ['Cancelled', 'secondary'],
+        ];
+
+        $key = $this->displayStatus($payment);
+
+        return $map[$key] ?? [ucfirst(str_replace('_', ' ', $key)), 'secondary'];
     }
 }

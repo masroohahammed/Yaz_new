@@ -2,6 +2,7 @@
 
 namespace App\Controllers\Traits;
 
+use App\Services\ContractTemplateService;
 use App\Services\ParkingContractService;
 use App\Services\UnitLeaseSyncService;
 
@@ -30,6 +31,32 @@ trait ParkingContractTrait
         );
         $contractDate = (string) ($d['contract_date'] ?? date('Y-m-d'));
 
+        $templateEn = '';
+        $templateAr = '';
+        $termsEn    = '';
+        $termsAr    = '';
+        $leaseId    = (int) ($d['lease_contract_id'] ?? 0);
+        if ($leaseId > 0 && $this->db->tableExists('lease_contracts')) {
+            $leaseRow = $this->db->table('lease_contracts lc')
+                ->select('lc.*, t.full_name AS tenant_name, f.name AS facility_name, u.unit_number')
+                ->join('tenants t', 't.id = lc.tenant_id', 'left')
+                ->join('facilities f', 'f.id = lc.facility_id', 'left')
+                ->join('units u', 'u.id = lc.unit_id', 'left')
+                ->where('lc.id', $leaseId)
+                ->get()->getRowArray();
+            if ($leaseRow) {
+                $leaseRow['plate_number']        = $leaseRow['plate_number'] ?? ($d['plate_number'] ?? '');
+                $leaseRow['vehicle_type']        = $leaseRow['vehicle_type'] ?? ($d['vehicle_type'] ?? '');
+                $leaseRow['vehicle_description'] = $leaseRow['vehicle_description'] ?? ($d['vehicle_description'] ?? '');
+                $leaseRow['currency']            = $this->settings['currency'] ?? 'QAR';
+                $resolved   = (new ContractTemplateService($this->db))->resolveForContract($leaseRow);
+                $templateEn = $resolved['content_en'];
+                $templateAr = $resolved['content_ar'];
+                $termsEn    = $resolved['terms_en'];
+                $termsAr    = $resolved['terms_ar'];
+            }
+        }
+
         $data = $this->viewData([
             'title'              => 'Parking Contract',
             'd'                  => $d,
@@ -45,6 +72,11 @@ trait ParkingContractTrait
             'endDateAr'          => $svc->formatDateAr((string) ($d['end_date'] ?? '')),
             'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
             'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
+            'templateEn'         => $templateEn,
+            'templateAr'         => $templateAr,
+            'termsEn'            => $termsEn,
+            'termsAr'            => $termsAr,
+            'useCustomTemplate'  => trim($templateEn . $templateAr) !== '',
             'usePdf'             => true,
             'snapshotPdf'        => true,
             'autoSnapshotPdf'    => $wantPdf,

@@ -378,3 +378,5 @@ LIMIT 1;
 
 ALTER TABLE `documents`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+-- 20) Contract types, payment/cheque tracking (2026-09-11) — see database/patches/2026-09-11-contract-types-payments.sql

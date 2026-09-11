@@ -100,6 +100,30 @@ $usePdfEmbed  = ! empty($usePdf);
   </div>
   </div>
 
+  <?php if (! empty($useCustomTemplate)): ?>
+  <div class="bilingual-row">
+    <div class="col-en block">
+      <?php if (! empty($templateEn)): ?>
+      <div class="clause-title">Agreement (English)</div>
+      <div><?= $templateEn ?></div>
+      <?php endif; ?>
+      <?php if (! empty($termsEn)): ?>
+      <div class="clause-title">Terms & Conditions</div>
+      <div><?= $termsEn ?></div>
+      <?php endif; ?>
+    </div>
+    <div class="col-ar block">
+      <?php if (! empty($templateAr)): ?>
+      <div class="clause-title">نص العقد (عربي)</div>
+      <div><?= $templateAr ?></div>
+      <?php endif; ?>
+      <?php if (! empty($termsAr)): ?>
+      <div class="clause-title">الشروط والأحكام</div>
+      <div><?= $termsAr ?></div>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php else: ?>
   <div class="bilingual-row">
   <div class="col-en block">
     <span class="clause-title">Article One: Term and Rent</span>
@@ -165,6 +189,7 @@ $usePdfEmbed  = ! empty($usePdf);
     يخضع لقوانين قطر وتختص المحاكم القطرية. أُبرم من نسختين أصليتين.
   </div>
   </div>
+  <?php endif; ?>
 
   <?php if ($contractPhotos !== []): ?>
   <div class="bilingual-row">
