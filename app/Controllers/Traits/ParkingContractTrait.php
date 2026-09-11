@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Traits;
 
+use App\Services\ContractTemplateService;
+use App\Services\ContractTypeService;
 use App\Services\ParkingContractService;
 use App\Services\UnitLeaseSyncService;
 
@@ -30,6 +32,13 @@ trait ParkingContractTrait
         );
         $contractDate = (string) ($d['contract_date'] ?? date('Y-m-d'));
 
+        $leaseRow = $this->loadParkingLeaseRow((int) ($d['lease_contract_id'] ?? 0));
+        $resolved = (new ContractTemplateService($this->db))->resolveForParkingDocument($d, $leaseRow);
+        $templateEn = $resolved['content_en'];
+        $templateAr = $resolved['content_ar'];
+        $termsEn    = $resolved['terms_en'];
+        $termsAr    = $resolved['terms_ar'];
+
         $data = $this->viewData([
             'title'              => 'Parking Contract',
             'd'                  => $d,
@@ -45,6 +54,11 @@ trait ParkingContractTrait
             'endDateAr'          => $svc->formatDateAr((string) ($d['end_date'] ?? '')),
             'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
             'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
+            'templateEn'         => $templateEn,
+            'templateAr'         => $templateAr,
+            'termsEn'            => $termsEn,
+            'termsAr'            => $termsAr,
+            'useCustomTemplate'  => true,
             'usePdf'             => true,
             'snapshotPdf'        => true,
             'autoSnapshotPdf'    => $wantPdf,
@@ -89,6 +103,12 @@ trait ParkingContractTrait
             $patch = [];
             if ($this->db->fieldExists('contract_kind', 'lease_contracts')) {
                 $patch['contract_kind'] = 'parking';
+            }
+            if ($this->db->fieldExists('contract_type_id', 'lease_contracts')) {
+                $typeId = $this->parkingContractTypeId();
+                if ($typeId > 0) {
+                    $patch['contract_type_id'] = $typeId;
+                }
             }
             if ($this->db->fieldExists('plate_number', 'lease_contracts') && ! empty($d['plate_number'])) {
                 $patch['plate_number'] = esc((string) $d['plate_number']);
@@ -315,6 +335,12 @@ trait ParkingContractTrait
         }
         if ($this->db->fieldExists('contract_kind', 'lease_contracts')) {
             $row['contract_kind'] = 'parking';
+        }
+        if ($this->db->fieldExists('contract_type_id', 'lease_contracts')) {
+            $typeId = $this->parkingContractTypeId();
+            if ($typeId > 0) {
+                $row['contract_type_id'] = $typeId;
+            }
         }
         if ($this->db->fieldExists('contract_number', 'lease_contracts')) {
             $row['contract_number'] = esc($contractNo);
@@ -558,6 +584,12 @@ trait ParkingContractTrait
         if ($this->db->fieldExists('contract_kind', 'lease_contracts')) {
             $newRow['contract_kind'] = 'parking';
         }
+        if ($this->db->fieldExists('contract_type_id', 'lease_contracts')) {
+            $typeId = $this->parkingContractTypeId();
+            if ($typeId > 0) {
+                $newRow['contract_type_id'] = $typeId;
+            }
+        }
         if ($this->db->fieldExists('tenant_signature_path', 'lease_contracts')) {
             $newRow['tenant_signature_path'] = null;
             $newRow['signature_token']       = null;
@@ -673,6 +705,9 @@ trait ParkingContractTrait
         $contractDate = (string) ($d['contract_date'] ?? date('Y-m-d'));
         $duration     = $svc->durationMonths((string) ($d['start_date'] ?? ''), (string) ($d['end_date'] ?? ''));
 
+        $leaseRow = $this->loadParkingLeaseRow((int) ($d['lease_contract_id'] ?? 0));
+        $resolved = (new ContractTemplateService($this->db))->resolveForParkingDocument($d, $leaseRow);
+
         return view('leases/parking_contract_print', $this->viewData([
             'title'              => 'Parking Contract',
             'd'                  => $d,
@@ -688,6 +723,11 @@ trait ParkingContractTrait
             'endDateAr'          => $svc->formatDateAr((string) ($d['end_date'] ?? '')),
             'poaDateFmt'         => $svc->formatPoaDate((string) ($d['poa_date'] ?? '')),
             'vehicleEn'          => $svc->vehicleTypeEnglish((string) ($d['vehicle_type'] ?? '')),
+            'templateEn'         => $resolved['content_en'],
+            'templateAr'         => $resolved['content_ar'],
+            'termsEn'            => $resolved['terms_en'],
+            'termsAr'            => $resolved['terms_ar'],
+            'useCustomTemplate'  => true,
             'usePdf'             => true,
             'snapshotPdf'        => true,
             'autoSnapshotPdf'    => false,
@@ -695,6 +735,29 @@ trait ParkingContractTrait
             'pdfUrl'             => '',
             'tenantSignatureB64' => $tenantSignatureB64,
         ]));
+    }
+
+    /** @return array<string,mixed>|null */
+    protected function loadParkingLeaseRow(int $leaseId): ?array
+    {
+        if ($leaseId < 1 || ! $this->db->tableExists('lease_contracts')) {
+            return null;
+        }
+
+        return $this->db->table('lease_contracts lc')
+            ->select('lc.*, t.full_name AS tenant_name, f.name AS facility_name, u.unit_number')
+            ->join('tenants t', 't.id = lc.tenant_id', 'left')
+            ->join('facilities f', 'f.id = lc.facility_id', 'left')
+            ->join('units u', 'u.id = lc.unit_id', 'left')
+            ->where('lc.id', $leaseId)
+            ->get()->getRowArray() ?: null;
+    }
+
+    protected function parkingContractTypeId(): int
+    {
+        $type = (new ContractTypeService($this->db))->findBySlug('parking');
+
+        return (int) ($type['id'] ?? 0);
     }
 
     protected function parkingContractRedirect(int $unitId, ?int $leaseId = null, bool $renew = false): string

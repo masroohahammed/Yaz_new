@@ -43,12 +43,16 @@ $displayQid = trim((string) ($tenantQid ?? $contract['tenant_qid'] ?? $contract[
     </div>
   </div>
 
-  <?php if (! empty($templateEn) || ! empty($templateAr)): ?>
+  <?php if (! empty($templateEn) || ! empty($templateAr) || ! empty($termsEn ?? '') || ! empty($termsAr ?? '')): ?>
   <div class="bilingual-row">
     <div class="col-en">
       <?php if (! empty($templateEn)): ?>
-      <div class="section-title">Contract Terms (English)</div>
+      <div class="section-title">Contract Body (English)</div>
       <div class="content-en"><?= $templateEn ?></div>
+      <?php endif; ?>
+      <?php if (! empty($termsEn)): ?>
+      <div class="section-title">Terms & Conditions</div>
+      <div class="content-en"><?= $termsEn ?></div>
       <?php endif; ?>
       <?php if (! empty($contract['contract_terms'])): ?>
       <div class="section-title">Additional Terms</div>
@@ -57,8 +61,12 @@ $displayQid = trim((string) ($tenantQid ?? $contract['tenant_qid'] ?? $contract[
     </div>
     <div class="col-ar">
       <?php if (! empty($templateAr)): ?>
-      <div class="section-title" style="text-align:right;border-left:none;border-right:3px solid #76002b">بنود العقد (عربي)</div>
+      <div class="section-title" style="text-align:right;border-left:none;border-right:3px solid #76002b">نص العقد (عربي)</div>
       <div class="content-ar"><?= $templateAr ?></div>
+      <?php endif; ?>
+      <?php if (! empty($termsAr)): ?>
+      <div class="section-title" style="text-align:right;border-left:none;border-right:3px solid #76002b">الشروط والأحكام</div>
+      <div class="content-ar"><?= $termsAr ?></div>
       <?php endif; ?>
     </div>
   </div>

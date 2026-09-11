@@ -23,6 +23,12 @@ Open: `https://your-domain/public/remediation-check`
 
 Should return `"ok": true` with all files listed as `"present": true`.
 
+### Mobile API
+
+Developer guide (endpoints, auth, curl examples): [`docs/MOBILE_API.md`](docs/MOBILE_API.md)
+
+The backend repo does **not** include Flutter/mobile app source — only the REST API the app consumes.
+
 ### Included features
 
 - Digital signature & tenant signing link generation

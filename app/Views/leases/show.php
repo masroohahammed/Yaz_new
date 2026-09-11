@@ -4,6 +4,7 @@
 $statusColors = ['draft'=>'secondary','active'=>'success','expired'=>'warning','terminated'=>'danger','renewed'=>'info'];
 $statusColor  = $statusColors[$contract['status']] ?? 'secondary';
 $isParkingLease = strtolower((string)($contract['unit_type'] ?? '')) === 'parking' || ($contract['contract_kind'] ?? '') === 'parking';
+$typeLabel = esc($contractType['name_en'] ?? ucfirst(str_replace('_', ' ', $contract['contract_kind'] ?? 'standard')));
 helper('fm');
 $renewDefaults = fm_renewal_date_defaults($contract['start_date'] ?? '', $contract['end_date'] ?? '');
 $daysUntilExpiry = fm_contract_days_until($contract['end_date'] ?? null);
@@ -14,7 +15,7 @@ $canRenew = in_array($contract['status'], ['active', 'draft', 'expired'], true);
 <div class="page-header">
   <div>
     <h1>Contract <?= esc($contract['contract_number']) ?></h1>
-    <div class="small text-muted"><?= esc($contract['tenant_name'] ?? '') ?> &middot; <?= esc($contract['facility_name'] ?? '') ?> &middot; Unit <?= esc($contract['unit_number'] ?? '—') ?></div>
+    <div class="small text-muted"><?= esc($contract['tenant_name'] ?? '') ?> &middot; <?= esc($contract['facility_name'] ?? '') ?> &middot; Unit <?= esc($contract['unit_number'] ?? '—') ?> &middot; <?= $typeLabel ?></div>
   </div>
   <div class="d-flex gap-2 flex-wrap">
     <?php if ($isParkingLease): ?>
@@ -146,6 +147,148 @@ $canRenew = in_array($contract['status'], ['active', 'draft', 'expired'], true);
 <?php endif; ?>
 
 <div class="form-card mb-3">
+  <h6 class="text-muted text-uppercase small mb-2">Utility transfer</h6>
+  <?= form_open_multipart(base_url('contracts/'.$contract['id'].'/utility-transfer')) ?>
+  <?= csrf_field() ?>
+  <div class="row g-2 align-items-start">
+    <div class="col-md-3">
+      <div class="form-check mt-1">
+        <input type="checkbox" name="utility_transfer_applicable" value="1" class="form-check-input" id="utilXfer"
+          <?= ! empty($contract['utility_transfer_applicable']) ? 'checked' : '' ?>>
+        <label class="form-check-label small" for="utilXfer">Transfer applicable</label>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small">Transfer date</label>
+      <input type="date" name="utility_transfer_date" class="form-control form-control-sm" value="<?= esc($contract['start_date'] ?? '') ?>">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label small">Details</label>
+      <textarea name="utility_transfer_details" class="form-control form-control-sm" rows="2" placeholder="Kahramaa, water, internet…"><?= esc($contract['utility_transfer_details'] ?? '') ?></textarea>
+    </div>
+  </div>
+  <?php if (!empty($utilityAccounts)): ?>
+  <div class="mt-2 small text-muted">Unit utility accounts: <?= count($utilityAccounts) ?> active</div>
+  <?php endif; ?>
+  <button type="submit" class="btn btn-sm btn-fm-primary mt-2">Save utility transfer</button>
+  <?= form_close() ?>
+</div>
+
+<?php if (($contract['payment_type'] ?? '') === 'cheque'): ?>
+<div class="form-card mb-3">
+  <h6 class="text-muted text-uppercase small mb-2">Cheque payment</h6>
+  <?php if ($errs = session()->getFlashdata('import_errors')): ?>
+  <div class="alert alert-warning small py-2">
+    <strong>Bulk import notes:</strong>
+    <ul class="mb-0 mt-1"><?php foreach ((array) $errs as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul>
+  </div>
+  <?php endif; ?>
+  <?= form_open_multipart(base_url('contracts/'.$contract['id'].'/cheque-payment')) ?>
+  <?= csrf_field() ?>
+  <div class="row g-2">
+    <div class="col-md-3">
+      <label class="form-label small">Linked invoice</label>
+      <select name="payment_id" class="form-select form-select-sm">
+        <option value="">— Optional —</option>
+        <?php foreach ($payments as $p): ?>
+        <option value="<?= $p['id'] ?>"><?= esc($p['payment_number']) ?> — <?= number_format((float)$p['amount'],2) ?> (<?= esc($p['status']) ?>)</option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="col-md-3"><label class="form-label small">Cheque no *</label><input name="cheque_no" class="form-control form-control-sm" required></div>
+    <div class="col-md-3"><label class="form-label small">Amount *</label><input type="number" step="0.01" name="amount" class="form-control form-control-sm" required></div>
+    <div class="col-md-3"><label class="form-label small">Due date</label><input type="date" name="due_date" class="form-control form-control-sm"></div>
+    <div class="col-md-3"><label class="form-label small">Issue date</label><input type="date" name="cheque_date" class="form-control form-control-sm"></div>
+    <div class="col-md-3"><label class="form-label small">Received date</label><input type="date" name="received_date" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>"></div>
+    <div class="col-md-3">
+      <label class="form-label small">Payable to *</label>
+      <select name="payable_to_type" id="payableToType" class="form-select form-select-sm" required>
+        <option value="company">Company</option>
+        <option value="landlord">Landlord</option>
+      </select>
+    </div>
+    <div class="col-md-3" id="landlordSelectWrap" style="display:none">
+      <label class="form-label small">Landlord account</label>
+      <select name="payable_to_id" class="form-select form-select-sm">
+        <option value="">— Select landlord —</option>
+        <?php foreach ($landlords ?? [] as $ll): ?>
+        <option value="<?= $ll['id'] ?>"><?= esc($ll['full_name']) ?><?= !empty($ll['bank_name']) ? ' ('.$ll['bank_name'].')' : '' ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="col-md-3"><label class="form-label small">Bank</label><input name="bank_name" class="form-control form-control-sm"></div>
+    <div class="col-md-3"><label class="form-label small">Account name</label><input name="account_name" class="form-control form-control-sm"></div>
+    <div class="col-md-3"><label class="form-label small">Account no</label><input name="account_no" class="form-control form-control-sm"></div>
+    <div class="col-md-6"><label class="form-label small">Upload cheque</label><input type="file" name="cheque_image" class="form-control form-control-sm" accept="image/*,.pdf"></div>
+    <div class="col-md-6"><label class="form-label small">Notes</label><input name="notes" class="form-control form-control-sm"></div>
+  </div>
+  <button type="submit" class="btn btn-sm btn-fm-primary mt-2">Register cheque</button>
+  <?= form_close() ?>
+
+  <hr class="my-3">
+  <h6 class="text-muted text-uppercase small mb-2">Bulk import cheques</h6>
+  <p class="small text-muted mb-2">Upload <strong>.xlsx</strong> or <strong>.csv</strong> to register multiple cheques for this contract. <code>contract_id</code> is applied automatically.</p>
+  <?= form_open_multipart(base_url('contracts/'.$contract['id'].'/cheque-bulk-import')) ?>
+  <?= csrf_field() ?>
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small">Excel / CSV file *</label>
+      <input type="file" name="import_file" class="form-control form-control-sm" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small">Default payable to</label>
+      <select name="payable_to_type" id="bulkPayableToType" class="form-select form-select-sm">
+        <option value="company">Company</option>
+        <option value="landlord">Landlord</option>
+      </select>
+    </div>
+    <div class="col-md-3" id="bulkLandlordSelectWrap" style="display:none">
+      <label class="form-label small">Landlord account</label>
+      <select name="payable_to_id" class="form-select form-select-sm">
+        <option value="">— Select landlord —</option>
+        <?php foreach ($landlords ?? [] as $ll): ?>
+        <option value="<?= $ll['id'] ?>"><?= esc($ll['full_name']) ?><?= !empty($ll['bank_name']) ? ' ('.$ll['bank_name'].')' : '' ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small">Received date</label>
+      <input type="date" name="received_date" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>">
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-sm btn-fm-outline w-100"><i class="bi bi-upload me-1"></i>Import cheques</button>
+    </div>
+  </div>
+  <details class="mt-2 small text-muted">
+    <summary class="cursor-pointer">Spreadsheet columns</summary>
+    <code class="d-block mt-1">cheque_no, amount, due_date, cheque_date, payment_id, bank_name, account_name, account_no, payable_to_type, payable_to_id</code>
+  </details>
+  <?= form_close() ?>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($contractCheques)): ?>
+<div class="form-card mb-3">
+  <h6 class="text-muted text-uppercase small mb-2">Contract cheques</h6>
+  <table class="table table-sm table-registry mb-0">
+    <thead><tr><th>No</th><th>Amount</th><th>Due</th><th>Payable to</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    <?php foreach ($contractCheques as $ch): ?>
+      <tr>
+        <td><?= esc($ch['cheque_no']) ?></td>
+        <td><?= number_format((float)$ch['amount'],2) ?></td>
+        <td><?= esc($ch['due_date'] ?? $ch['cheque_date'] ?? '—') ?></td>
+        <td class="small"><?= esc(ucfirst($ch['payable_to_type'] ?? 'company')) ?></td>
+        <td><span class="badge bg-secondary"><?= esc($ch['status']) ?></span></td>
+        <td><a href="<?= base_url('cheques/'.$ch['id']) ?>" class="btn btn-sm btn-fm-outline">View</a></td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+</div>
+<?php endif; ?>
+
+<div class="form-card mb-3">
   <h6 class="text-muted text-uppercase small mb-2">Payments</h6>
   <table class="table table-registry table-sm mb-0">
     <thead><tr><th>#</th><th>Due</th><th>Period</th><th>Amount</th><th>Status</th><th></th></tr></thead>
@@ -233,4 +376,16 @@ $canRenew = in_array($contract['status'], ['active', 'draft', 'expired'], true);
   </form>
 </div></div></div>
 
+<script>
+function toggleLandlordSelect(selectId, wrapId) {
+  const sel = document.getElementById(selectId);
+  const wrap = document.getElementById(wrapId);
+  if (!sel || !wrap) return;
+  const sync = () => { wrap.style.display = sel.value === 'landlord' ? '' : 'none'; };
+  sel.addEventListener('change', sync);
+  sync();
+}
+toggleLandlordSelect('payableToType', 'landlordSelectWrap');
+toggleLandlordSelect('bulkPayableToType', 'bulkLandlordSelectWrap');
+</script>
 <?= $this->endSection() ?>

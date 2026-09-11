@@ -53,7 +53,12 @@
 ?><tr>
 <td><a href="<?= base_url('contracts/'.$c['id']) ?>"><?= esc($c['contract_number']) ?></a></td>
 <td><?= esc($c['tenant_name'] ?? '—') ?></td><td><?= esc($c['facility_name'] ?? '—') ?></td><td><?= esc($c['unit_number'] ?? '—') ?></td>
-<td class="small"><?= $isParking ? '<span class="badge bg-secondary">Parking</span>' : 'Property' ?><?php $plate = $c['plate_number'] ?? $c['unit_plate_number'] ?? ''; if ($isParking && $plate !== ''): ?><br><span class="text-muted"><?= esc($plate) ?></span><?php endif; ?></td>
+<td class="small"><?php
+  $typeName = trim((string)($c['contract_type_name'] ?? ''));
+  if ($typeName === '') {
+      $typeName = $isParking ? 'Parking' : ucfirst(str_replace('_', ' ', $c['contract_kind'] ?? 'residential'));
+  }
+?><span class="badge bg-light text-dark border"><?= esc($typeName) ?></span><?php $plate = $c['plate_number'] ?? $c['unit_plate_number'] ?? ''; if ($isParking && $plate !== ''): ?><br><span class="text-muted"><?= esc($plate) ?></span><?php endif; ?></td>
 <td><?= number_format((float)$c['rent_amount'],2) ?> <?= esc($currency) ?></td>
 <td class="small"><?= esc($c['start_date']) ?> – <?= esc($c['end_date']) ?></td>
 <td><span class="badge bg-secondary"><?= esc($c['status']) ?></span></td>

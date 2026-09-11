@@ -4,8 +4,16 @@ namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
 use App\Controllers\Traits\ParkingContractTrait;
+use App\Models\Contract_model;
+use App\Services\ChequeImportService;
+use App\Services\ChequePaymentSyncService;
+use App\Services\ChequeTrackingService;
+use App\Services\SpreadsheetImportService;
 use App\Services\ContractSignatureService;
+use App\Services\ContractTemplateService;
+use App\Services\ContractTypeService;
 use App\Services\ParkingContractService;
+use App\Services\PaymentTrackingService;
 use App\Services\UtilityAccountService;
 
 class Leases extends BaseController
@@ -35,6 +43,10 @@ class Leases extends BaseController
             ->join('units u', 'u.id = lc.unit_id', 'left')
             ->join('facilities f', $this->leaseFacilityJoinSql(), 'left')
             ->where('lc.deleted_at', null);
+        if ($this->db->tableExists('contract_types') && $this->db->fieldExists('contract_type_id', self::TABLE)) {
+            $q->select('ct.name_en AS contract_type_name', false)
+                ->join('contract_types ct', 'ct.id = lc.contract_type_id', 'left');
+        }
         $this->scopeCompany($q, 'lc.company_id');
         $this->applyLeaseFacilityScope($q);
 
@@ -86,10 +98,6 @@ class Leases extends BaseController
         if ($preUnitId > 0 && $this->db->tableExists('units')) {
             $preUnit = $this->db->table('units')->where('id', $preUnitId)->get()->getRowArray();
             if ($preUnit) {
-                helper('fm');
-                if (fm_is_parking_unit($preUnit)) {
-                    return redirect()->to(fm_unit_parking_contract_url($preUnitId));
-                }
                 if (! $tenancySvc->unitIsVacant($preUnit)) {
                     return redirect()->to(base_url('units/view/' . $preUnitId))
                         ->with('error', $tenancySvc->vacantOnlyMessage());
@@ -98,14 +106,7 @@ class Leases extends BaseController
             }
         }
 
-        return view('leases/form', $this->viewData([
-            'title'      => 'New Lease Contract',
-            'contract'   => null,
-            'tenants'    => $this->tenantOptions(),
-            'facilities' => $this->facilityOptions(),
-            'units'      => $units,
-            'preUnit'    => $preUnit,
-        ]));
+        return view('contracts/form', $this->contractFormData(null, $units, $preUnit));
     }
 
     public function store()
@@ -113,6 +114,8 @@ class Leases extends BaseController
         if (! $this->pmTableExists(self::TABLE)) {
             return redirect()->to(base_url('contracts'))->with('error', 'Leases module is not available. Run database migration first.');
         }
+
+        $this->mergePropertyIdIntoPost();
 
         $rules = [
             'tenant_id'   => 'required|integer',
@@ -143,6 +146,7 @@ class Leases extends BaseController
         $id = (int) $this->db->insertID();
 
         $this->syncParkingUnitPlate((int) $data['unit_id'], $data);
+        $this->syncContractRentSchedule($id);
 
         $this->logActivity('create', 'lease_contracts', $id, 'Contract created: ' . $data['contract_number']);
 
@@ -207,14 +211,44 @@ class Leases extends BaseController
                 ->get()->getResultArray();
         }
 
+        $utilityAccounts = (new UtilityAccountService($this->db))->byUnit((int) ($contract['unit_id'] ?? 0));
+
+        $contractCheques = [];
+        if ($this->pmTableExists('cheques')) {
+            $contractCheques = $this->db->table('cheques')
+                ->where('contract_id', $id)
+                ->orderBy('cheque_date', 'DESC')
+                ->limit(20)
+                ->get()->getResultArray();
+        }
+
+        $landlords = [];
+        if ($this->db->tableExists('landlords')) {
+            $lq = $this->db->table('landlords')->select('id, full_name, bank_name, bank_account, bank_iban')
+                ->where('deleted_at', null)->orderBy('full_name');
+            $this->scopeCompany($lq, 'company_id');
+            $landlords = $lq->get()->getResultArray();
+        }
+
+        $typeSvc = new ContractTypeService($this->db);
+        $contractType = $typeSvc->resolveTypeForContract(
+            (int) ($contract['contract_type_id'] ?? 0),
+            $contract['contract_kind'] ?? null,
+            $contract['unit_type'] ?? null
+        );
+
         return view('leases/show', $this->viewData([
-            'title'      => 'Contract ' . $contract['contract_number'],
-            'contract'   => $contract,
-            'payments'   => $payments,
-            'amendments' => $amendments,
-            'offers'     => $offers,
-            'documents'  => $documents,
-            'signatureReady' => (new ContractSignatureService($this->db))->tableReady(),
+            'title'            => 'Contract ' . $contract['contract_number'],
+            'contract'         => $contract,
+            'contractType'     => $contractType,
+            'payments'         => $payments,
+            'amendments'       => $amendments,
+            'offers'           => $offers,
+            'documents'        => $documents,
+            'utilityAccounts'  => $utilityAccounts,
+            'contractCheques'  => $contractCheques,
+            'landlords'        => $landlords,
+            'signatureReady'   => (new ContractSignatureService($this->db))->tableReady(),
         ]));
     }
 
@@ -229,22 +263,9 @@ class Leases extends BaseController
             return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
         }
 
-        if ($this->isParkingContractRow($contract)) {
-            helper('fm');
-
-            return redirect()->to(base_url('contracts/' . $id . '/parking-print'));
-        }
-
         $units = $this->unitsForFacility((int) $contract['facility_id'], (int) ($contract['unit_id'] ?? 0));
 
-        return view('leases/form', $this->viewData([
-            'title'      => 'Edit Contract',
-            'contract'   => $contract,
-            'tenants'    => $this->tenantOptions(),
-            'facilities' => $this->facilityOptions(),
-            'units'      => $units,
-            'signatureReady' => (new ContractSignatureService($this->db))->tableReady(),
-        ]));
+        return view('contracts/form', $this->contractFormData($contract, $units));
     }
 
     public function update(int $id)
@@ -256,6 +277,8 @@ class Leases extends BaseController
         if (! $this->pmFind(self::TABLE, $id)) {
             return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
         }
+
+        $this->mergePropertyIdIntoPost();
 
         $rules = [
             'tenant_id'   => 'required|integer',
@@ -284,6 +307,7 @@ class Leases extends BaseController
         $this->db->table(self::TABLE)->where('id', $id)->update($data);
 
         $this->syncParkingUnitPlate((int) $data['unit_id'], $data);
+        $this->syncContractRentSchedule($id);
 
         $this->logActivity('update', 'lease_contracts', $id, 'Contract updated');
 
@@ -843,36 +867,12 @@ class Leases extends BaseController
         $tenantQid = $svc->tenantQid($contract);
         $signatureB64 = $svc->signatureDataUri($contract['tenant_signature_path'] ?? '');
 
-        $templateEn = $contract['custom_content_en'] ?? '';
-        $templateAr = $contract['custom_content_ar'] ?? '';
-
-        if ($templateEn === '' && $this->pmTableExists('contract_templates')) {
-            $tplId = $contract['template_id'] ?? null;
-            $q     = $this->db->table('contract_templates')->where('is_active', 1);
-            if ($tplId) {
-                $q->where('id', $tplId);
-            }
-            $tpl = $q->orderBy('id', 'DESC')->limit(1)->get()->getRowArray();
-            if ($tpl) {
-                $templateEn = $tpl['content_en'] ?? '';
-                $templateAr = $tpl['content_ar'] ?? '';
-            }
-        }
-
-        $vars = [
-            '{{unit_number}}'         => esc($contract['unit_number'] ?? ''),
-            '{{property_name}}'       => esc($contract['facility_name'] ?? ''),
-            '{{tenant_name}}'         => esc($contract['tenant_name'] ?? ''),
-            '{{tenant_qid}}'          => esc($tenantQid),
-            '{{rent_amount}}'         => number_format((float) ($contract['rent_amount'] ?? 0), 2),
-            '{{currency}}'            => $this->settings['currency'] ?? 'QAR',
-            '{{payment_frequency}}'   => esc($contract['payment_frequency'] ?? ''),
-            '{{start_date}}'          => esc($contract['start_date'] ?? ''),
-            '{{end_date}}'            => esc($contract['end_date'] ?? ''),
-            '{{contract_number}}'     => esc($contract['contract_number'] ?? ''),
-        ];
-        $templateEn = strtr($templateEn, $vars);
-        $templateAr = strtr($templateAr, $vars);
+        $contract['currency'] = $this->settings['currency'] ?? 'QAR';
+        $resolved = (new ContractTemplateService($this->db))->resolveForContract($contract, $tenantQid);
+        $templateEn = $resolved['content_en'];
+        $templateAr = $resolved['content_ar'];
+        $termsEn    = $resolved['terms_en'];
+        $termsAr    = $resolved['terms_ar'];
 
         if ($this->request->getGet('pdf')) {
             return $this->renderStandardLeasePdf($contract, $templateEn, $templateAr, $tenantQid, $signatureB64);
@@ -885,6 +885,8 @@ class Leases extends BaseController
             'tenantSignatureB64'   => $signatureB64,
             'templateEn'           => $templateEn,
             'templateAr'           => $templateAr,
+            'termsEn'              => $termsEn ?? '',
+            'termsAr'              => $termsAr ?? '',
             'usePdf'               => true,
         ]));
     }
@@ -1271,19 +1273,245 @@ class Leases extends BaseController
             ->vacantUnitsForFacility($facilityId, $includeUnitId);
     }
 
+    public function saveUtilityTransfer(int $id)
+    {
+        if (! $this->request->is('post')) {
+            return redirect()->back();
+        }
+
+        $contract = $this->contractDetail($id);
+        if (! $contract) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
+        }
+
+        $applicable = $this->request->getPost('utility_transfer_applicable') ? 1 : 0;
+        $details    = trim((string) $this->request->getPost('utility_transfer_details'));
+        $transferDate = $this->request->getPost('utility_transfer_date') ?: ($contract['start_date'] ?? date('Y-m-d'));
+
+        $update = ['updated_at' => date('Y-m-d H:i:s')];
+        if ($this->db->fieldExists('utility_transfer_applicable', self::TABLE)) {
+            $update['utility_transfer_applicable'] = $applicable;
+        }
+        if ($this->db->fieldExists('utility_transfer_details', self::TABLE)) {
+            $update['utility_transfer_details'] = $details !== '' ? esc($details) : null;
+        }
+        $this->db->table(self::TABLE)->where('id', $id)->update($update);
+
+        if ($applicable && ! empty($contract['unit_id']) && ! empty($contract['tenant_id'])) {
+            (new UtilityAccountService($this->db))->transferToTenantForUnit(
+                (int) $contract['unit_id'],
+                (int) $contract['tenant_id'],
+                $transferDate
+            );
+        }
+
+        $this->logActivity('utility_transfer', 'lease_contracts', $id, $applicable ? 'Utility transfer recorded' : 'Utility transfer disabled');
+
+        return redirect()->to(base_url('contracts/' . $id))->with('success', 'Utility transfer settings saved.');
+    }
+
+    public function recordChequePayment(int $id)
+    {
+        if (! $this->request->is('post')) {
+            return redirect()->back();
+        }
+
+        $contract = $this->contractDetail($id);
+        if (! $contract) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
+        }
+
+        if (! $this->pmTableExists('cheques')) {
+            return redirect()->back()->with('error', 'Cheques module not available.');
+        }
+
+        $chequeNo = trim((string) $this->request->getPost('cheque_no'));
+        $amount   = (float) $this->request->getPost('amount');
+        if ($chequeNo === '' || $amount <= 0) {
+            return redirect()->back()->with('error', 'Cheque number and amount are required.');
+        }
+
+        $payableType = $this->request->getPost('payable_to_type') ?: 'company';
+        $payableId   = (int) ($this->request->getPost('payable_to_id') ?? 0) ?: null;
+        $landlordId  = $payableType === 'landlord' ? $payableId : null;
+        $paymentId   = (int) ($this->request->getPost('payment_id') ?? 0) ?: null;
+
+        $imagePath = null;
+        $file = $this->request->getFile('cheque_image');
+        if ($file && $file->isValid() && ! $file->hasMoved()) {
+            $dir = WRITEPATH . 'uploads/cheques/';
+            if (! is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+            $newName = 'chq_' . time() . '_' . $file->getRandomName();
+            $file->move($dir, $newName);
+            $imagePath = 'writable/uploads/cheques/' . $newName;
+        }
+
+        $bankName = esc(trim((string) $this->request->getPost('bank_name'))) ?: null;
+        $accountName = esc(trim((string) $this->request->getPost('account_name'))) ?: null;
+        $accountNo   = esc(trim((string) $this->request->getPost('account_no'))) ?: null;
+
+        if ($payableType === 'landlord' && $landlordId && $this->db->tableExists('landlords')) {
+            $ll = $this->db->table('landlords')->where('id', $landlordId)->get()->getRowArray();
+            if ($ll) {
+                $bankName    = $bankName ?: ($ll['bank_name'] ?? null);
+                $accountName = $accountName ?: ($ll['full_name'] ?? null);
+                $accountNo   = $accountNo ?: ($ll['bank_account'] ?? $ll['bank_iban'] ?? null);
+            }
+        }
+
+        $chequeData = [
+            'company_id'      => $contract['company_id'],
+            'contract_id'     => $id,
+            'tenant_id'       => $contract['tenant_id'],
+            'facility_id'     => $contract['facility_id'],
+            'payment_id'      => $paymentId,
+            'landlord_id'     => $landlordId,
+            'payable_to_type' => $payableType,
+            'payable_to_id'   => $payableId,
+            'cheque_no'       => esc($chequeNo),
+            'amount'          => $amount,
+            'bank_name'       => $bankName,
+            'account_name'    => $accountName,
+            'account_no'      => $accountNo,
+            'cheque_date'     => $this->request->getPost('cheque_date') ?: null,
+            'due_date'        => $this->request->getPost('due_date') ?: null,
+            'received_date'   => $this->request->getPost('received_date') ?: date('Y-m-d'),
+            'status'          => 'pending',
+            'image_path'      => $imagePath,
+            'notes'           => esc(trim((string) $this->request->getPost('notes'))) ?: null,
+        ];
+        $chequeSvc = new ChequeTrackingService($this->db);
+        $chequeId  = $chequeSvc->createCheque($chequeData, (int) ($this->currentUser()['id'] ?? 0));
+        $chequeData['id'] = $chequeId;
+
+        if ($paymentId && $this->pmTableExists('lease_payments')) {
+            $this->db->table('lease_payments')->where('id', $paymentId)->update([
+                'payment_method' => 'cheque',
+                'cheque_no'      => esc($chequeNo),
+                'updated_at'     => date('Y-m-d H:i:s'),
+            ]);
+            (new ChequePaymentSyncService($this->db))->onChequeRegistered($chequeData, (int) ($this->currentUser()['id'] ?? 0));
+        }
+
+        $this->logActivity('cheque', 'lease_contracts', $id, 'Cheque registered: ' . $chequeNo);
+
+        return redirect()->to(base_url('contracts/' . $id))->with('success', 'Cheque recorded and linked to contract.');
+    }
+
+    public function bulkImportCheques(int $id)
+    {
+        if (! $this->request->is('post')) {
+            return redirect()->back();
+        }
+
+        $contract = $this->contractDetail($id);
+        if (! $contract) {
+            return redirect()->to(base_url('contracts'))->with('error', 'Contract not found.');
+        }
+
+        if (($contract['payment_type'] ?? '') !== 'cheque') {
+            return redirect()->back()->with('error', 'Bulk cheque import is only available when payment mode is Cheque.');
+        }
+
+        if (! $this->pmTableExists('cheques')) {
+            return redirect()->back()->with('error', 'Cheques module not available.');
+        }
+
+        $file = $this->request->getFile('import_file');
+        if (! $file || ! $file->isValid()) {
+            return redirect()->back()->with('error', 'Please upload a valid Excel (.xlsx) or CSV file.');
+        }
+
+        $rows = (new SpreadsheetImportService())->rowsFromUpload($file);
+        if ($rows === []) {
+            return redirect()->back()->with('error', 'No cheque rows found in the uploaded file.');
+        }
+
+        $payableType = $this->request->getPost('payable_to_type') ?: 'company';
+        $payableId   = (int) ($this->request->getPost('payable_to_id') ?? 0) ?: null;
+        $receivedDate = $this->request->getPost('received_date') ?: date('Y-m-d');
+
+        $uid    = (int) ($this->currentUser()['id'] ?? 0);
+        $result = (new ChequeImportService($this->db))->importRows($rows, $uid, [
+            'forced_contract_id'     => $id,
+            'company_id'             => (int) ($contract['company_id'] ?? 0) ?: null,
+            'default_payable_to_type'=> $payableType,
+            'default_payable_to_id'  => $payableId,
+            'default_received_date'  => $receivedDate,
+        ]);
+
+        $msg = $result['count'] . ' cheque(s) imported for this contract.';
+        if ($result['errors'] !== []) {
+            $msg .= ' Skipped ' . count($result['errors']) . ' row(s).';
+        }
+
+        $this->logActivity('cheque_bulk_import', 'lease_contracts', $id, 'Imported ' . $result['count'] . ' cheques');
+
+        return redirect()->to(base_url('contracts/' . $id))
+            ->with('success', $msg)
+            ->with('import_errors', $result['errors']);
+    }
+
+    /** @param list<array<string,mixed>> $units */
+    private function contractFormData(?array $contract, array $units = [], ?array $preUnit = null): array
+    {
+        $typeSvc = new ContractTypeService($this->db);
+        $templates = [];
+        if ($this->pmTableExists('contract_templates')) {
+            $templates = $this->db->table('contract_templates')->where('is_active', 1)->orderBy('name')->get()->getResultArray();
+        }
+
+        $rentSchedule = [];
+        if ($contract && $this->db->tableExists('contract_rent_schedule')) {
+            $rentSchedule = $this->db->table('contract_rent_schedule')
+                ->where('contract_id', (int) $contract['id'])
+                ->orderBy('year_number')
+                ->get()->getResultArray();
+        }
+
+        return $this->viewData([
+            'title'          => $contract ? 'Edit Contract' : 'New Contract',
+            'contract'       => $contract,
+            'tenants'        => $this->tenantOptions(),
+            'properties'     => $this->facilityOptions(),
+            'facilities'     => $this->facilityOptions(),
+            'units'          => $units,
+            'preUnit'        => $preUnit,
+            'templates'      => $templates,
+            'contractTypes'  => $typeSvc->activeTypes(),
+            'rentSchedule'   => $rentSchedule,
+            'signatureReady' => (new ContractSignatureService($this->db))->tableReady(),
+        ]);
+    }
+
     private function contractPayload(): array
     {
-        $unitId = (int) $this->request->getPost('unit_id');
-        $unit   = $unitId > 0 && $this->db->tableExists('units')
+        $facilityId = (int) ($this->request->getPost('facility_id') ?: $this->request->getPost('property_id'));
+        $unitId     = (int) $this->request->getPost('unit_id');
+        $unit       = $unitId > 0 && $this->db->tableExists('units')
             ? $this->db->table('units')->where('id', $unitId)->get()->getRowArray()
             : null;
-        $isParking = $unit && strtolower((string) ($unit['unit_type'] ?? '')) === 'parking';
+
+        $typeSvc  = new ContractTypeService($this->db);
+        $typeId   = (int) ($this->request->getPost('contract_type_id') ?? 0);
+        $typeSlug = trim((string) ($this->request->getPost('contract_type') ?? ''));
+        $typeRow  = $typeSvc->resolveTypeForContract($typeId, $typeSlug, $unit['unit_type'] ?? null);
+        $isParking = ($typeRow['slug'] ?? '') === 'parking'
+            || ($unit && strtolower((string) ($unit['unit_type'] ?? '')) === 'parking');
+
+        $freq = $this->request->getPost('payment_frequency') ?: 'monthly';
+        if ($freq === 'annual') {
+            $freq = 'yearly';
+        }
 
         $data = [
             'company_id'             => $this->pmCompanyId(),
             'tenant_id'              => (int) $this->request->getPost('tenant_id'),
-            'facility_id'            => (int) $this->request->getPost('facility_id'),
+            'facility_id'            => $facilityId,
             'unit_id'                => $unitId,
+            'template_id'            => (int) ($this->request->getPost('template_id') ?? 0) ?: null,
             'status'                 => $this->request->getPost('status'),
             'signed_date'            => $this->request->getPost('signed_date') ?: null,
             'billing_start_date'     => $this->request->getPost('billing_start_date') ?: null,
@@ -1291,44 +1519,48 @@ class Leases extends BaseController
             'end_date'               => $this->request->getPost('end_date'),
             'rent_amount'            => $this->request->getPost('rent_amount'),
             'security_deposit'       => $this->request->getPost('security_deposit') ?: null,
-            'payment_frequency'      => $this->request->getPost('payment_frequency') ?: 'monthly',
+            'payment_frequency'      => $freq,
             'payment_type'           => $this->request->getPost('payment_type') ?: 'cheque',
             'payment_day'            => $this->request->getPost('payment_day') ?: null,
             'late_penalty_pct'       => $this->request->getPost('late_penalty_pct') ?: null,
             'grace_period_days'      => $this->request->getPost('grace_period_days') ?: null,
             'discount_pct'           => $this->request->getPost('discount_pct') ?: null,
+            'has_free_period'        => $this->request->getPost('has_free_period') ? 1 : 0,
+            'free_period_months'     => $this->request->getPost('free_period_months') ?: null,
+            'free_period_desc'       => esc($this->request->getPost('free_period_desc')) ?: null,
+            'free_period_position'   => $this->request->getPost('free_period_position') ?: null,
+            'includes_utilities'     => $this->request->getPost('includes_utilities') ? 1 : 0,
+            'utilities_desc'         => esc($this->request->getPost('utilities_desc')) ?: null,
+            'includes_furnished'     => $this->request->getPost('includes_furnished') ? 1 : 0,
+            'furnished_desc'         => esc($this->request->getPost('furnished_desc')) ?: null,
+            'deposit_payment_method' => $this->request->getPost('deposit_payment_method') ?: null,
+            'deposit_cheque_no'      => esc($this->request->getPost('deposit_cheque_no')) ?: null,
+            'prorata_basis'          => $this->request->getPost('prorata_basis') ?: null,
             'vat_applicable'         => $this->request->getPost('vat_applicable') ? 1 : 0,
             'vat_rate'               => $this->request->getPost('vat_rate') ?: null,
             'auto_renew'             => $this->request->getPost('auto_renew') ? 1 : 0,
             'auto_generate_invoices' => $this->request->getPost('auto_generate_invoices') ? 1 : 0,
-            'contract_terms'         => esc($this->request->getPost('contract_terms')) ?: null,
+            'contract_terms'         => $this->request->getPost('contract_terms') ?: null,
+            'custom_content_en'      => $this->request->getPost('custom_content_en') ?: null,
+            'custom_content_ar'      => $this->request->getPost('custom_content_ar') ?: null,
             'notes'                  => esc($this->request->getPost('notes')) ?: null,
         ];
 
-        if ($isParking && $this->db->fieldExists('contract_kind', self::TABLE)) {
-            $data['contract_kind'] = 'parking';
+        if ($this->db->fieldExists('contract_type_id', self::TABLE) && (int) ($typeRow['id'] ?? 0) > 0) {
+            $data['contract_type_id'] = (int) $typeRow['id'];
         }
-        if ($isParking && $this->db->fieldExists('plate_number', self::TABLE)) {
-            $plate = trim((string) $this->request->getPost('plate_number'));
-            $data['plate_number'] = $plate !== '' ? esc($plate) : ($unit['plate_number'] ?? null);
+        if ($this->db->fieldExists('contract_kind', self::TABLE)) {
+            $data['contract_kind'] = $typeRow['slug'] ?? ($isParking ? 'parking' : 'standard');
         }
-        if ($isParking && $this->db->fieldExists('vehicle_type', self::TABLE)) {
-            $data['vehicle_type'] = esc(trim((string) $this->request->getPost('vehicle_type') ?? '')) ?: null;
-        }
-        if ($isParking && $this->db->fieldExists('vehicle_description', self::TABLE)) {
-            $data['vehicle_description'] = esc(trim((string) $this->request->getPost('vehicle_description') ?? '')) ?: null;
-        }
-        if ($isParking && $this->db->fieldExists('title_deed_no', self::TABLE)) {
-            $data['title_deed_no'] = esc(trim((string) $this->request->getPost('title_deed_no') ?? '')) ?: null;
-        }
-        if ($isParking && $this->db->fieldExists('zone_no', self::TABLE)) {
-            $data['zone_no'] = esc(trim((string) $this->request->getPost('zone_no') ?? '')) ?: null;
-        }
-        if ($isParking && $this->db->fieldExists('street_no', self::TABLE)) {
-            $data['street_no'] = esc(trim((string) $this->request->getPost('street_no') ?? '')) ?: null;
-        }
-        if ($isParking && $this->db->fieldExists('building_no', self::TABLE)) {
-            $data['building_no'] = esc(trim((string) $this->request->getPost('building_no') ?? '')) ?: null;
+
+        foreach (['plate_number', 'vehicle_type', 'vehicle_description', 'title_deed_no', 'zone_no', 'street_no', 'building_no'] as $field) {
+            if ($this->db->fieldExists($field, self::TABLE)) {
+                $val = trim((string) $this->request->getPost($field));
+                if ($field === 'plate_number' && $val === '' && $isParking) {
+                    $val = trim((string) ($unit['plate_number'] ?? ''));
+                }
+                $data[$field] = $val !== '' ? esc($val) : null;
+            }
         }
 
         $this->applyTenantQidField($data);
@@ -1370,6 +1602,23 @@ class Leases extends BaseController
         }
 
         return strtolower((string) ($contract['unit_type'] ?? '')) === 'parking';
+    }
+
+    private function mergePropertyIdIntoPost(): void
+    {
+        if (! $this->request->getPost('facility_id') && $this->request->getPost('property_id')) {
+            $_POST['facility_id'] = $this->request->getPost('property_id');
+        }
+    }
+
+    private function syncContractRentSchedule(int $contractId): void
+    {
+        $annual = $this->request->getPost('annual_rent');
+        if (! is_array($annual)) {
+            return;
+        }
+
+        model(Contract_model::class)->syncRentSchedule($contractId, $annual);
     }
 
     /** @param array<string, mixed> $data */
@@ -1423,34 +1672,13 @@ class Leases extends BaseController
             return $this->renderParkingContractDocument($d, true, $signatureB64);
         }
 
-        $templateEn = $contract['custom_content_en'] ?? '';
-        $templateAr = $contract['custom_content_ar'] ?? '';
-        if ($templateEn === '' && $this->pmTableExists('contract_templates')) {
-            $tpl = $this->db->table('contract_templates')->where('is_active', 1)
-                ->orderBy('id', 'DESC')->limit(1)->get()->getRowArray();
-            if ($tpl) {
-                $templateEn = $tpl['content_en'] ?? '';
-                $templateAr = $tpl['content_ar'] ?? '';
-            }
-        }
-
-        $vars = [
-            '{{unit_number}}'       => esc($contract['unit_number'] ?? ''),
-            '{{property_name}}'     => esc($contract['facility_name'] ?? ''),
-            '{{tenant_name}}'       => esc($contract['tenant_name'] ?? ''),
-            '{{tenant_qid}}'        => esc($tenantQid),
-            '{{rent_amount}}'       => number_format((float) ($contract['rent_amount'] ?? 0), 2),
-            '{{currency}}'          => $this->settings['currency'] ?? 'QAR',
-            '{{payment_frequency}}' => esc($contract['payment_frequency'] ?? ''),
-            '{{start_date}}'        => esc($contract['start_date'] ?? ''),
-            '{{end_date}}'          => esc($contract['end_date'] ?? ''),
-            '{{contract_number}}'   => esc($contract['contract_number'] ?? ''),
-        ];
+        $contract['currency'] = $this->settings['currency'] ?? 'QAR';
+        $resolved = (new ContractTemplateService($this->db))->resolveForContract($contract, $tenantQid);
 
         return $this->renderStandardLeasePdf(
             $contract,
-            strtr($templateEn, $vars),
-            strtr($templateAr, $vars),
+            $resolved['content_en'],
+            $resolved['content_ar'],
             $tenantQid,
             $signatureB64
         );

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
+use App\Services\PaymentTrackingService;
 
 class Payments extends BaseController
 {
@@ -94,7 +95,7 @@ class Payments extends BaseController
             'amount'         => 'required|decimal',
             'payment_method' => 'required|max_length[50]',
             'due_date'       => 'permit_empty|valid_date[Y-m-d]',
-            'status'         => 'required|in_list[pending,paid,partial,overdue,cancelled,postponed]',
+            'status'         => 'required|in_list[pending,paid,partial,overdue,cancelled,postponed,cheque_received,cheque_bounced,converted_to_cash]',
         ];
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
@@ -131,10 +132,21 @@ class Payments extends BaseController
                 ->get()->getResultArray();
         }
 
+        $tracking  = new PaymentTrackingService($this->db);
+        $paidTotal = (float) ($payment['amount_paid'] ?? 0);
+        if ($paidTotal <= 0) {
+            $paidTotal = $tracking->paidTotal($id);
+        }
+
         return view('payments/show', $this->viewData([
-            'title'    => 'Payment ' . ($payment['payment_number'] ?? $id),
-            'payment'  => $payment,
-            'partials' => $partials,
+            'title'           => 'Payment ' . ($payment['payment_number'] ?? $id),
+            'payment'         => $payment,
+            'partials'        => $partials,
+            'paidTotal'       => $paidTotal,
+            'balance'         => $tracking->balance(array_merge($payment, ['amount_paid' => $paidTotal])),
+            'displayStatus'   => $tracking->displayStatus($payment),
+            'statusBadge'     => $tracking->statusBadge($payment),
+            'paymentHistory'  => $tracking->historyForPayment($id),
         ]));
     }
 
@@ -171,7 +183,7 @@ class Payments extends BaseController
             'amount'         => 'required|decimal',
             'payment_method' => 'required|max_length[50]',
             'due_date'       => 'permit_empty|valid_date[Y-m-d]',
-            'status'         => 'required|in_list[pending,paid,partial,overdue,cancelled,postponed]',
+            'status'         => 'required|in_list[pending,paid,partial,overdue,cancelled,postponed,cheque_received,cheque_bounced,converted_to_cash]',
         ];
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
@@ -223,12 +235,15 @@ class Payments extends BaseController
         $amount      = $this->request->getPost('amount') ?: $payment['amount'];
         $paymentDate = $this->request->getPost('payment_date') ?: date('Y-m-d');
 
+        $tracking = new PaymentTrackingService($this->db);
         $this->db->table(self::TABLE)->where('id', $id)->update([
             'status'       => 'paid',
             'amount'       => $amount,
+            'amount_paid'  => $amount,
             'payment_date' => $paymentDate,
             'updated_at'   => date('Y-m-d H:i:s'),
         ]);
+        $tracking->logStatusChange($id, $payment['status'] ?? null, 'paid', (float) $amount, 'Full payment collected', (int) ($payment['contract_id'] ?? 0), (int) ($this->currentUser()['id'] ?? 0));
 
         if (($payment['payment_method'] ?? '') === 'cheque') {
             $autoCreate = $this->settings['auto_create_cheque_record'] ?? '0';
@@ -296,12 +311,28 @@ class Payments extends BaseController
         $paid    = $this->totalPartials($id) + (float) $partialAmount;
         $remaining = (float) $payment['amount'] - $paid;
         $notes   = 'Partial paid: ' . $paid . ' / ' . $payment['amount'] . ' — Remaining: ' . max(0, $remaining);
+        $newStatus = $remaining <= 0.009 ? 'paid' : 'partial';
 
-        $this->db->table(self::TABLE)->where('id', $id)->update([
-            'status'     => 'partial',
+        $update = [
+            'status'     => $newStatus,
+            'amount_paid'=> $paid,
             'notes'      => $notes,
             'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        ];
+        if ($newStatus === 'paid') {
+            $update['payment_date'] = $this->request->getPost('paid_date') ?: date('Y-m-d');
+        }
+        $this->db->table(self::TABLE)->where('id', $id)->update($update);
+
+        (new PaymentTrackingService($this->db))->logStatusChange(
+            $id,
+            $payment['status'] ?? null,
+            $newStatus === 'paid' ? 'paid' : 'partially_paid',
+            (float) $partialAmount,
+            $notes,
+            (int) ($payment['contract_id'] ?? 0),
+            (int) ($this->currentUser()['id'] ?? 0)
+        );
 
         $this->logActivity('partial', 'lease_payments', $id, 'Partial payment: ' . $partialAmount);
 
@@ -335,12 +366,29 @@ class Payments extends BaseController
             return redirect()->back()->with('error', 'Postpone note is required.');
         }
 
-        $this->db->table(self::TABLE)->where('id', $id)->update([
+        $update = [
             'status'     => 'postponed',
             'due_date'   => $postponedTo,
             'notes'      => 'Postponed to ' . $postponedTo . ': ' . $note,
             'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        ];
+        if ($this->db->fieldExists('original_due_date', self::TABLE) && empty($payment['original_due_date'])) {
+            $update['original_due_date'] = $payment['due_date'];
+        }
+        if ($this->db->fieldExists('postponed_from_date', self::TABLE)) {
+            $update['postponed_from_date'] = $payment['due_date'];
+        }
+        $this->db->table(self::TABLE)->where('id', $id)->update($update);
+
+        (new PaymentTrackingService($this->db))->logStatusChange(
+            $id,
+            $payment['status'] ?? null,
+            'postponed',
+            null,
+            'Postponed from ' . ($payment['due_date'] ?? '') . ' to ' . $postponedTo . ': ' . $note,
+            (int) ($payment['contract_id'] ?? 0),
+            (int) ($this->currentUser()['id'] ?? 0)
+        );
 
         $this->logActivity('postpone', 'lease_payments', $id, 'Payment postponed to ' . $postponedTo);
 

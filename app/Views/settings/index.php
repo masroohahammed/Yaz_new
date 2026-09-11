@@ -15,6 +15,7 @@
     <a href="<?= base_url('settings/workflow') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-diagram-3 me-1"></i>Workflow</a>
     <a href="<?= base_url('reports/activity-log') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-activity me-1"></i>Activity Log</a>
     <a href="<?= base_url('settings/finance-module') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-diagram-3 me-1"></i>Finance Modules</a>
+    <a href="<?= base_url('settings/contract-setup') ?>" class="btn btn-fm-outline btn-sm"><i class="bi bi-file-earmark-richtext me-1"></i>Contract Setup</a>
   </div>
 </div>
 

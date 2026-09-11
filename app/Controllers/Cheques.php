@@ -4,6 +4,10 @@ namespace App\Controllers;
 
 use App\Controllers\Traits\PmModuleTrait;
 use App\Services\AiModel;
+use App\Services\ChequeImportService;
+use App\Services\ChequePaymentSyncService;
+use App\Services\ChequeTrackingService;
+use App\Services\SpreadsheetImportService;
 
 class Cheques extends BaseController
 {
@@ -116,10 +120,13 @@ class Cheques extends BaseController
             return redirect()->to(base_url('cheques'))->with('error', 'Cheque not found.');
         }
 
+        $history = (new ChequeTrackingService($this->db))->historyForCheque($id);
+
         return view('cheques/form', $this->viewData([
             'title'    => 'Cheque #' . $cheque['cheque_no'],
             'cheque'   => $cheque,
             'readOnly' => true,
+            'history'  => $history,
         ]));
     }
 
@@ -160,6 +167,9 @@ class Cheques extends BaseController
         }
 
         $this->db->table(self::TABLE)->where('id', $id)->update($updateData);
+        $uid = (int) ($this->currentUser()['id'] ?? 0);
+        (new ChequeTrackingService($this->db))->logStatusChange($id, $cheque['status'] ?? null, 'bounced', $reason, $uid);
+        (new ChequePaymentSyncService($this->db))->onChequeBounced(array_merge($cheque, $updateData), $reason, $uid);
 
         (new AiModel($this->db))->raiseFlag(
             'cheque',
@@ -202,6 +212,7 @@ class Cheques extends BaseController
         }
 
         $this->db->table(self::TABLE)->where('id', $id)->update($update);
+        (new ChequeTrackingService($this->db))->logStatusChange($id, $cheque['status'] ?? null, 'deposited', 'Cheque deposited', (int) ($this->currentUser()['id'] ?? 0));
 
         $this->logActivity('deposit', 'cheques', $id, 'Cheque deposited: ' . $cheque['cheque_no']);
 
@@ -237,6 +248,9 @@ class Cheques extends BaseController
         }
 
         $this->db->table(self::TABLE)->where('id', $id)->update($update);
+        $uid = (int) ($this->currentUser()['id'] ?? 0);
+        (new ChequeTrackingService($this->db))->logStatusChange($id, $cheque['status'] ?? null, 'cleared', 'Cheque cleared', $uid);
+        (new ChequePaymentSyncService($this->db))->onChequeCleared(array_merge($cheque, $update), $uid);
 
         $this->logActivity('clear', 'cheques', $id, 'Cheque cleared: ' . $cheque['cheque_no']);
 
@@ -283,6 +297,9 @@ class Cheques extends BaseController
         }
 
         $this->db->table(self::TABLE)->where('id', $id)->update($updateData);
+        $uid = (int) ($this->currentUser()['id'] ?? 0);
+        (new ChequeTrackingService($this->db))->logStatusChange($id, $cheque['status'] ?? null, 'cleared', 'Converted to cash' . ($notes ? ': ' . $notes : ''), $uid);
+        (new ChequePaymentSyncService($this->db))->onConvertedToCash(array_merge($cheque, $updateData), $notes, $uid);
 
         if ($this->pmTableExists('lease_payments') && ! empty($cheque['contract_id'])) {
             $payNo = $this->generateNumber('PAY', 'lease_payments', 'payment_number');
@@ -318,82 +335,31 @@ class Cheques extends BaseController
 
         if ($this->request->is('get')) {
             return view('cheques/import', $this->viewData([
-                'title' => 'Import Cheques (CSV)',
+                'title' => 'Import Cheques (Excel / CSV)',
             ]));
         }
 
-        $file = $this->request->getFile('csv_file');
+        $file = $this->request->getFile('import_file') ?? $this->request->getFile('csv_file');
         if (! $file || ! $file->isValid()) {
-            return redirect()->back()->with('error', 'Please upload a valid CSV file.');
+            return redirect()->back()->with('error', 'Please upload a valid Excel (.xlsx) or CSV file.');
         }
 
-        $content = file_get_contents($file->getTempName());
-        $lines   = explode("\n", str_replace("\r", "", $content));
-        $headers = null;
-        $count   = 0;
-        $errors  = [];
-
-        foreach ($lines as $lineNum => $line) {
-            $line = trim($line);
-            if ($line === '') {
-                continue;
-            }
-            $cols = str_getcsv($line);
-
-            if ($headers === null) {
-                $headers = array_map('strtolower', array_map('trim', $cols));
-                continue;
-            }
-
-            $row = array_combine($headers, array_pad($cols, count($headers), ''));
-            if ($row === false) {
-                $errors[] = 'Line ' . ($lineNum + 1) . ': column count mismatch';
-                continue;
-            }
-
-            $chequeNo = trim($row['cheque_no'] ?? $row['cheque no'] ?? '');
-            $amount   = trim($row['amount'] ?? '');
-            if ($chequeNo === '' || $amount === '') {
-                $errors[] = 'Line ' . ($lineNum + 1) . ': cheque_no and amount required';
-                continue;
-            }
-
-            $contractId = null;
-            $tenantId   = null;
-            $facilityId = null;
-            $cid        = (int) ($row['contract_id'] ?? 0);
-            if ($cid > 0 && $this->pmTableExists('lease_contracts')) {
-                $contract = $this->db->table('lease_contracts')->where('id', $cid)->get()->getRowArray();
-                if ($contract) {
-                    $contractId = $cid;
-                    $tenantId   = (int) ($contract['tenant_id'] ?? 0) ?: null;
-                    $facilityId = (int) ($contract['facility_id'] ?? 0) ?: null;
-                }
-            }
-
-            $this->db->table(self::TABLE)->insert([
-                'company_id'    => $this->pmCompanyId(),
-                'contract_id'   => $contractId,
-                'tenant_id'     => $tenantId,
-                'facility_id'   => $facilityId,
-                'cheque_no'     => esc($chequeNo),
-                'amount'        => $amount,
-                'bank_name'     => esc(trim($row['bank_name'] ?? '')) ?: null,
-                'cheque_date'   => trim($row['cheque_date'] ?? '') ?: null,
-                'status'        => 'pending',
-                'created_at'    => date('Y-m-d H:i:s'),
-            ]);
-            $count++;
-        }
+        $rows = (new SpreadsheetImportService())->rowsFromUpload($file);
+        $uid  = (int) ($this->currentUser()['id'] ?? 0);
+        $result = (new ChequeImportService($this->db))->importRows($rows, $uid, [
+            'company_id' => $this->pmCompanyId(),
+        ]);
+        $count  = $result['count'];
+        $errors = $result['errors'];
 
         $msg = $count . ' cheque(s) imported.';
         if ($errors) {
-            $msg .= ' Errors on ' . count($errors) . ' rows.';
+            $msg .= ' Skipped ' . count($errors) . ' row(s).';
         }
 
-        $this->logActivity('import_csv', 'cheques', 0, 'Imported ' . $count . ' cheques via CSV');
+        $this->logActivity('import_csv', 'cheques', 0, 'Imported ' . $count . ' cheques via spreadsheet');
 
-        return redirect()->to(base_url('cheques'))->with('success', $msg);
+        return redirect()->to(base_url('cheques'))->with('success', $msg)->with('import_errors', $errors);
     }
 
     // ── Export CSV ────────────────────────────────────────────────────────────

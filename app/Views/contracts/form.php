@@ -7,7 +7,18 @@ $c = $contract;
 $propertyId = (int) ($c['facility_id'] ?? service('request')->getGet('property_id') ?? service('request')->getGet('facility_id') ?? 0);
 $unitId = (int) ($c['unit_id'] ?? service('request')->getGet('unit_id') ?? 0);
 $tenantId = (int) ($c['tenant_id'] ?? service('request')->getGet('tenant_id') ?? 0);
-$formUrl = $isEdit ? base_url('contracts/update/' . $c['id']) : base_url('contracts/store');
+$formUrl = $isEdit ? base_url('contracts/' . $c['id'] . '/update') : base_url('contracts');
+$contractTypes = $contractTypes ?? [];
+$selectedTypeId = (int) old('contract_type_id', $c['contract_type_id'] ?? 0);
+$selectedSlug = old('contract_type', $c['contract_kind'] ?? ($preUnit && strtolower((string)($preUnit['unit_type'] ?? '')) === 'parking' ? 'parking' : 'residential'));
+if ($selectedTypeId < 1 && $selectedSlug !== '') {
+    foreach ($contractTypes as $ct) {
+        if (($ct['slug'] ?? '') === $selectedSlug) {
+            $selectedTypeId = (int) $ct['id'];
+            break;
+        }
+    }
+}
 ?>
 
 <div class="page-header">
@@ -28,6 +39,35 @@ $formUrl = $isEdit ? base_url('contracts/update/' . $c['id']) : base_url('contra
 <div class="row g-3">
   <div class="col-lg-8">
     <div class="fm-form-section">
+      <h6>Contract type</h6>
+      <div class="row g-2">
+        <div class="col-md-6">
+          <label class="form-label small">Type *</label>
+          <select name="contract_type_id" id="contractTypeSelect" class="form-select form-select-sm" required>
+            <option value="">— Select contract type —</option>
+            <?php foreach ($contractTypes as $ct): ?>
+            <option value="<?= (int) $ct['id'] ?>" data-slug="<?= esc($ct['slug']) ?>"
+              <?= $selectedTypeId === (int) $ct['id'] ? 'selected' : '' ?>>
+              <?= esc($ct['name_en']) ?><?= ! empty($ct['name_ar']) ? ' / ' . esc($ct['name_ar']) : '' ?>
+            </option>
+            <?php endforeach; ?>
+          </select>
+          <input type="hidden" name="contract_type" id="contractTypeSlug" value="<?= esc($selectedSlug) ?>">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small">Print template</label>
+          <select name="template_id" id="templateSelect" class="form-select form-select-sm">
+            <option value="">— Default for type —</option>
+            <?php foreach ($templates ?? [] as $tm): ?>
+            <option value="<?= $tm['id'] ?>" data-type-id="<?= (int) ($tm['contract_type_id'] ?? 0) ?>"
+              <?= ($c['template_id'] ?? '') == $tm['id'] ? 'selected' : '' ?>><?= esc($tm['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="fm-form-section mt-3">
       <h6>Parties</h6>
       <div class="row g-2">
         <div class="col-md-6">
@@ -55,15 +95,6 @@ $formUrl = $isEdit ? base_url('contracts/update/' . $c['id']) : base_url('contra
           <select name="unit_id" id="unitSelect" class="form-select form-select-sm" required>
             <option value="">— Select unit —</option>
             <?php if ($unitId): ?><option value="<?= $unitId ?>" selected>Unit #<?= $unitId ?></option><?php endif; ?>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label small">Template</label>
-          <select name="template_id" class="form-select form-select-sm">
-            <option value="">— Default —</option>
-            <?php foreach ($templates as $tm): ?>
-            <option value="<?= $tm['id'] ?>" <?= ($c['template_id'] ?? '') == $tm['id'] ? 'selected' : '' ?>><?= esc($tm['name']) ?></option>
-            <?php endforeach; ?>
           </select>
         </div>
         <div class="col-md-4">
@@ -129,6 +160,19 @@ $formUrl = $isEdit ? base_url('contracts/update/' . $c['id']) : base_url('contra
           </select>
         </div>
         <div class="col-md-6"><label class="form-label small">Description</label><input type="text" name="free_period_desc" class="form-control form-control-sm" value="<?= esc($c['free_period_desc'] ?? '') ?>"></div>
+      </div>
+    </div>
+
+    <div id="parkingFields" class="fm-form-section mt-3" style="display:none">
+      <h6><i class="bi bi-car-front me-1"></i>Parking details <span class="text-muted fw-normal">(optional)</span></h6>
+      <div class="row g-2">
+        <div class="col-md-3"><label class="form-label small">Plate number</label><input type="text" name="plate_number" id="plate_number" class="form-control form-control-sm" value="<?= esc(old('plate_number', $c['plate_number'] ?? ($preUnit['plate_number'] ?? ''))) ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Vehicle type</label><input type="text" name="vehicle_type" class="form-control form-control-sm" value="<?= esc(old('vehicle_type', $c['vehicle_type'] ?? '')) ?>" placeholder="Car, Motorcycle…"></div>
+        <div class="col-md-3"><label class="form-label small">Vehicle description</label><input type="text" name="vehicle_description" class="form-control form-control-sm" value="<?= esc(old('vehicle_description', $c['vehicle_description'] ?? '')) ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Title deed no.</label><input type="text" name="title_deed_no" class="form-control form-control-sm" value="<?= esc(old('title_deed_no', $c['title_deed_no'] ?? '')) ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Building no.</label><input type="text" name="building_no" class="form-control form-control-sm" value="<?= esc(old('building_no', $c['building_no'] ?? '')) ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Zone no.</label><input type="text" name="zone_no" class="form-control form-control-sm" value="<?= esc(old('zone_no', $c['zone_no'] ?? '')) ?>"></div>
+        <div class="col-md-3"><label class="form-label small">Street no.</label><input type="text" name="street_no" class="form-control form-control-sm" value="<?= esc(old('street_no', $c['street_no'] ?? '')) ?>"></div>
       </div>
     </div>
 
@@ -205,24 +249,66 @@ document.addEventListener('DOMContentLoaded', function () {
   const unit = document.getElementById('unitSelect');
   const tenant = document.getElementById('tenantSelect');
   const warn = document.getElementById('blacklistWarn');
+  const typeSel = document.getElementById('contractTypeSelect');
+  const typeSlug = document.getElementById('contractTypeSlug');
+  const parkingBox = document.getElementById('parkingFields');
+  const templateSel = document.getElementById('templateSelect');
+  const plateInput = document.getElementById('plate_number');
+  const isNew = <?= empty($c) ? 'true' : 'false' ?>;
+
+  function syncTypeSlug() {
+    const opt = typeSel?.selectedOptions[0];
+    const slug = opt?.dataset?.slug || '';
+    if (typeSlug) typeSlug.value = slug;
+    if (parkingBox) parkingBox.style.display = slug === 'parking' ? '' : 'none';
+    filterTemplates();
+  }
+
+  function filterTemplates() {
+    if (!templateSel) return;
+    const typeId = typeSel?.value || '';
+    Array.from(templateSel.options).forEach(o => {
+      if (!o.value) return;
+      const tid = o.getAttribute('data-type-id') || '';
+      o.hidden = typeId && tid && tid !== typeId;
+    });
+  }
 
   function loadUnits(pid, selected) {
     unit.innerHTML = '<option value="">— Select unit —</option>';
     if (!pid) return;
-    fetch('<?= base_url('contracts/ajax/units') ?>/' + pid, { headers: { Accept: 'application/json' } })
+    const qs = isNew ? '?vacant_only=1' + (selected ? '&include_unit_id=' + selected : '') : '?include_unit_id=' + (selected || '');
+    fetch('<?= base_url('contracts/ajax/units/') ?>' + pid + qs, { headers: { Accept: 'application/json' } })
       .then(r => r.json())
-      .then(data => {
-        const rows = data.units || data || [];
-        rows.forEach(u => {
+      .then(rows => {
+        (rows || []).forEach(u => {
           const o = document.createElement('option');
           o.value = u.id;
-          o.textContent = (u.unit_number || u.id) + (u.status ? ' (' + u.status + ')' : '');
+          o.textContent = (u.unit_number || u.id) + (String(u.unit_type || '').toLowerCase() === 'parking' ? ' (Parking)' : '');
+          o.setAttribute('data-type', u.unit_type || '');
+          o.setAttribute('data-plate', u.plate_number || '');
           if (String(u.id) === String(selected)) o.selected = true;
           unit.appendChild(o);
         });
+        maybeSelectParkingFromUnit();
       });
   }
 
+  function maybeSelectParkingFromUnit() {
+    const uopt = unit?.selectedOptions[0];
+    if (!uopt || !typeSel) return;
+    if (String(uopt.getAttribute('data-type') || '').toLowerCase() === 'parking') {
+      const parkingOpt = Array.from(typeSel.options).find(o => o.dataset.slug === 'parking');
+      if (parkingOpt) {
+        typeSel.value = parkingOpt.value;
+        syncTypeSlug();
+      }
+      if (plateInput && !plateInput.value) plateInput.value = uopt.getAttribute('data-plate') || '';
+    }
+  }
+
+  typeSel?.addEventListener('change', syncTypeSlug);
+  unit?.addEventListener('change', maybeSelectParkingFromUnit);
   prop?.addEventListener('change', () => loadUnits(prop.value, ''));
   if (prop?.value) loadUnits(prop.value, '<?= $unitId ?>');
 
@@ -231,6 +317,7 @@ document.addEventListener('DOMContentLoaded', function () {
     warn.style.display = opt?.dataset?.blacklisted === '1' ? '' : 'none';
   });
   tenant?.dispatchEvent(new Event('change'));
+  syncTypeSlug();
 });
 </script>
 <?= $this->endSection() ?>

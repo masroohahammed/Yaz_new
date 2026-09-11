@@ -407,6 +407,9 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('contracts/(:num)/amendment',                'Leases::amendmentForm/$1');
     $routes->post('contracts/(:num)/penalties',               'Leases::applyPenalties/$1', ['filter' => 'permission']);
     $routes->post('contracts/(:num)/save-print',              'Leases::savePrint/$1');
+    $routes->post('contracts/(:num)/utility-transfer',         'Leases::saveUtilityTransfer/$1');
+    $routes->post('contracts/(:num)/cheque-payment',         'Leases::recordChequePayment/$1');
+    $routes->post('contracts/(:num)/cheque-bulk-import',    'Leases::bulkImportCheques/$1');
     $routes->post('contracts/(:num)/generate-sign-link',     'Leases::generateSignLink/$1');
     $routes->post('contracts/(:num)/regenerate-sign-link',   'Leases::regenerateSignLink/$1');
     $routes->get('contracts/(:num)/signed-pdf',              'Leases::downloadSignedPdf/$1');
@@ -776,7 +779,9 @@ $routes->group('', ['filter' => ['auth', 'rbac', 'workspace']], static function 
     $routes->get('settings/workspaces',              'Settings::workspaces');
     $routes->post('settings/workspaces/save',        'Settings::saveWorkspaces');
     $routes->get('settings/contract-templates',      'Settings::contractTemplates');
+    $routes->get('settings/contract-setup',          'Settings::contractTemplates');
     $routes->post('settings/contract-templates/save','Settings::saveContractTemplate');
+    $routes->post('settings/contract-types/save',    'Settings::saveContractType');
     $routes->post('settings/switch-company',         'Settings::switchCompany');
     $routes->get('companies',                        'Settings::companies');
     $routes->get('companies/create',                 'Settings::createCompany');
@@ -1028,6 +1033,7 @@ $routes->get('cron/run', 'Cron::runAll');
 
 // API v1
 $routes->group('api/v1', static function ($routes) {
+    $routes->get('health', 'Api\V1\Health::index');
     $routes->post('auth/login', 'Api\V1\Auth::login');
     $routes->post('app-log', 'Api\V1\AppLog::store');
     $routes->group('', ['filter' => 'jwt'], static function ($routes) {
@@ -1091,3 +1097,5 @@ $routes->group('api/legacy', static function ($routes) {
 });
 $routes->post('api/public/maintenance', 'Api\PublicApi::requestMaintenance');
 $routes->get('api/public/track/(:segment)', 'Api\PublicApi::trackRequest/$1');
+
+$routes->set404Override([\App\Controllers\Api\ApiErrors::class, 'notFound']);

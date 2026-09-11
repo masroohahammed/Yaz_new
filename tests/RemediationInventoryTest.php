@@ -243,6 +243,19 @@ final class RemediationInventoryTest extends TestCase
         $routes = file_get_contents($this->root . '/app/Config/Routes.php');
         $this->assertStringContainsString("group('api/v1'", $routes);
         $this->assertStringContainsString("group('api/legacy'", $routes);
+        $this->assertStringContainsString("Api\\V1\\Health::index", $routes);
+        $this->assertStringContainsString("get('health'", $routes);
+        $this->assertFileExists($this->root . '/app/Controllers/Api/V1/Health.php');
+        $this->assertFileExists($this->root . '/app/Controllers/Api/ApiErrors.php');
+    }
+
+    public function testContractSetupViewDoesNotUseRequestInView(): void
+    {
+        $view = file_get_contents($this->root . '/app/Views/settings/contract_templates.php');
+        $this->assertStringNotContainsString('$this->request', $view);
+        $settings = file_get_contents($this->root . '/app/Controllers/Settings.php');
+        $this->assertStringContainsString("'editId'", $settings);
+        $this->assertStringContainsString("'editTypeId'", $settings);
     }
 
     public function testFinanceTotalsServiceIsSingleSourceOfTruth(): void
@@ -1169,5 +1182,66 @@ final class RemediationInventoryTest extends TestCase
         $this->assertMatchesRegularExpression('/if\s*\(\s*!\s*\$propertyOnly\s*\)[\s\S]{0,120}Overdue Invoices/', $view);
         $this->assertMatchesRegularExpression('/if\s*\(\s*!\s*\$propertyOnly\s*\)[\s\S]{0,120}Maintenance history/', $view);
         $this->assertMatchesRegularExpression('/if\s*\(\s*!\s*\$propertyOnly\s*\)[\s\S]{0,120}Finance snapshot/', $view);
+    }
+
+    public function testContractSetupTypesAndPaymentTracking(): void
+    {
+        foreach ([
+            'app/Services/ContractTypeService.php',
+            'app/Services/ContractTemplateService.php',
+            'app/Services/PaymentTrackingService.php',
+            'app/Services/ChequeTrackingService.php',
+            'app/Services/ChequePaymentSyncService.php',
+            'app/Services/ChequeImportService.php',
+            'app/Services/SpreadsheetImportService.php',
+            'app/Services/ParkingContractTemplateDefaults.php',
+            'app/Database/Migrations/2026-09-11-120000_ContractTypesAndPaymentTracking.php',
+            'database/patches/2026-09-11-contract-types-payments.sql',
+            'docs/MOBILE_API.md',
+        ] as $rel) {
+            $this->assertFileExists($this->root . '/' . $rel, "Missing {$rel}");
+        }
+
+        $form = file_get_contents($this->root . '/app/Views/contracts/form.php');
+        $this->assertStringContainsString('contract_type_id', $form);
+        $this->assertStringContainsString('parkingFields', $form);
+        $this->assertStringContainsString('fm-tinymce', $form);
+
+        $settings = file_get_contents($this->root . '/app/Views/settings/contract_templates.php');
+        $this->assertStringContainsString('Contract Setup', $settings);
+        $this->assertStringContainsString('contract-types/save', $settings);
+
+        $leases = file_get_contents($this->root . '/app/Controllers/Leases.php');
+        $this->assertStringContainsString('saveUtilityTransfer', $leases);
+        $this->assertStringContainsString('recordChequePayment', $leases);
+        $this->assertStringContainsString('bulkImportCheques', $leases);
+        $this->assertStringContainsString('contracts/form', $leases);
+        $this->assertStringContainsString('syncContractRentSchedule', $leases);
+        $this->assertStringContainsString('contract_type_name', $leases);
+
+        $cheques = file_get_contents($this->root . '/app/Controllers/Cheques.php');
+        $this->assertStringContainsString('SpreadsheetImportService', $cheques);
+        $this->assertStringContainsString('ChequePaymentSyncService', $cheques);
+
+        $parkingTpl = file_get_contents($this->root . '/app/Services/ParkingContractTemplateDefaults.php');
+        $this->assertStringContainsString('Article One: Term and Rent', $parkingTpl);
+        $this->assertStringContainsString('{{duration_en}}', $parkingTpl);
+
+        $trait = file_get_contents($this->root . '/app/Controllers/Traits/ParkingContractTrait.php');
+        $this->assertStringContainsString('resolveForParkingDocument', $trait);
+
+        $tplSvc = file_get_contents($this->root . '/app/Services/ContractTemplateService.php');
+        $this->assertStringContainsString('{{parking_unit_no}}', $tplSvc);
+
+        $paymentsShow = file_get_contents($this->root . '/app/Views/payments/show.php');
+        $this->assertStringContainsString('Partial payment', $paymentsShow);
+        $this->assertStringContainsString('Postpone payment', $paymentsShow);
+        $this->assertStringContainsString('Payment history', $paymentsShow);
+
+        $leaseShow = file_get_contents($this->root . '/app/Views/leases/show.php');
+        $this->assertStringContainsString('Bulk import cheques', $leaseShow);
+        $this->assertStringContainsString('cheque-bulk-import', $leaseShow);
+        $routes = file_get_contents($this->root . '/app/Config/Routes.php');
+        $this->assertStringContainsString('cheque-bulk-import', $routes);
     }
 }
