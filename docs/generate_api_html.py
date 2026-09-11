@@ -343,6 +343,44 @@ def json_block(data) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False)
 
 
+ORIGINAL_THEME = ROOT / "mobile-api-reference-original.html"
+
+
+def load_original_css() -> str:
+    """CSS from mobile-api-reference-original.html (single source for theme)."""
+    if not ORIGINAL_THEME.exists():
+        raise FileNotFoundError(f"Missing theme reference: {ORIGINAL_THEME}")
+    html = ORIGINAL_THEME.read_text(encoding="utf-8")
+    m = re.search(r"<style>(.*?)</style>", html, re.S)
+    if not m:
+        raise ValueError("Could not extract CSS from mobile-api-reference-original.html")
+    return m.group(1).strip()
+
+
+def format_curl_original(curl: str) -> str:
+    """Single-quoted cURL like the original reference."""
+    return curl.replace('\\"', "'").replace('"', "'")
+
+
+def format_input(ep: dict) -> tuple[str, str]:
+    if ep["request"] is not None:
+        return "Request JSON", json_block(ep["request"])
+    if ep["method"] == "GET" and "Bearer" in ep["auth"]:
+        return "Input", "Bearer token"
+    if "?" in ep["path"]:
+        q = short_path(ep["path"]).split("?", 1)[1]
+        return "Input", f"Query: {q.replace('&', ', ')}"
+    return "Input", "None"
+
+
+def http_codes(ep: dict) -> str:
+    if ep["auth"] == "None":
+        return "HTTP: 200 OK"
+    if ep["method"] == "POST":
+        return "HTTP: 200 · 400 validation · 401 unauthorized · 403 forbidden"
+    return "HTTP: 200 · 401 unauthorized · 403 forbidden"
+
+
 def _ordered_groups(endpoints: list[dict], group_order: list[str] | None) -> dict[str, list[dict]]:
     groups: dict[str, list[dict]] = {}
     for ep in endpoints:
@@ -480,7 +518,8 @@ function copyPre(btn) {{
 
 
 def render_mobile_clean(endpoints: list[dict]) -> str:
-    """Clean light-theme layout matching the original mobile-api-reference.html."""
+    """Layout + CSS from docs/mobile-api-reference-original.html."""
+    css = load_original_css()
     by_group: dict[str, list[dict]] = {}
     for ep in endpoints:
         by_group.setdefault(ep["group"], []).append(ep)
@@ -504,10 +543,16 @@ def render_mobile_clean(endpoints: list[dict]) -> str:
             eid = slug(ep)
             mclass = ep["method"].lower()
             badge_cls, badge_text = auth_badge(ep["auth"])
+            if badge_text == "Public (optional JWT)":
+                badge_text = "Public"
             title = endpoint_title(ep)
-            req_label = "Request JSON" if ep["request"] is not None else "Input"
-            req_body = json_block(ep["request"])
+            req_label, req_body = format_input(ep)
             resp_body = json_block(ep["response"])
+            resp_pre = (
+                f'<pre class="json">{esc(resp_body)}</pre>'
+                if ep["response"] is not None and not isinstance(ep["response"], str)
+                else f"<pre>{esc(resp_body)}</pre>"
+            )
             articles.append(
                 f"""
 <article class="ep" id="{eid}">
@@ -518,13 +563,12 @@ def render_mobile_clean(endpoints: list[dict]) -> str:
   </div>
   <div class="ep-body">
     <p class="use"><strong>{esc(title)}</strong> — {esc(ep["desc"])}</p>
-    <p class="codes">Auth: {esc(ep["auth"])}</p>
-    <div class="label">{req_label}</div>
-    <pre>{esc(req_body)}</pre>
+    <p class="codes">{esc(http_codes(ep))}</p>
+    <div class="label">{req_label}</div><pre>{esc(req_body)}</pre>
     <div class="label">Response example</div>
-    <pre class="json">{esc(resp_body)}</pre>
-    <div class="label">cURL — paste into Postman Import → Raw text</div>
-    <pre class="curl">{esc(ep["curl"])}</pre>
+    {resp_pre}
+    <div class="label">cURL</div>
+    <pre class="curl">{esc(format_curl_original(ep["curl"]))}</pre>
   </div>
 </article>"""
             )
@@ -538,72 +582,31 @@ def render_mobile_clean(endpoints: list[dict]) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Al Yazwa FM — Mobile API Reference</title>
+<title>Al Yazwa FM — API Reference</title>
 <style>
-:root{{--brand:#1a1a5e;--green:#059669;--blue:#2563eb;--bg:#f5f6f8;--card:#fff;--muted:#6b7280;--border:#e5e7eb}}
-*{{box-sizing:border-box}}body{{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#1c1c1e;line-height:1.55}}
-header{{background:linear-gradient(135deg,var(--brand),#3d38a3);color:#fff;padding:28px 20px}}
-header h1{{margin:0 0 4px;font-size:26px}}header p{{margin:0;opacity:.9;font-size:14px}}
-.wrap{{max-width:920px;margin:0 auto;padding:20px 16px 40px}}
-.hero{{background:var(--card);border-radius:12px;padding:18px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}}
-.hero table{{width:100%;border-collapse:collapse;font-size:14px}}
-.hero th,.hero td{{text-align:left;padding:7px 10px;border:1px solid var(--border)}}
-.hero th{{background:#fafafa;width:130px}}
-.hero code{{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:13px}}
-.flow{{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05);font-size:14px}}
-.flow ol{{margin:8px 0 0;padding-left:20px;color:var(--muted)}}
-.flow li{{margin:4px 0}}
-.flow code{{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:12px}}
-nav.toc{{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}}
-nav.toc ul{{margin:8px 0 0;padding-left:18px}}nav.toc a{{color:var(--brand);text-decoration:none}}
-nav.toc a:hover{{text-decoration:underline}}
-.note{{background:#eef2ff;border-left:4px solid var(--brand);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#374151}}
-section{{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}}
-section h2{{margin:0 0 6px;font-size:18px;color:var(--brand);border-bottom:2px solid var(--border);padding-bottom:8px}}
-section .sub{{color:var(--muted);font-size:13px;margin:0 0 14px}}
-.ep{{border:1px solid var(--border);border-radius:10px;margin:14px 0;overflow:hidden}}
-.ep-head{{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;background:#fafafa;border-bottom:1px solid var(--border)}}
-.method{{font-size:10px;font-weight:700;color:#fff;padding:3px 8px;border-radius:5px;text-transform:uppercase}}
-.method.get{{background:var(--green)}}.method.post{{background:var(--blue)}}
-.path{{font-size:13px;font-weight:600;font-family:Consolas,Monaco,monospace}}
-.badge{{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600}}
-.badge.jwt{{background:#ede9fe;color:var(--brand)}}.badge.pub{{background:#e8f5d8;color:#5d7a1f}}
-.ep-body{{padding:12px 14px 16px;font-size:14px}}
-.use{{margin:0 0 8px}}.codes{{font-size:12px;color:var(--muted);margin:0 0 10px}}
-.label{{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 5px}}
-pre{{background:#f3f4f6;border-radius:7px;padding:10px 12px;overflow-x:auto;font-size:11px;line-height:1.45;margin:0;white-space:pre-wrap;word-break:break-word;font-family:Consolas,Monaco,monospace}}
-pre.curl{{background:#1e1e2e;color:#cdd6f4}}
-pre.json{{background:#f8fafc;border:1px solid var(--border)}}
-footer{{text-align:center;color:var(--muted);font-size:12px;padding:14px 0 4px}}
+{css}
 </style>
 </head>
 <body>
-<header><div class="wrap" style="padding-top:0;padding-bottom:0"><h1>Al Yazwa FM — Mobile API Reference</h1><p>REST API v1 · Postman import · cURL · JSON examples</p></div></header>
+<header><div class="wrap" style="padding:0"><h1>Al Yazwa FM — API Reference</h1><p>REST API v1 · Postman import · cURL · JSON examples</p></div></header>
 <div class="wrap">
 <div class="hero">
   <table>
-    <tr><th>Base URL</th><td><code>{{{{BASE_URL}}}}</code> <span style="color:var(--muted)">e.g. https://pfms.alyazwa.com/api/v1</span></td></tr>
-    <tr><th>Auth</th><td><code>Authorization: Bearer &lt;token&gt;</code> from <code>POST /auth/login</code></td></tr>
+    <tr><th>Base URL</th><td><code>https://pfms.alyazwa.com/api/v1</code></td></tr>
+    <tr><th>Auth</th><td><code>Authorization: Bearer &lt;token&gt;</code> (from POST /auth/login)</td></tr>
     <tr><th>Content-Type</th><td><code>application/json</code></td></tr>
     <tr><th>Token lifetime</th><td>24 hours</td></tr>
   </table>
+  <div class="btns">
+    <a href="alyazwa-fm-api.postman_collection.json" download>Download Postman Collection</a>
+    <a href="index.html" class="green">App Downloads</a>
+  </div>
 </div>
-<div class="flow">
-  <strong>Mobile app flow</strong>
-  <ol>
-    <li><code>GET /health</code> — verify API is reachable</li>
-    <li><code>POST /auth/login</code> — store bearer token</li>
-    <li><code>GET /auth/me</code> — restore session, read <code>role</code> / <code>app_area</code></li>
-    <li>Route to <strong>Tenant</strong>, <strong>FM</strong>, or <strong>Employee</strong> screens</li>
-  </ol>
-</div>
-<nav class="toc"><strong>Sections</strong><ul>{toc_items}</ul></nav>
-<div class="note"><strong>Postman:</strong> Copy any cURL block below → <em>Import → Raw text</em>. Set variables <code>BASE_URL</code> and <code>TOKEN</code>.</div>
+<nav class="toc"><strong>Endpoints</strong><ul>{toc_items}</ul></nav>
 {"".join(sections_html)}
-<footer>Al Yazwa FM · API v1 · {len(endpoints)} endpoints</footer>
 </div>
-</body>
-</html>"""
+<footer>Al Yazwa FM API v1 · <a href="index.html">Downloads</a></footer>
+</body></html>"""
 
 
 def try_php_build() -> bool:
