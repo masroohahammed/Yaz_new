@@ -48,16 +48,18 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
 <nav>
   <h2>Setup</h2>
   <a href="#variables">Variables</a>
+  
   <a href="#postman">Postman import</a>
-  <h2>System</h2><a href="#get-api-v1-health">GET /api/v1/health</a><h2>Authentication</h2><a href="#post-api-v1-auth-login">POST /api/v1/auth/login</a><a href="#get-api-v1-auth-me">GET /api/v1/auth/me</a><h2>App Telemetry</h2><a href="#post-api-v1-app-log">POST /api/v1/app-log</a><h2>Property Management</h2><a href="#get-api-v1-properties">GET /api/v1/properties</a><a href="#get-api-v1-properties-kpis-facilityid">GET /api/v1/properties/kpis/{facilityId}</a><h2>Work Orders (PM)</h2><a href="#get-api-v1-work-orders">GET /api/v1/work-orders</a><a href="#get-api-v1-work-orders-id">GET /api/v1/work-orders/{id}</a><a href="#post-api-v1-work-orders">POST /api/v1/work-orders</a><a href="#post-api-v1-work-orders-id">POST /api/v1/work-orders/{id}</a><a href="#post-api-v1-work-orders-id-delete">POST /api/v1/work-orders/{id}/delete</a><h2>Finance</h2><a href="#get-api-v1-finance-invoices">GET /api/v1/finance/invoices</a><a href="#post-api-v1-finance-invoices">POST /api/v1/finance/invoices</a><a href="#get-api-v1-finance-trial-balance-as-of-yyyy-mm-dd">GET /api/v1/finance/trial-balance?as_of=YYYY-MM-DD</a><a href="#get-api-v1-finance-reconciliation-from-to">GET /api/v1/finance/reconciliation?from=&amp;to=</a><h2>Facility Management (FM)</h2><a href="#get-api-v1-fm-dashboard">GET /api/v1/fm/dashboard</a><a href="#get-api-v1-fm-work-orders-status-q">GET /api/v1/fm/work-orders?status=&amp;q=</a><a href="#get-api-v1-fm-work-orders-id">GET /api/v1/fm/work-orders/{id}</a><a href="#post-api-v1-fm-work-orders-id-status">POST /api/v1/fm/work-orders/{id}/status</a><a href="#post-api-v1-fm-work-orders-id-assign">POST /api/v1/fm/work-orders/{id}/assign</a><a href="#post-api-v1-fm-work-orders-id-job-cards">POST /api/v1/fm/work-orders/{id}/job-cards</a><a href="#get-api-v1-fm-complaints">GET /api/v1/fm/complaints</a><a href="#get-api-v1-fm-complaints-id">GET /api/v1/fm/complaints/{id}</a><a href="#post-api-v1-fm-complaints-id-action">POST /api/v1/fm/complaints/{id}/action</a><a href="#get-api-v1-fm-job-cards">GET /api/v1/fm/job-cards</a><a href="#get-api-v1-fm-job-cards-id">GET /api/v1/fm/job-cards/{id}</a><a href="#post-api-v1-fm-job-cards-id-status">POST /api/v1/fm/job-cards/{id}/status</a><a href="#get-api-v1-fm-technicians">GET /api/v1/fm/technicians</a><h2>Tenant Portal</h2><a href="#get-api-v1-portal-contracts">GET /api/v1/portal/contracts</a><a href="#get-api-v1-portal-contracts-id">GET /api/v1/portal/contracts/{id}</a><a href="#get-api-v1-portal-payments-q-status-page-per-page">GET /api/v1/portal/payments?q=&amp;status=&amp;page=&amp;per_page=</a><a href="#get-api-v1-portal-payments-id">GET /api/v1/portal/payments/{id}</a><a href="#get-api-v1-portal-requests">GET /api/v1/portal/requests</a><a href="#get-api-v1-portal-requests-id">GET /api/v1/portal/requests/{id}</a><a href="#post-api-v1-portal-requests">POST /api/v1/portal/requests</a><a href="#post-api-v1-portal-requests-id-messages">POST /api/v1/portal/requests/{id}/messages</a><a href="#get-api-v1-portal-documents-id-download">GET /api/v1/portal/documents/{id}/download</a><h2>Inspections</h2><a href="#get-api-v1-inspections-properties-facility-id-status-frequency">GET /api/v1/inspections/properties?facility_id=&amp;status=&amp;frequency=</a><a href="#get-api-v1-inspections-properties-id">GET /api/v1/inspections/properties/{id}</a><a href="#get-api-v1-inspections-units-facility-id-type-frequency">GET /api/v1/inspections/units?facility_id=&amp;type=&amp;frequency=</a><a href="#get-api-v1-inspections-units-id">GET /api/v1/inspections/units/{id}</a><h2>Public (no login)</h2><a href="#post-api-public-maintenance">POST /api/public/maintenance</a><a href="#get-api-public-track-ticket">GET /api/public/track/{ticket}</a><h2>Errors</h2><a href="#get-api-v1-unknown-path">GET /api/v1/{unknown-path}</a>
+  <h2>System</h2><a href="#get-api-v1-health">GET /api/v1/health</a><h2>Authentication</h2><a href="#post-api-v1-auth-login">POST /api/v1/auth/login</a><a href="#get-api-v1-auth-me">GET /api/v1/auth/me</a><h2>App Telemetry</h2><a href="#post-api-v1-app-log">POST /api/v1/app-log</a><h2>Property Management</h2><a href="#get-api-v1-properties">GET /api/v1/properties</a><a href="#get-api-v1-properties-kpis-facilityid">GET /api/v1/properties/kpis/{facilityId}</a><h2>Work Orders (PM)</h2><a href="#get-api-v1-work-orders">GET /api/v1/work-orders</a><a href="#get-api-v1-work-orders-id">GET /api/v1/work-orders/{id}</a><a href="#post-api-v1-work-orders">POST /api/v1/work-orders</a><a href="#post-api-v1-work-orders-id">POST /api/v1/work-orders/{id}</a><a href="#post-api-v1-work-orders-id-delete">POST /api/v1/work-orders/{id}/delete</a><h2>Finance</h2><a href="#get-api-v1-finance-invoices">GET /api/v1/finance/invoices</a><a href="#post-api-v1-finance-invoices">POST /api/v1/finance/invoices</a><a href="#get-api-v1-finance-trial-balance-as-of-yyyy-mm-dd">GET /api/v1/finance/trial-balance?as_of=YYYY-MM-DD</a><a href="#get-api-v1-finance-reconciliation-from-to">GET /api/v1/finance/reconciliation?from=&amp;to=</a><h2>Facility Management (FM)</h2><a href="#get-api-v1-fm-dashboard">GET /api/v1/fm/dashboard</a><a href="#get-api-v1-fm-work-orders-status-q">GET /api/v1/fm/work-orders?status=&amp;q=</a><a href="#get-api-v1-fm-work-orders-id">GET /api/v1/fm/work-orders/{id}</a><a href="#post-api-v1-fm-work-orders-id-status">POST /api/v1/fm/work-orders/{id}/status</a><a href="#post-api-v1-fm-work-orders-id-assign">POST /api/v1/fm/work-orders/{id}/assign</a><a href="#post-api-v1-fm-work-orders-id-job-cards">POST /api/v1/fm/work-orders/{id}/job-cards</a><a href="#get-api-v1-fm-complaints">GET /api/v1/fm/complaints</a><a href="#get-api-v1-fm-complaints-id">GET /api/v1/fm/complaints/{id}</a><a href="#post-api-v1-fm-complaints-id-action">POST /api/v1/fm/complaints/{id}/action</a><a href="#get-api-v1-fm-job-cards">GET /api/v1/fm/job-cards</a><a href="#get-api-v1-fm-job-cards-id">GET /api/v1/fm/job-cards/{id}</a><a href="#post-api-v1-fm-job-cards-id-status">POST /api/v1/fm/job-cards/{id}/status</a><a href="#get-api-v1-fm-technicians">GET /api/v1/fm/technicians</a><h2>Tenant Portal</h2><a href="#get-api-v1-portal-contracts">GET /api/v1/portal/contracts</a><a href="#get-api-v1-portal-contracts-id">GET /api/v1/portal/contracts/{id}</a><a href="#get-api-v1-portal-payments-q-status-page-per-page">GET /api/v1/portal/payments?q=&amp;status=&amp;page=&amp;per_page=</a><a href="#get-api-v1-portal-payments-id">GET /api/v1/portal/payments/{id}</a><a href="#get-api-v1-portal-requests">GET /api/v1/portal/requests</a><a href="#get-api-v1-portal-requests-id">GET /api/v1/portal/requests/{id}</a><a href="#post-api-v1-portal-requests">POST /api/v1/portal/requests</a><a href="#post-api-v1-portal-requests-id-messages">POST /api/v1/portal/requests/{id}/messages</a><a href="#get-api-v1-portal-documents-id-download">GET /api/v1/portal/documents/{id}/download</a><h2>Employee Self-Service</h2><a href="#get-api-v1-employee-profile">GET /api/v1/employee/profile</a><a href="#get-api-v1-employee-dashboard">GET /api/v1/employee/dashboard</a><a href="#post-api-v1-employee-attendance-check-in">POST /api/v1/employee/attendance/check-in</a><a href="#post-api-v1-employee-attendance-check-out">POST /api/v1/employee/attendance/check-out</a><a href="#post-api-v1-employee-attendance-break-start">POST /api/v1/employee/attendance/break-start</a><a href="#post-api-v1-employee-attendance-break-end">POST /api/v1/employee/attendance/break-end</a><a href="#get-api-v1-employee-attendance-month-yyyy-mm">GET /api/v1/employee/attendance?month=YYYY-MM</a><a href="#get-api-v1-employee-leaves">GET /api/v1/employee/leaves</a><a href="#post-api-v1-employee-leaves">POST /api/v1/employee/leaves</a><a href="#get-api-v1-employee-team-attendance-date-yyyy-mm-dd">GET /api/v1/employee/team-attendance?date=YYYY-MM-DD</a><a href="#get-api-v1-employee-leave-approvals">GET /api/v1/employee/leave-approvals</a><a href="#post-api-v1-employee-leaves-id-action">POST /api/v1/employee/leaves/{id}/action</a><h2>Inspections</h2><a href="#get-api-v1-inspections-properties-facility-id-status-frequency">GET /api/v1/inspections/properties?facility_id=&amp;status=&amp;frequency=</a><a href="#get-api-v1-inspections-properties-id">GET /api/v1/inspections/properties/{id}</a><a href="#get-api-v1-inspections-units-facility-id-type-frequency">GET /api/v1/inspections/units?facility_id=&amp;type=&amp;frequency=</a><a href="#get-api-v1-inspections-units-id">GET /api/v1/inspections/units/{id}</a><h2>Public (no login)</h2><a href="#post-api-public-maintenance">POST /api/public/maintenance</a><a href="#get-api-public-track-ticket">GET /api/public/track/{ticket}</a><h2>Errors</h2><a href="#get-api-v1-unknown-path">GET /api/v1/{unknown-path}</a>
 </nav>
 <main>
 <section id="variables" class="vars">
   <h2 style="margin-top:0;font-size:1.1rem;">Replace before calling</h2>
   <p><code>{{BASE_URL}}</code> — API base, e.g. <code>https://your-domain.com/public/api/v1</code></p>
   <p><code>{{PUBLIC_BASE}}</code> — Site root, e.g. <code>https://your-domain.com/public</code></p>
-  <p><code>{{TOKEN}}</code> — JWT from <code>POST /auth/login</code> (<code>Authorization: Bearer …</code>)</p>
+  <p><code>{{TOKEN}}</code> — Session token from <code>POST /auth/login</code> (<code>Authorization: Bearer …</code>, valid 24h)</p>
 </section>
+
 <section id="postman" class="note">
   <strong>Import into Postman:</strong> Click <em>Import → Raw text</em> and paste any cURL block below. Postman converts it to a ready request. Set collection variables <code>BASE_URL</code> and <code>TOKEN</code> to avoid editing each request.
 </section>
@@ -890,6 +892,288 @@ pre.curl { border-left:3px solid var(--accent); white-space:pre-wrap; word-break
   <pre class="json"><em class="muted">None</em></pre>
   <h4>Response example</h4>
   <pre class="json"><em class="muted">None</em></pre>
+</article><h2 class="group-title">Employee Self-Service</h2>
+<article class="endpoint" id="get-api-v1-employee-profile">
+  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/profile</span></h3>
+  <p class="desc">Get employee master profile: code, department, designation, shift times, facility.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/profile&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Accept: application/json&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json"><em class="muted">None</em></pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;employee_id&quot;: 12,
+    &quot;emp_code&quot;: &quot;EMP-001&quot;,
+    &quot;name&quot;: &quot;Sara Ali&quot;,
+    &quot;email&quot;: &quot;sara@example.com&quot;,
+    &quot;department&quot;: &quot;FM&quot;,
+    &quot;designation&quot;: &quot;Technician&quot;,
+    &quot;shift_start&quot;: &quot;08:00:00&quot;,
+    &quot;shift_end&quot;: &quot;17:00:00&quot;,
+    &quot;facility_name&quot;: &quot;Yazwa Tower&quot;
+  }
+}</pre>
+</article>
+<article class="endpoint" id="get-api-v1-employee-dashboard">
+  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/dashboard</span></h3>
+  <p class="desc">Employee home dashboard: today's attendance, break status, monthly KPIs, pending leaves.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/dashboard&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json"><em class="muted">None</em></pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: {
+    &quot;employee&quot;: {
+      &quot;emp_code&quot;: &quot;EMP-001&quot;,
+      &quot;name&quot;: &quot;Sara Ali&quot;
+    },
+    &quot;today&quot;: {
+      &quot;check_in&quot;: &quot;08:02:00&quot;,
+      &quot;status&quot;: &quot;present&quot;
+    },
+    &quot;on_break&quot;: false,
+    &quot;month_summary&quot;: {
+      &quot;present_days&quot;: 18,
+      &quot;late_days&quot;: 1,
+      &quot;total_hours&quot;: 142.5
+    },
+    &quot;pending_leaves&quot;: 1,
+    &quot;is_manager&quot;: false
+  }
+}</pre>
+</article>
+<article class="endpoint" id="post-api-v1-employee-attendance-check-in">
+  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/attendance/check-in</span></h3>
+  <p class="desc">Record daily check-in. Optional GPS coordinates. Marks late if after shift start + 15 minutes.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/attendance/check-in&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;latitude&quot;:25.2854,&quot;longitude&quot;:51.5310}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json">{
+  &quot;latitude&quot;: 25.2854,
+  &quot;longitude&quot;: 51.531
+}</pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Checked in at 08:02&quot;,
+  &quot;data&quot;: {
+    &quot;status&quot;: &quot;present&quot;,
+    &quot;check_in&quot;: &quot;2026-09-11 08:02:00&quot;
+  }
+}</pre>
+</article>
+<article class="endpoint" id="post-api-v1-employee-attendance-check-out">
+  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/attendance/check-out</span></h3>
+  <p class="desc">Record daily check-out. Calculates hours_worked and overtime_hrs automatically.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/attendance/check-out&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;latitude&quot;:25.2854,&quot;longitude&quot;:51.5310}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json">{
+  &quot;latitude&quot;: 25.2854,
+  &quot;longitude&quot;: 51.531
+}</pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Checked out&quot;,
+  &quot;data&quot;: {
+    &quot;check_out&quot;: &quot;2026-09-11 17:05:00&quot;,
+    &quot;hours_worked&quot;: 9.05,
+    &quot;overtime_hrs&quot;: 0.08
+  }
+}</pre>
+</article>
+<article class="endpoint" id="post-api-v1-employee-attendance-break-start">
+  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/attendance/break-start</span></h3>
+  <p class="desc">Start a break period for today.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/attendance/break-start&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json"><em class="muted">None</em></pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Break started&quot;,
+  &quot;data&quot;: {
+    &quot;break_start&quot;: &quot;2026-09-11 12:00:00&quot;
+  }
+}</pre>
+</article>
+<article class="endpoint" id="post-api-v1-employee-attendance-break-end">
+  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/attendance/break-end</span></h3>
+  <p class="desc">End the current open break and return duration in minutes.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/attendance/break-end&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json"><em class="muted">None</em></pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Break ended&quot;,
+  &quot;data&quot;: {
+    &quot;duration_minutes&quot;: 45
+  }
+}</pre>
+</article>
+<article class="endpoint" id="get-api-v1-employee-attendance-month-yyyy-mm">
+  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/attendance?month=YYYY-MM</span></h3>
+  <p class="desc">Get monthly attendance records for the employee.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/attendance?month=2026-09&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json"><em class="muted">None</em></pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;date&quot;: &quot;2026-09-01&quot;,
+      &quot;status&quot;: &quot;present&quot;,
+      &quot;check_in&quot;: &quot;08:00:00&quot;,
+      &quot;check_out&quot;: &quot;17:00:00&quot;,
+      &quot;hours_worked&quot;: 9.0
+    }
+  ],
+  &quot;count&quot;: 1
+}</pre>
+</article>
+<article class="endpoint" id="get-api-v1-employee-leaves">
+  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/leaves</span></h3>
+  <p class="desc">List own leave requests and their approval status.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/leaves&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json"><em class="muted">None</em></pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 5,
+      &quot;leave_type&quot;: &quot;annual&quot;,
+      &quot;from_date&quot;: &quot;2026-09-20&quot;,
+      &quot;to_date&quot;: &quot;2026-09-22&quot;,
+      &quot;status&quot;: &quot;pending&quot;
+    }
+  ]
+}</pre>
+</article>
+<article class="endpoint" id="post-api-v1-employee-leaves">
+  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/leaves</span></h3>
+  <p class="desc">Submit a new leave request for approval.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (linked employee)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/leaves&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;leave_type&quot;:&quot;annual&quot;,&quot;from_date&quot;:&quot;2026-09-20&quot;,&quot;to_date&quot;:&quot;2026-09-22&quot;,&quot;reason&quot;:&quot;Family travel&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json">{
+  &quot;leave_type&quot;: &quot;annual&quot;,
+  &quot;from_date&quot;: &quot;2026-09-20&quot;,
+  &quot;to_date&quot;: &quot;2026-09-22&quot;,
+  &quot;reason&quot;: &quot;Family travel&quot;
+}</pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Leave request submitted&quot;,
+  &quot;id&quot;: 6
+}</pre>
+</article>
+<article class="endpoint" id="get-api-v1-employee-team-attendance-date-yyyy-mm-dd">
+  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/team-attendance?date=YYYY-MM-DD</span></h3>
+  <p class="desc">Supervisor/Manager: view team attendance for a specific date.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (supervisor/manager)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/team-attendance?date=2026-09-11&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json"><em class="muted">None</em></pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;employee_id&quot;: 12,
+      &quot;name&quot;: &quot;Sara Ali&quot;,
+      &quot;status&quot;: &quot;present&quot;,
+      &quot;check_in&quot;: &quot;08:02:00&quot;
+    }
+  ]
+}</pre>
+</article>
+<article class="endpoint" id="get-api-v1-employee-leave-approvals">
+  <h3><span class="method get">GET</span> <span class="path">/api/v1/employee/leave-approvals</span></h3>
+  <p class="desc">Supervisor/Manager: list pending leave requests awaiting approval.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (supervisor/manager)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X GET &quot;{{BASE_URL}}/employee/leave-approvals&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot;<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json"><em class="muted">None</em></pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 5,
+      &quot;employee_name&quot;: &quot;Sara Ali&quot;,
+      &quot;leave_type&quot;: &quot;annual&quot;,
+      &quot;from_date&quot;: &quot;2026-09-20&quot;,
+      &quot;status&quot;: &quot;pending&quot;
+    }
+  ]
+}</pre>
+</article>
+<article class="endpoint" id="post-api-v1-employee-leaves-id-action">
+  <h3><span class="method post">POST</span> <span class="path">/api/v1/employee/leaves/{id}/action</span></h3>
+  <p class="desc">Supervisor/Manager: approve or reject a leave request. Approved leaves mark attendance as leave.</p>
+  <p class="meta"><strong>Auth:</strong> Bearer JWT (supervisor/manager)</p>
+  <h4>cURL — Postman import</h4>
+  <pre class="curl" data-copy>curl -X POST &quot;{{BASE_URL}}/employee/leaves/5/action&quot; \
+  -H &quot;Authorization: Bearer {{TOKEN}}&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;action&quot;:&quot;approve&quot;}'<button type="button" class="copy-btn" onclick="copyPre(this)">Copy</button></pre>
+  <h4>Request body (JSON)</h4>
+  <pre class="json">{
+  &quot;action&quot;: &quot;approve&quot;,
+  &quot;reason&quot;: &quot;Required when action is reject&quot;
+}</pre>
+  <h4>Response example</h4>
+  <pre class="json">{
+  &quot;status&quot;: true,
+  &quot;message&quot;: &quot;Leave approved&quot;
+}</pre>
 </article><h2 class="group-title">Inspections</h2>
 <article class="endpoint" id="get-api-v1-inspections-properties-facility-id-status-frequency">
   <h3><span class="method get">GET</span> <span class="path">/api/v1/inspections/properties?facility_id=&amp;status=&amp;frequency=</span></h3>

@@ -15,18 +15,31 @@ PHP_MOBILE_BUILD = ROOT / "build_mobile_api_reference_html.php"
 OUT_FULL = ROOT / "API_REFERENCE.html"
 OUT_MOBILE = ROOT / "mobile-api-reference.html"
 
+# Original Flutter mobile app flow (see docs/mobile-api-reference.html / uploaded reference)
 MOBILE_GROUPS = [
     "System",
     "Authentication",
-    "App Telemetry",
-    "Property Management",
-    "Facility Management (FM)",
     "Tenant Portal",
-    "Work Orders (PM)",
+    "Facility Management (FM)",
+    "Employee Self-Service",
+    "Property Management",
     "Finance",
-    "Inspections",
-    "Public (no login)",
+    "App Telemetry",
 ]
+
+MOBILE_EXCLUDED_PATHS = {
+    "/api/v1/finance/invoices",  # GET and POST share path prefix — excluded via exact match below
+    "/api/v1/work-orders",
+    "/api/v1/work-orders/{id}",
+    "/api/v1/work-orders/{id}/delete",
+    "/api/v1/inspections/properties?facility_id=&status=&frequency=",
+    "/api/v1/inspections/properties/{id}",
+    "/api/v1/inspections/units?facility_id=&type=&frequency=",
+    "/api/v1/inspections/units/{id}",
+    "/api/public/maintenance",
+    "/api/public/track/{ticket}",
+    "/api/v1/{unknown-path}",
+}
 
 BASE_URL = "{{BASE_URL}}"
 PUBLIC_BASE = "{{PUBLIC_BASE}}"
@@ -259,14 +272,13 @@ MOBILE_FLOW_SECTION = """
 <section id="app-flow" class="flow">
   <h2 style="margin-top:0;font-size:1.1rem;">Original mobile app flow</h2>
   <ol>
-    <li><strong>Startup</strong> — <code>GET /api/v1/health</code> then optional <code>POST /api/v1/app-log</code> (splash / telemetry)</li>
-    <li><strong>Login</strong> — <code>POST /api/v1/auth/login</code> → store <code>token</code></li>
-    <li><strong>Profile</strong> — <code>GET /api/v1/auth/me</code> → read <code>role</code> and route UI</li>
-    <li><strong>FM roles</strong> (facility_manager, supervisor, technician) — <code>/fm/dashboard</code>, work orders, complaints, job cards, technicians</li>
-    <li><strong>Tenant role</strong> — <code>/portal/contracts</code>, payments, service requests, document download</li>
-    <li><strong>Properties</strong> — list + KPIs for assigned facilities</li>
-    <li><strong>Inspections</strong> — property / unit compliance lists and detail</li>
-    <li><strong>Public</strong> — guest maintenance submit + ticket tracking (no token)</li>
+    <li><strong>Startup</strong> — <code>GET /api/v1/health</code> to verify API reachability</li>
+    <li><strong>Login</strong> — <code>POST /api/v1/auth/login</code> → store <code>token</code> (24h)</li>
+    <li><strong>Session restore</strong> — <code>GET /api/v1/auth/me</code> → read <code>role</code> / <code>app_area</code> and route UI</li>
+    <li><strong>Tenant app</strong> — contracts, payments, maintenance requests, document download</li>
+    <li><strong>FM app</strong> — dashboard, work orders, complaints, job cards, technicians</li>
+    <li><strong>Employee app</strong> — profile, attendance check-in/out, breaks, leave requests, team attendance (managers)</li>
+    <li><strong>Shared</strong> — properties/KPIs, finance reports, optional <code>POST /api/v1/app-log</code> telemetry</li>
   </ol>
 </section>"""
 
@@ -420,7 +432,11 @@ def try_php_build() -> bool:
 
 def mobile_endpoints(all_eps: list[dict]) -> list[dict]:
     allowed = set(MOBILE_GROUPS)
-    return [ep for ep in all_eps if ep["group"] in allowed]
+    return [
+        ep
+        for ep in all_eps
+        if ep["group"] in allowed and ep["path"] not in MOBILE_EXCLUDED_PATHS
+    ]
 
 
 def write_python_docs(endpoints: list[dict]) -> None:
